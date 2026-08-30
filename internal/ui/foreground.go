@@ -241,7 +241,7 @@ func (m *ForegroundModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, nil
 				}
 
-			case "enter":
+			case keyEnter:
 				if m.FocusIndex == FieldSubmit || m.FocusIndex == FieldTitle || m.FocusIndex == FieldDescription {
 					title := strings.TrimSpace(m.TitleInput.Value())
 					if title == "" {
@@ -551,21 +551,22 @@ func (m *ForegroundModel) renderPlaylistManagementModal() string {
 
 	var middleSection string
 
-	if m.IsLoading {
+	switch {
+	case m.IsLoading:
 		middleSection = lipgloss.NewStyle().
 			Height(5).
 			Align(lipgloss.Center, lipgloss.Center).
 			Width(modalWidth - 4).
 			Foreground(lipgloss.Color("#A1A1AA")).
 			Render("⏳ Fetching your playlists...")
-	} else if m.IsSubmitting {
+	case m.IsSubmitting:
 		middleSection = lipgloss.NewStyle().
 			Height(5).
 			Align(lipgloss.Center, lipgloss.Center).
 			Width(modalWidth - 4).
 			Foreground(lipgloss.Color("#A1A1AA")).
 			Render("⏳ Updating playlist...")
-	} else {
+	default:
 		var listRows []string
 		if len(m.Playlists) == 0 {
 			listRows = append(listRows, dimStyle.Render("No editable playlists found in library."))

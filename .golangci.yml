@@ -6,6 +6,10 @@ linters:
     - ineffassign
     - misspell
     - revive
+    - contextcheck
+    - dupl
+    - goconst
+    - gocritic
   settings:
     lll:
       line-length: 180

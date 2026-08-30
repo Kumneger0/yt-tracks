@@ -242,7 +242,7 @@ func runRoot(cmd *cobra.Command, serverURL string) error {
 		for _, dep := range missingDeps {
 			fmt.Fprintf(os.Stderr, "Error: %s is missing. Please install %s using your system package manager.\n", dep.ToolName, dep.ToolName)
 		}
-		os.Exit(1)
+		return fmt.Errorf("missing required system dependencies")
 	}
 
 	for _, dep := range debsCheekResults {
@@ -262,9 +262,8 @@ func runRoot(cmd *cobra.Command, serverURL string) error {
 	client := ytMusicClient.GetYtMusicClient(serverURL)
 	termWidth, termHeight, err := term.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
-		fmt.Println(err.Error())
 		slog.Error(err.Error())
-		os.Exit(1)
+		return fmt.Errorf("failed to get terminal size: %w", err)
 	}
 
 	model := ui.Model{
@@ -362,7 +361,7 @@ func runRoot(cmd *cobra.Command, serverURL string) error {
 	_, err = Program.Run()
 	if err != nil {
 		slog.Error(err.Error())
-		log.Fatal(err)
+		return err
 	}
 
 	if ins != nil {

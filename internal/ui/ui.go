@@ -170,17 +170,18 @@ func (m Model) View() string {
 	searchBar := renderSearchBar(&m, dimensions.MainWidth)
 	breadcrumb := renderBreadcrumbs(m.BreadcrumbItems)
 	var mainView string
-	if m.IsSearchLoading {
+	switch {
+	case m.IsSearchLoading:
 		loadingText := dimmerStyle.Render("  ⟳ Loading...")
 		mainView = getStyle(&m, dimensions.ContentHeight, dimensions.MainWidth, MainView, false).Render(
 			lipgloss.JoinVertical(lipgloss.Top, searchBar, breadcrumb, loadingText),
 		)
-	} else if m.MainViewMode == SearchResultMode {
+	case m.MainViewMode == SearchResultMode:
 		resultHeader := titleStyle.Render("  Search Results")
 		mainView = getStyle(&m, dimensions.ContentHeight, dimensions.MainWidth, MainView, false).Render(
 			lipgloss.JoinVertical(lipgloss.Top, searchBar, resultHeader, lipgloss.NewStyle().Padding(1, 0, 0, 0).Render(m.SearchResult.View())),
 		)
-	} else if m.MainViewMode == LyricsMode {
+	case m.MainViewMode == LyricsMode:
 		trackName := ""
 		if m.SelectedTrack != nil && m.SelectedTrack.Track != nil {
 			trackName = " • " + m.SelectedTrack.Track.Title
@@ -190,11 +191,11 @@ func (m Model) View() string {
 		mainView = getStyle(&m, dimensions.ContentHeight, dimensions.MainWidth, MainView, false).Render(
 			lipgloss.JoinVertical(lipgloss.Top, searchBar, breadcrumb, lyricsHeader, lyricsPadded),
 		)
-	} else if m.MainViewMode == HomePageMode {
+	case m.MainViewMode == HomePageMode:
 		mainView = getStyle(&m, dimensions.ContentHeight, dimensions.MainWidth, MainView, false).Render(
 			lipgloss.JoinVertical(lipgloss.Top, searchBar, breadcrumb, lipgloss.NewStyle().Padding(1, 0, 0, 0).Render(m.HomePageList.View())),
 		)
-	} else {
+	default:
 		mainView = getStyle(&m, dimensions.ContentHeight, dimensions.MainWidth, MainView, false).
 			Render(lipgloss.JoinVertical(lipgloss.Top, searchBar, breadcrumb, lipgloss.NewStyle().Padding(1, 0, 0, 0).Render(m.SelectedPlayListItems.View())))
 	}

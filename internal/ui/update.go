@@ -23,6 +23,14 @@ import (
 	"go.dalton.dog/bubbleup"
 )
 
+const (
+	keyTab      = "tab"
+	keyShiftTab = "shift+tab"
+	keyEnter    = "enter"
+	keyDown     = "down"
+	titleHome   = "Home"
+)
+
 type MusicMetadata struct {
 	artistName []string
 	title      string
@@ -482,7 +490,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.HomePageList = list.New(items, CustomDelegate{Model: &m}, dims.MainWidth, dims.ContentHeight-4)
 		m.HomePageList.SetShowTitle(false)
 		removeListDefaults(&m.HomePageList)
-		m.HomePageList.Title = "Home"
+		m.HomePageList.Title = titleHome
 		m.HomePageViewMode = HomePageSectionView
 		m.MainViewMode = HomePageMode
 		return m, nil
@@ -541,9 +549,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			var cmd tea.Cmd
 			if m.IsOnPagination {
 				m.IsOnPagination = false
-				existingItems := m.SelectedPlayListItems.Items()
-				allItems := append(existingItems, playListItemSongs...)
-				cmd = m.SelectedPlayListItems.SetItems(allItems)
+				selectedPlayListItems := m.SelectedPlayListItems.Items()
+				selectedPlayListItems = append(selectedPlayListItems, playListItemSongs...)
+				cmd = m.SelectedPlayListItems.SetItems(selectedPlayListItems)
 			} else {
 				cmd = m.SelectedPlayListItems.SetItems(playListItemSongs)
 			}
@@ -734,7 +742,7 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (Model, tea.Cmd) {
 			),
 			openAddToPlaylistCmd,
 		)
-	case "down", "j":
+	case keyDown, "j":
 		if m.MainViewMode == LyricsMode && m.FocusedOn == MainView {
 			var cmd tea.Cmd
 			m.LyricsView, cmd = m.LyricsView.Update(msg)
@@ -901,11 +909,11 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (Model, tea.Cmd) {
 			m.PlayerProcess = nil
 		}
 		return m, tea.Quit
-	case "tab":
+	case keyTab:
 		return changeFocusMode(&m, false)
-	case "shift+tab":
+	case keyShiftTab:
 		return changeFocusMode(&m, true)
-	case "enter":
+	case keyEnter:
 		return m.handleEnterKey()
 	}
 	return m, nil
@@ -1203,7 +1211,8 @@ func (m *Model) updateLyricsView() {
 	inactiveStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#A1A1AA"))
 	sourceStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#71717A")).Italic(true)
 
-	if m.CurrentLyrics.HasTimestamps && len(m.CurrentLyrics.Lines) > 0 {
+	switch {
+	case m.CurrentLyrics.HasTimestamps && len(m.CurrentLyrics.Lines) > 0:
 		currentMS := int32(m.PlayedSeconds*1000) - 750
 		if currentMS < 0 {
 			currentMS = 0
@@ -1245,13 +1254,13 @@ func (m *Model) updateLyricsView() {
 			}
 			m.LyricsView.SetYOffset(targetOffset)
 		}
-	} else if m.CurrentLyrics.Lyrics != "" {
+	case m.CurrentLyrics.Lyrics != "":
 		lyricsText := m.CurrentLyrics.Lyrics
 		if m.CurrentLyrics.Source != "" {
 			lyricsText = lyricsText + "\n\n" + sourceStyle.Render(m.CurrentLyrics.Source)
 		}
 		m.LyricsView.SetContent(lyricsText)
-	} else {
+	default:
 		noLyricsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#71717A")).Italic(true)
 		m.LyricsView.SetContent(noLyricsStyle.Render("No lyrics available for this song."))
 	}
@@ -1262,13 +1271,14 @@ func (m Model) handleMusicChange(isForward bool) (Model, tea.Cmd) {
 	fromHistory := false
 
 	if isForward {
-		if m.Queue != nil && m.Queue.Len() > 0 {
+		switch {
+		case m.Queue != nil && m.Queue.Len() > 0:
 			track = m.Queue.PopFirst()
-		} else if len(m.PlayHistory) > 0 && m.PlayHistoryIndex < len(m.PlayHistory)-1 {
+		case len(m.PlayHistory) > 0 && m.PlayHistoryIndex < len(m.PlayHistory)-1:
 			m.PlayHistoryIndex++
 			track = m.PlayHistory[m.PlayHistoryIndex]
 			fromHistory = true
-		} else if len(m.PlaybackContext) > 0 {
+		case len(m.PlaybackContext) > 0:
 			idx := m.PlaylistContextIndex
 			if idx >= 0 && idx < len(m.PlaybackContext) &&
 				m.SelectedTrack != nil && m.SelectedTrack.Track != nil &&
@@ -1276,9 +1286,11 @@ func (m Model) handleMusicChange(isForward bool) (Model, tea.Cmd) {
 				m.SelectedTrack.Track.VideoId == m.PlaybackContext[idx].Track.VideoId {
 				idx = (idx + 1) % len(m.PlaybackContext)
 			}
-			m.PlaylistContextIndex = idx
-			track = m.PlaybackContext[m.PlaylistContextIndex]
-		} else if len(m.PlayHistory) > 0 {
+			if idx >= 0 && idx < len(m.PlaybackContext) {
+				track = m.PlaybackContext[idx]
+				m.PlaylistContextIndex = idx
+			}
+		case len(m.PlayHistory) > 0:
 			m.PlayHistoryIndex = 0
 			track = m.PlayHistory[m.PlayHistoryIndex]
 			fromHistory = true
@@ -1288,11 +1300,11 @@ func (m Model) handleMusicChange(isForward bool) (Model, tea.Cmd) {
 			m.SelectedTrack != nil && m.SelectedTrack.Track != nil {
 			appendToPlayHistory(&m, &m.SelectedTrack.PlaylistTrackObject)
 		}
-	} else {
-		if len(m.PlayHistory) > 0 && m.PlayHistoryIndex > 0 {
-			m.PlayHistoryIndex--
-			track = m.PlayHistory[m.PlayHistoryIndex]
-		}
+	}
+
+	if !isForward && len(m.PlayHistory) > 0 && m.PlayHistoryIndex > 0 {
+		m.PlayHistoryIndex--
+		track = m.PlayHistory[m.PlayHistoryIndex]
 	}
 
 	if track != nil {
@@ -1898,7 +1910,8 @@ func (m Model) handleMainViewOrQueueEnter() (Model, tea.Cmd) {
 		if selectedItem.SongRelatedContent != nil {
 			m.PendingContextName = selectedItem.SongRelatedContent.Title
 		}
-		if selectedItem.VideoId != "" || selectedItem.ContentType == "song" || selectedItem.ContentType == "video" {
+		switch {
+		case selectedItem.VideoId != "" || selectedItem.ContentType == "song" || selectedItem.ContentType == "video":
 			playlistTrack := types.PlaylistTrackObject{
 				Track: &musicpb.Song{
 					VideoId: selectedItem.VideoId,
@@ -1923,17 +1936,17 @@ func (m Model) handleMainViewOrQueueEnter() (Model, tea.Cmd) {
 			}
 			m, cmd := m.PlaySelectedMusic(playlistTrack)
 			return m, tea.Batch(cmd, relatedSongsCmd)
-		} else if selectedItem.ContentType == "artist" || strings.HasPrefix(selectedItem.BrowseId, "UC") || selectedItem.Subscribers != "" {
+		case selectedItem.ContentType == "artist" || strings.HasPrefix(selectedItem.BrowseId, "UC") || selectedItem.Subscribers != "":
 			return m.navigateToDetailView(m.getArtistTracks(selectedItem.BrowseId))
-		} else if selectedItem.ContentType == "album" || strings.HasPrefix(selectedItem.BrowseId, "MPRE") {
+		case selectedItem.ContentType == "album" || strings.HasPrefix(selectedItem.BrowseId, "MPRE"):
 			return m.navigateToDetailView(m.getAlbumTracks(selectedItem.BrowseId))
-		} else if selectedItem.ContentType == "playlist" || (selectedItem.PlaylistId != "" && selectedItem.ContentType == "") {
+		case selectedItem.ContentType == "playlist" || (selectedItem.PlaylistId != "" && selectedItem.ContentType == ""):
 			playlistID := selectedItem.PlaylistId
 			if playlistID == "" {
 				playlistID = selectedItem.BrowseId
 			}
 			return m.navigateToDetailView(m.getPlaylistItems(playlistID))
-		} else if selectedItem.BrowseId != "" {
+		case selectedItem.BrowseId != "":
 			return m.navigateToDetailView(m.getArtistTracks(selectedItem.BrowseId))
 		}
 	}

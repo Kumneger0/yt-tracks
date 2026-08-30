@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	musicpb "github.com/kumneger0/yt-tracks/gen"
 	"github.com/kumneger0/yt-tracks/internal/types"
 )
 
@@ -31,55 +32,61 @@ func (d CustomDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 }
 
 func (d CustomDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
-	var title string
-	var isSelected bool
-	var icon string
-	var subtitle string
-
+	isSelected := isItemSelected(d, m, index)
+	var selectedTrack *SelectedTrack
 	if d.Model != nil {
-		switch d.Model.FocusedOn {
-		case SideView:
-			if strings.EqualFold(m.Title, "yt-tracks") || strings.EqualFold(m.Title, "Library") {
-				isSelected = m.Index() == index
-			}
-		case MainView:
-			if !strings.EqualFold(m.Title, "Related") && !strings.EqualFold(m.Title, "Queue") && !strings.EqualFold(m.Title, "yt-tracks") {
-				isSelected = m.Index() == index
-			}
-		case QueueList:
-			if strings.EqualFold(m.Title, "Related") || strings.EqualFold(m.Title, "Queue") {
-				isSelected = m.Index() == index
-			}
+		selectedTrack = d.Model.SelectedTrack
+	}
+	icon, title, subtitle := extractItemDisplayInfo(item, selectedTrack)
+	rendered := formatRenderedItemLine(icon, title, subtitle, m.Width(), isSelected)
+	fmt.Fprint(w, rendered)
+}
+
+func isItemSelected(d CustomDelegate, m list.Model, index int) bool {
+	if d.Model == nil {
+		return false
+	}
+	title := m.Title
+	switch d.Model.FocusedOn {
+	case SideView:
+		if strings.EqualFold(title, "yt-tracks") || strings.EqualFold(title, "Library") {
+			return m.Index() == index
+		}
+	case MainView:
+		if !strings.EqualFold(title, "Related") && !strings.EqualFold(title, "Queue") && !strings.EqualFold(title, "yt-tracks") {
+			return m.Index() == index
+		}
+	case QueueList:
+		if strings.EqualFold(title, "Related") || strings.EqualFold(title, "Queue") {
+			return m.Index() == index
 		}
 	}
+	return false
+}
 
+const (
+	defaultPlaylistSubtitle = "Playlist"
+	contentTypeSong         = "song"
+	contentTypeAlbum        = "album"
+	contentTypeVideo        = "video"
+)
+
+func extractItemDisplayInfo(item list.Item, selectedTrack *SelectedTrack) (icon, title, subtitle string) {
 	switch item := item.(type) {
 	case types.SongItem:
-		icon = "♫"
+		icon = SongIcon
 		if item.Song != nil {
 			title = item.Title
-			if len(item.Artists) > 0 {
-				var names []string
-				for _, a := range item.Artists {
-					names = append(names, a.Name)
-				}
-				subtitle = strings.Join(names, ", ")
-			}
+			subtitle = formatArtistNames(item.Artists)
 		}
 	case types.SearchResultSongItem:
-		icon = "♫"
+		icon = SongIcon
 		if item.SearchResultSong != nil {
 			title = item.Title
-			if len(item.Artists) > 0 {
-				var names []string
-				for _, a := range item.Artists {
-					names = append(names, a.Name)
-				}
-				subtitle = strings.Join(names, ", ")
-			}
+			subtitle = formatArtistNames(item.Artists)
 		}
 	case types.SearchResultArtistItem:
-		icon = "♪"
+		icon = ArtistIcon
 		if item.SearchResultArtist != nil {
 			title = item.Name
 			if item.Subscribers != "" {
@@ -89,23 +96,23 @@ func (d CustomDelegate) Render(w io.Writer, m list.Model, index int, item list.I
 			}
 		}
 	case types.SearchResultPlaylistItem:
-		icon = "☰"
+		icon = PlaylistIcon
 		if item.SearchResultPlaylist != nil {
 			title = item.Title
 			if item.Author != "" {
 				subtitle = item.Author
 			} else {
-				subtitle = "Playlist"
+				subtitle = defaultPlaylistSubtitle
 			}
 		}
 	case types.SearchResultAlbumItem:
-		icon = "◉"
+		icon = AlbumIcon
 		if item.SearchResultAlbum != nil {
 			title = item.Title
 			subtitle = fmt.Sprintf("%s • %s", item.Type, item.Year)
 		}
 	case types.SearchResultPodcastItem:
-		icon = "📻"
+		icon = PodcastIcon
 		if item.SearchResultPodcast != nil {
 			title = item.Title
 			if item.Author != "" {
@@ -115,35 +122,36 @@ func (d CustomDelegate) Render(w io.Writer, m list.Model, index int, item list.I
 			}
 		}
 	case types.SearchResultEpisodeItem:
-		icon = "🎙"
+		icon = EpisodeIcon
 		if item.SearchResultEpisode != nil {
 			title = item.Title
-			if item.PodcastName != "" && item.Date != "" {
+			switch {
+			case item.PodcastName != "" && item.Date != "":
 				subtitle = fmt.Sprintf("%s • %s", item.PodcastName, item.Date)
-			} else if item.PodcastName != "" {
+			case item.PodcastName != "":
 				subtitle = item.PodcastName
-			} else {
+			default:
 				subtitle = "Podcast Episode"
 			}
 		}
 	case types.AlbumItem:
-		icon = "◉"
+		icon = AlbumIcon
 		if item.Album != nil {
 			title = item.Title
 			subtitle = fmt.Sprintf("%s • %s", item.Type, item.Year)
 		}
 	case types.PlaylistItem:
-		icon = "☰"
+		icon = PlaylistIcon
 		if item.Playlist != nil {
 			title = item.Title
 			if item.Author != "" {
 				subtitle = item.Author
 			} else {
-				subtitle = "Playlist"
+				subtitle = defaultPlaylistSubtitle
 			}
 		}
 	case types.FollowedArtistItem:
-		icon = "♪"
+		icon = ArtistIcon
 		if item.FollowedArtist != nil {
 			title = item.Name
 			if item.Subscribers != "" {
@@ -153,77 +161,84 @@ func (d CustomDelegate) Render(w io.Writer, m list.Model, index int, item list.I
 			}
 		}
 	case types.LibraryChannelItem:
-		icon = "♪"
+		icon = ArtistIcon
 		if item.LibraryChannel != nil {
 			title = item.Name
 			subtitle = "Channel"
 		}
 	case types.PodcastItem:
-		icon = "📻"
+		icon = PodcastIcon
 		if item.Podcast != nil {
 			title = item.Title
 			subtitle = item.Author
 		}
 	case types.SongRelatedContentItem:
 		if item.SongRelatedContent != nil {
-			if item.VideoId != "" || item.ContentType == "song" || item.ContentType == "video" {
-				icon = "♫"
-			} else if item.ContentType == "artist" || strings.HasPrefix(item.BrowseId, "UC") || item.Subscribers != "" {
-				icon = "♪"
-			} else if item.ContentType == "album" || strings.HasPrefix(item.BrowseId, "MPRE") {
-				icon = "◉"
-			} else {
-				icon = "☰"
+			switch {
+			case item.VideoId != "" || item.ContentType == contentTypeSong || item.ContentType == contentTypeVideo:
+				icon = SongIcon
+			case item.ContentType == "artist" || strings.HasPrefix(item.BrowseId, "UC") || item.Subscribers != "":
+				icon = ArtistIcon
+			case item.ContentType == contentTypeAlbum || strings.HasPrefix(item.BrowseId, "MPRE"):
+				icon = AlbumIcon
+			default:
+				icon = PlaylistIcon
 			}
 			title = item.Title
 			subtitle = item.Description
 		}
 	case types.PlaylistTrackObject:
-		icon = "♫"
+		icon = SongIcon
 		if item.Track != nil {
 			title = item.Track.Title
-			if d.Model != nil && d.Model.SelectedTrack != nil && d.Model.SelectedTrack.Track != nil &&
-				item.Track.VideoId == d.Model.SelectedTrack.Track.VideoId {
+			if selectedTrack != nil && selectedTrack.Track != nil &&
+				item.Track.VideoId == selectedTrack.Track.VideoId {
 				title += " (current)"
 			}
-			if len(item.Track.Artists) > 0 {
-				var names []string
-				for _, a := range item.Track.Artists {
-					names = append(names, a.Name)
-				}
-				subtitle = strings.Join(names, ", ")
-			}
+			subtitle = formatArtistNames(item.Track.Artists)
 		}
 	case types.SidebarItem:
 		icon = item.Icon
 		title = item.Name
 	case types.HomePageContentItem:
-		if item.VideoID != "" || item.ContentType == "song" || item.ContentType == "video" {
-			icon = "♫"
-		} else if item.ContentType == "album" || strings.HasPrefix(item.BrowseID, "MPRE") {
-			icon = "◉"
-		} else {
-			icon = "☰"
+		switch {
+		case item.VideoID != "" || item.ContentType == contentTypeSong || item.ContentType == contentTypeVideo:
+			icon = SongIcon
+		case item.ContentType == contentTypeAlbum || strings.HasPrefix(item.BrowseID, "MPRE"):
+			icon = AlbumIcon
+		default:
+			icon = PlaylistIcon
 		}
 		title = item.ItemTitle
 		if len(item.Artists) > 0 {
-			var names []string
-			for _, a := range item.Artists {
-				names = append(names, a.Name)
-			}
-			subtitle = strings.Join(names, ", ")
+			subtitle = formatArtistNames(item.Artists)
 		} else {
 			subtitle = item.Description
 		}
 	case types.HomePageSectionItem:
-		icon = "▸"
+		icon = SectionIcon
 		title = item.SectionTitle
 	case types.UserSavedTracksListItem:
 		title = item.FilterValue()
-		icon = "♥"
+		icon = LikedIcon
 	}
+	return icon, title, subtitle
+}
 
-	availableWidth := m.Width()
+func formatArtistNames(artists []*musicpb.Artist) string {
+	if len(artists) == 0 {
+		return ""
+	}
+	names := make([]string, 0, len(artists))
+	for _, a := range artists {
+		if a != nil && a.Name != "" {
+			names = append(names, a.Name)
+		}
+	}
+	return strings.Join(names, ", ")
+}
+
+func formatRenderedItemLine(icon, title, subtitle string, availableWidth int, isSelected bool) string {
 	if availableWidth <= 0 {
 		availableWidth = 40
 	}
@@ -231,7 +246,6 @@ func (d CustomDelegate) Render(w io.Writer, m list.Model, index int, item list.I
 	prefix := fmt.Sprintf(" %s %s", icon, title)
 	prefixWidth := lipgloss.Width(prefix)
 
-	var rendered string
 	if subtitle != "" && availableWidth >= prefixWidth+8 {
 		sep := " · "
 		sepWidth := lipgloss.Width(sep)
@@ -239,38 +253,27 @@ func (d CustomDelegate) Render(w io.Writer, m list.Model, index int, item list.I
 		if maxSubWidth > 3 {
 			sub := truncateText(subtitle, maxSubWidth)
 			if isSelected {
-				rendered = selectedStyle.Render(prefix) +
+				return selectedStyle.Render(prefix) +
 					selectedStyle.Foreground(lipgloss.Color("#D4D4D8")).Render(sep+sub+" ")
-			} else {
-				rendered = normalStyle.Render(prefix) +
-					dimStyle.Render(sep+sub+" ")
 			}
-		} else {
-			str := prefix + " "
-			if isSelected {
-				rendered = selectedStyle.Render(str)
-			} else {
-				rendered = normalStyle.Render(str)
-			}
-		}
-	} else {
-		if prefixWidth > availableWidth-1 {
-			iconWidth := lipgloss.Width(fmt.Sprintf(" %s ", icon))
-			maxTitleWidth := availableWidth - iconWidth - 1
-			if maxTitleWidth > 3 {
-				title = truncateText(title, maxTitleWidth)
-				prefix = fmt.Sprintf(" %s %s", icon, title)
-			}
-		}
-		str := prefix + " "
-		if isSelected {
-			rendered = selectedStyle.Render(str)
-		} else {
-			rendered = normalStyle.Render(str)
+			return normalStyle.Render(prefix) +
+				dimStyle.Render(sep+sub+" ")
 		}
 	}
 
-	fmt.Fprint(w, rendered)
+	if prefixWidth > availableWidth-1 {
+		iconWidth := lipgloss.Width(fmt.Sprintf(" %s ", icon))
+		maxTitleWidth := availableWidth - iconWidth - 1
+		if maxTitleWidth > 3 {
+			title = truncateText(title, maxTitleWidth)
+			prefix = fmt.Sprintf(" %s %s", icon, title)
+		}
+	}
+	str := prefix + " "
+	if isSelected {
+		return selectedStyle.Render(str)
+	}
+	return normalStyle.Render(str)
 }
 
 func truncateText(s string, maxW int) string {
@@ -314,7 +317,7 @@ func renderSearchBar(m *Model, width int) string {
 	return strings.TrimRight(box.Render(content), "\n")
 }
 
-func renderNowPlaying(m *Model, currentPosition, TotalDuration time.Duration) string {
+func renderNowPlaying(m *Model, currentPosition, totalDuration time.Duration) string {
 	selectedTrack := m.SelectedTrack
 	if selectedTrack == nil || selectedTrack.Track == nil {
 		return ""
@@ -329,33 +332,33 @@ func renderNowPlaying(m *Model, currentPosition, TotalDuration time.Duration) st
 
 	var likedIndicator string
 	if selectedTrack.isLiked {
-		likedIndicator = " ♥"
+		likedIndicator = " " + LikedIcon
 	} else {
-		likedIndicator = " ♡"
+		likedIndicator = " " + UnlikedIcon
 	}
 
 	barWidth := m.Width
 	var progressFloat float64
-	if TotalDuration == 0 {
+	if totalDuration == 0 {
 		progressFloat = 1.0
 	} else {
-		progressFloat = float64(currentPosition.Abs()) / float64(TotalDuration.Abs()) * float64(barWidth)
+		progressFloat = float64(currentPosition.Abs()) / float64(totalDuration.Abs()) * float64(barWidth)
 	}
 	progress := max(min(int(math.Max(progressFloat, 1)), barWidth), 0)
 
 	filled := lipgloss.NewStyle().Foreground(progressFilled).Render(strings.Repeat("━", progress))
 	empty := lipgloss.NewStyle().Foreground(progressEmpty).Render(strings.Repeat("─", max(barWidth-progress, 0)))
 
-	playIcon := "⏸"
+	playIcon := PauseIcon
 	if m.IsPlaying() {
-		playIcon = "▶"
+		playIcon = PlayIcon
 	}
 
 	trackInfo := lipgloss.NewStyle().Foreground(textPrimary).Bold(true).Render(
 		fmt.Sprintf("%s %s", playIcon, trackName),
 	)
 	artistInfo := dimStyle.Render(fmt.Sprintf(" — %s", artistName))
-	timeInfo := dimStyle.Render(fmt.Sprintf("  %s / %s", formatTime(currentPosition), formatTime(TotalDuration)))
+	timeInfo := dimStyle.Render(fmt.Sprintf("  %s / %s", formatTime(currentPosition), formatTime(totalDuration)))
 	likeInfo := lipgloss.NewStyle().Foreground(lipgloss.Color("#F87171")).Render(likedIndicator)
 
 	return fmt.Sprintf("%s%s%s%s\n%s%s\n",
