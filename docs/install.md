@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-Before building `ytmusic-tui` from source, ensure you have the following installed:
+Before building `yt-tracks` from source, ensure you have the following installed:
 
 - **[Go](https://go.dev/dl/)** (v1.26 or higher)
 - **[Python](https://www.python.org/downloads/)** (v3.13 or higher) & **[uv](https://docs.astral.sh/uv/)** (recommended Python package manager)
@@ -16,8 +16,8 @@ Before building `ytmusic-tui` from source, ensure you have the following install
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/kumneger0/ytmusic-tui.git
-cd ytmusic-tui
+git clone https://github.com/kumneger0/yt-tracks.git
+cd yt-tracks
 ```
 
 ### 2. Set Up Python Environment
@@ -44,7 +44,7 @@ make build
 
 ### 4. Install & Launch
 
-To install `ytmusic-tui` to `/usr/local/bin`:
+To install `yt-tracks` to `/usr/local/bin`:
 
 ```bash
 make install
@@ -53,7 +53,7 @@ make install
 Or run the built binary directly:
 
 ```bash
-./ytmusic-tui
+./yt-tracks
 ```
 
 ### 5. Authenticate with YouTube Music
@@ -61,7 +61,7 @@ Or run the built binary directly:
 To access your playlists, liked songs, and library, extract session cookies from your browser:
 
 ```bash
-ytmusic-tui extract-cookies
+yt-tracks extract-cookies
 ```
 
 ---
@@ -70,5 +70,5 @@ ytmusic-tui extract-cookies
 
 If you encounter issues during installation or build:
 - Ensure `yt-dlp` and `ffmpeg` are in your system `PATH`.
-- Check application logs via `ytmusic-tui log`.
-- Open an issue on [GitHub Issues](https://github.com/kumneger0/ytmusic-tui/issues).
+- Check application logs via `yt-tracks log`.
+- Open an issue on [GitHub Issues](https://github.com/kumneger0/yt-tracks/issues).

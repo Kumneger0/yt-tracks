@@ -1,12 +1,12 @@
-# Contributing to ytmusic-tui
+# Contributing to yt-tracks
 
-Thank you for your interest in contributing to **ytmusic-tui**! This document provides guidelines and setup instructions to help you get started.
+Thank you for your interest in contributing to **yt-tracks**! This document provides guidelines and setup instructions to help you get started.
 
 ---
 
 ## Architecture Overview
 
-`ytmusic-tui` consists of two main components:
+`yt-tracks` consists of two main components:
 - **Go TUI Frontend**: Built with [Bubble Tea](https://github.com/charmbracelet/bubbletea), Lipgloss, and Cobra.
 - **Python Backend Service**: A gRPC / Connect RPC server managing YouTube Music API interactions, authentication, and metadata.
 
@@ -31,8 +31,8 @@ Before starting, ensure you have the following installed:
 
 1. **Fork & Clone**:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/ytmusic-tui.git
-   cd ytmusic-tui
+   git clone https://github.com/YOUR_USERNAME/yt-tracks.git
+   cd yt-tracks
    ```
 
 2. **Install Python Environment**:
@@ -85,4 +85,4 @@ go test -v ./...
 
 ## Reporting Issues
 
-Use [GitHub Issues](https://github.com/kumneger0/ytmusic-tui/issues) for bug reports and feature requests. Include your OS, Go version, and log output (`ytmusic-tui log` or `~/.config/ytmusic-tui/ytmusic-tui.log`) when reporting bugs.
+Use [GitHub Issues](https://github.com/kumneger0/yt-tracks/issues) for bug reports and feature requests. Include your OS, Go version, and log output (`yt-tracks log` or `~/.config/yt-tracks/yt-tracks.log`) when reporting bugs.

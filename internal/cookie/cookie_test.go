@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kumneger0/ytmusic-tui/internal/config"
+	"github.com/kumneger0/yt-tracks/internal/config"
 )
 
 func TestConvertToNetscapeCookies_Empty(t *testing.T) {

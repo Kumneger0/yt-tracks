@@ -9,8 +9,8 @@ import (
 
 	"github.com/godbus/dbus/v5"
 	"github.com/godbus/dbus/v5/prop"
-	"github.com/kumneger0/ytmusic-tui/internal/types"
-	"github.com/kumneger0/ytmusic-tui/internal/ui"
+	"github.com/kumneger0/yt-tracks/internal/types"
+	"github.com/kumneger0/yt-tracks/internal/ui"
 )
 
 func newProp(value any, cb func(*prop.Change) *dbus.Error) *prop.Prop {
@@ -44,7 +44,7 @@ var mediaPlayer2 = map[string]*prop.Prop{
 	"CanQuit":             newProp(false, nil),
 	"CanRaise":            newProp(false, nil),
 	"HasTrackList":        newProp(false, nil),
-	"Identity":            newProp("ytmusic-tui", nil),
+	"Identity":            newProp("yt-tracks", nil),
 	"SupportedUriSchemes": newProp([]string{}, nil),
 	"SupportedMimeTypes":  newProp([]string{}, nil),
 }
@@ -92,7 +92,7 @@ func GetDbusInstance() (*ui.Instance, *chan types.DBusMessage, error) {
 		return nil, nil, err
 	}
 
-	reply, err := conn.RequestName("org.mpris.MediaPlayer2.ytmusic-tui", dbus.NameFlagReplaceExisting)
+	reply, err := conn.RequestName("org.mpris.MediaPlayer2.yt-tracks", dbus.NameFlagReplaceExisting)
 	if err != nil {
 		slog.Error(err.Error())
 		return nil, nil, err

@@ -9,11 +9,11 @@ import (
 func newVersionCmd(version string) *cobra.Command {
 	return &cobra.Command{
 		Use:          "version",
-		Short:        "show the version of ytmusic-tui",
+		Short:        "show the version of yt-tracks",
 		Args:         cobra.NoArgs,
 		SilenceUsage: true,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Fprintf(cmd.OutOrStdout(), "ytmusic-tui: %s\n", version)
+			fmt.Fprintf(cmd.OutOrStdout(), "yt-tracks: %s\n", version)
 		},
 	}
 }

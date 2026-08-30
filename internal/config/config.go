@@ -28,33 +28,33 @@ func GetConfigDir(goos string) string {
 	configDir, err := userConfigDir()
 	if err != nil {
 		if goos == "windows" {
-			return filepath.Join(os.Getenv("APPDATA"), "ytmusic-tui")
+			return filepath.Join(os.Getenv("APPDATA"), "yt-tracks")
 		}
 		xdgConfig := os.Getenv("XDG_CONFIG_HOME")
 		if xdgConfig != "" {
-			return filepath.Join(xdgConfig, "ytmusic-tui")
+			return filepath.Join(xdgConfig, "yt-tracks")
 		}
 		if goos == "darwin" {
-			return filepath.Join(os.Getenv("HOME"), "Library", "Application Support", "ytmusic-tui")
+			return filepath.Join(os.Getenv("HOME"), "Library", "Application Support", "yt-tracks")
 		}
-		return filepath.Join(os.Getenv("HOME"), ".config", "ytmusic-tui")
+		return filepath.Join(os.Getenv("HOME"), ".config", "yt-tracks")
 	}
-	return filepath.Join(configDir, "ytmusic-tui")
+	return filepath.Join(configDir, "yt-tracks")
 }
 
 func GetStateDir(goos string) string {
 	if goos == "windows" {
-		return filepath.Join(os.Getenv("APPDATA"), "ytmusic-tui")
+		return filepath.Join(os.Getenv("APPDATA"), "yt-tracks")
 	}
 	if goos == "darwin" {
-		return filepath.Join(os.Getenv("HOME"), "Library", "State", "ytmusic-tui")
+		return filepath.Join(os.Getenv("HOME"), "Library", "State", "yt-tracks")
 	}
 	stateDir := os.Getenv("XDG_STATE_HOME")
 	if stateDir == "" {
 		homeDir, _ := userHomeDir()
 		stateDir = filepath.Join(homeDir, ".local", "state")
 	}
-	return filepath.Join(stateDir, "ytmusic-tui")
+	return filepath.Join(stateDir, "yt-tracks")
 }
 
 func GetCacheDir(goos string) string {
@@ -62,14 +62,14 @@ func GetCacheDir(goos string) string {
 	if err != nil {
 		homeDir, _ := userHomeDir()
 		if goos == "windows" {
-			return filepath.Join(os.Getenv("LOCALAPPDATA"), "ytmusic-tui")
+			return filepath.Join(os.Getenv("LOCALAPPDATA"), "yt-tracks")
 		}
 		if goos == "darwin" {
-			return filepath.Join(os.Getenv("HOME"), "Library", "Caches", "ytmusic-tui")
+			return filepath.Join(os.Getenv("HOME"), "Library", "Caches", "yt-tracks")
 		}
-		return filepath.Join(homeDir, ".cache", "ytmusic-tui")
+		return filepath.Join(homeDir, ".cache", "yt-tracks")
 	}
-	return filepath.Join(cacheDir, "ytmusic-tui")
+	return filepath.Join(cacheDir, "yt-tracks")
 }
 
 func GetDefaultConfig(goos string) *Config {

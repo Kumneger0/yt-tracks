@@ -4,7 +4,7 @@ import (
 	"container/ring"
 	"sync"
 
-	"github.com/kumneger0/ytmusic-tui/internal/types"
+	"github.com/kumneger0/yt-tracks/internal/types"
 )
 
 type RingQueue struct {

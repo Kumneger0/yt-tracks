@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/kumneger0/ytmusic-tui/internal/types"
+	"github.com/kumneger0/yt-tracks/internal/types"
 )
 
 type dummyModel struct {

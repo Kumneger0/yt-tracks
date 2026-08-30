@@ -496,7 +496,7 @@ wheels = [
 ]
 
 [[package]]
-name = "ytmusic"
+name = "yt-tracks"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

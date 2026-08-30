@@ -1,7 +1,7 @@
 package types // nolint:revive
 
 import (
-	musicpb "github.com/kumneger0/ytmusic-tui/gen"
+	musicpb "github.com/kumneger0/yt-tracks/gen"
 )
 
 type PlaylistItemsResponse struct {

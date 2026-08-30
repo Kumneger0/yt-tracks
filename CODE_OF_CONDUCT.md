@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The purpose of this Code of Conduct is to establish a welcoming, inclusive, and respectful environment for all participants in the ytmusic-tui project, regardless of background or identity. We are committed to providing a harassment-free experience for everyone.
+The purpose of this Code of Conduct is to establish a welcoming, inclusive, and respectful environment for all participants in the yt-tracks project, regardless of background or identity. We are committed to providing a harassment-free experience for everyone.
 
 ## Expected Behavior
 
@@ -41,7 +41,7 @@ The project maintainers are responsible for clarifying and enforcing standards o
 
 If you experience or witness unacceptable behavior, please report it by contacting the project team at:
 
-- Email: [ytmusic-tui@kumneger.dev](mailto:ytmusic-tui@kumneger.dev)
+- Email: [yt-tracks@kumneger.dev](mailto:yt-tracks@kumneger.dev)
 - Project Lead: Kumneger Wondimu
 
 All complaints will be reviewed and investigated promptly and fairly. The project team is obligated to maintain confidentiality regarding the reporter of an incident.

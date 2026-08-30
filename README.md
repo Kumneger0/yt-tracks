@@ -1,9 +1,9 @@
-# ytmusic-tui
+# yt-tracks
 
 listen to youtube music in your terminal
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Docs](https://img.shields.io/badge/docs-ytmusic--tui.kumneger.dev-blue.svg)](https://ytmusic-tui.kumneger.dev)
+[![Docs](https://img.shields.io/badge/docs-yt--tracks.kumneger.dev-blue.svg)](https://yt-tracks.kumneger.dev)
 
 ## ✨ Preview
 
@@ -21,7 +21,7 @@ listen to youtube music in your terminal
 
 ## 📚 Docs
 
-check the [docs](https://ytmusic-tui.kumneger.dev) for the full lowdown on how to use this
+check the [docs](https://yt-tracks.kumneger.dev) for the full lowdown on how to use this
 
 ## 🚀 Features
 
@@ -35,7 +35,7 @@ check the [docs](https://ytmusic-tui.kumneger.dev) for the full lowdown on how t
 
 ## 🤝 Contributing
 
-wanna help? check [contributing.md](CONTRIBUTING.md) for the details. found a bug or got ideas? [open an issue](https://github.com/Kumneger0/ytmusic-tui/issues)
+wanna help? check [contributing.md](CONTRIBUTING.md) for the details. found a bug or got ideas? [open an issue](https://github.com/Kumneger0/yt-tracks/issues)
 
 ## 📄 License
 

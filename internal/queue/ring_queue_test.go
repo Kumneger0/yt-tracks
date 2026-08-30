@@ -3,8 +3,8 @@ package queue
 import (
 	"testing"
 
-	musicpb "github.com/kumneger0/ytmusic-tui/gen"
-	"github.com/kumneger0/ytmusic-tui/internal/types"
+	musicpb "github.com/kumneger0/yt-tracks/gen"
+	"github.com/kumneger0/yt-tracks/internal/types"
 )
 
 func TestRingQueue_Empty(t *testing.T) {

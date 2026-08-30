@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package ytmusic_tui.music.v1;
+package yt_tracks.music.v1;
 
-option go_package = "github.com/kumneger0/ytmusic-tui/gen;gen";
+option go_package = "github.com/kumneger0/yt-tracks/gen;gen";
 
 
 service MusicService {

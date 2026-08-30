@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
-	musicpb "github.com/kumneger0/ytmusic-tui/gen"
-	"github.com/kumneger0/ytmusic-tui/internal/types"
+	musicpb "github.com/kumneger0/yt-tracks/gen"
+	"github.com/kumneger0/yt-tracks/internal/types"
 )
 
 func TestForegroundModel_CreatePlaylistModal(t *testing.T) {

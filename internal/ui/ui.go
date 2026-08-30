@@ -15,11 +15,11 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/godbus/dbus/v5"
 	"github.com/godbus/dbus/v5/prop"
-	musicpb "github.com/kumneger0/ytmusic-tui/gen"
-	"github.com/kumneger0/ytmusic-tui/gen/genconnect"
-	"github.com/kumneger0/ytmusic-tui/internal/queue"
-	"github.com/kumneger0/ytmusic-tui/internal/types"
-	"github.com/kumneger0/ytmusic-tui/internal/youtube"
+	musicpb "github.com/kumneger0/yt-tracks/gen"
+	"github.com/kumneger0/yt-tracks/gen/genconnect"
+	"github.com/kumneger0/yt-tracks/internal/queue"
+	"github.com/kumneger0/yt-tracks/internal/types"
+	"github.com/kumneger0/yt-tracks/internal/youtube"
 	"go.dalton.dog/bubbleup"
 )
 
@@ -134,7 +134,7 @@ func (m Model) Init() tea.Cmd {
 			Err:      nil,
 		}
 	}
-	return tea.Batch(m.Alert.Init(), SendLoadingCmd(), homePageFeed, tea.SetWindowTitle("YTmusic-tui"))
+	return tea.Batch(m.Alert.Init(), SendLoadingCmd(), homePageFeed, tea.SetWindowTitle("yt-tracks"))
 }
 
 func renderBreadcrumbs(items []types.Breadcrumb) string {

@@ -4,7 +4,7 @@ dist
 build
 main.dist
 main.build
-ytmusic-tui
+yt-tracks
 backend/binaries
 coverage.out
 __pycache__

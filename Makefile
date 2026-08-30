@@ -1,5 +1,5 @@
 SERVER_URL ?= http://localhost:8080
-project_name?=ytmusic-tui
+project_name?=yt-tracks
 
 default: help
 
@@ -15,13 +15,13 @@ build: ## build the Go application
 
 
 .PHONY: install
-install: build ## build and install ytmusic-tui to /usr/local/bin
-	@echo "--> Installing ytmusic-tui to /usr/local/bin..."
+install: build ## build and install yt-tracks to /usr/local/bin
+	@echo "--> Installing yt-tracks to /usr/local/bin..."
 	@sudo cp $(project_name) /usr/local/bin/
-	@echo "--> Installation complete. Run 'ytmusic-tui' to start."
+	@echo "--> Installation complete. Run 'yt-tracks' to start."
 
 .PHONY: run
-run: build ## build and run ytmusic-tui
+run: build ## build and run yt-tracks
 	@./$(project_name)
 
 .PHONY: bootstrap	
