@@ -1,10 +1,10 @@
-# `ytmusic-tui` Reference: Prerequisites, Commands & Keybindings
+# `yt-tracks` Reference: Prerequisites, Commands & Keybindings
 
 ---
 
 ## 1. Prerequisites
 
-Before running `ytmusic-tui`, ensure the following system tools are installed:
+Before running `yt-tracks`, ensure the following system tools are installed:
 
 - **`yt-dlp`**: Required for extracting and fetching YouTube Music audio stream URLs.
 - **`ffmpeg`**: Required for decoding and playing audio streams.
@@ -23,10 +23,10 @@ Install both using your OS package manager:
 
 | Command | Purpose |
 | --- | --- |
-| `ytmusic-tui` | Launch the interactive terminal user interface. |
-| `ytmusic-tui extract-cookies` | Automatically extract YouTube Music cookies from supported browsers (`chrome`, `firefox`, `safari`), verify via API, and store locally. |
-| `ytmusic-tui version` | Print application version. |
-| `ytmusic-tui log` | View debug logs. |
+| `yt-tracks` | Launch the interactive terminal user interface. |
+| `yt-tracks extract-cookies` | Automatically extract YouTube Music cookies from supported browsers (`chrome`, `firefox`, `safari`), verify via API, and store locally. |
+| `yt-tracks version` | Print application version. |
+| `yt-tracks log` | View debug logs. |
 
 ---
 
@@ -61,13 +61,13 @@ Install both using your OS package manager:
 | `n` | Player Focused | Skip to next track (Queue &rarr; Context &rarr; History) |
 | `b` | Player Focused | Skip to previous track from history |
 | `Ctrl + l` | Global | Toggle Synced Lyrics View overlay |
-| `q` / `Ctrl + c` | Non-Input | Quit `ytmusic-tui` cleanly |
+| `q` / `Ctrl + c` | Non-Input | Quit `yt-tracks` cleanly |
 
 ---
 
 ## 4. Configuration & State Files
 
 Credentials and configuration are stored locally:
-- **Linux**: `~/.config/ytmusic-tui/browser.json`
-- **macOS**: `~/Library/Application Support/ytmusic-tui/browser.json`
-- **Windows**: `%APPDATA%\ytmusic-tui\browser.json`
+- **Linux**: `~/.config/yt-tracks/browser.json`
+- **macOS**: `~/Library/Application Support/yt-tracks/browser.json`
+- **Windows**: `%APPDATA%\yt-tracks\browser.json`

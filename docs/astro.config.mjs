@@ -3,7 +3,7 @@ import vercel from '@astrojs/vercel';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  site: "https://ytmusic-tui.kumneger.dev",
+  site: "https://yt-tracks.kumneger.dev",
   output: "static",
   vite: {
     plugins: [tailwindcss()],

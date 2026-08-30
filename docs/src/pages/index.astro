@@ -7,30 +7,30 @@ import '../styles/global.css';
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ytmusic-tui documentation</title>
+  <title>yt-tracks documentation</title>
 </head>
 <body class="bg-black/40 text-zinc-300 font-sans antialiased min-h-screen p-4 sm:p-8 md:p-12 selection:bg-sky-500/30 selection:text-sky-200">
   <div class="max-w-5xl mx-auto bg-zinc-950 rounded-2xl px-6 sm:p-1 md:p-0 shadow-2xl space-y-10">
 
     <header class="flex items-center justify-between pb-6">
       <div class="flex items-center gap-3">
-        <span class="text-xl sm:text-2xl font-bold text-zinc-100 tracking-tight">ytmusic-tui</span>
+        <span class="text-xl sm:text-2xl font-bold text-zinc-100 tracking-tight">yt-tracks</span>
       </div>
-      <a href="https://github.com/Kumneger0/ytmusic-tui" target="_blank" rel="noopener noreferrer" class="text-sm sm:text-base font-medium text-sky-400 hover:text-sky-300 hover:underline transition-colors flex items-center gap-1">
+      <a href="https://github.com/Kumneger0/yt-tracks" target="_blank" rel="noopener noreferrer" class="text-sm sm:text-base font-medium text-sky-400 hover:text-sky-300 hover:underline transition-colors flex items-center gap-1">
         GitHub Repository &rarr;
       </a>
     </header>
 
     <!-- Main Section -->
     <section class="space-y-4">
-      <h1 class="text-3xl sm:text-4xl font-bold text-zinc-100 tracking-tight">ytmusic-tui documentation</h1>
+      <h1 class="text-3xl sm:text-4xl font-bold text-zinc-100 tracking-tight">yt-tracks documentation</h1>
       <p class="text-lg sm:text-xl text-zinc-400 leading-relaxed">
         A fast, terminal user interface client for YouTube Music.
       </p>
 
       <!-- Demo Screenshot -->
       <div class="border border-zinc-800/90 rounded-xl overflow-hidden bg-black shadow-lg my-6">
-        <img src="/ytmuic-tui.png" alt="ytmusic-tui demo screenshot" class="w-full h-auto block object-contain" />
+        <img src="/ytmuic-tui.png" alt="yt-tracks demo screenshot" class="w-full h-auto block object-contain" />
       </div>
     </section>
 
@@ -40,18 +40,18 @@ import '../styles/global.css';
         1. Installation
       </h2>
       <p class="text-base sm:text-lg text-zinc-300 mb-4">
-        Download pre-built binaries from the <a href="https://github.com/Kumneger0/ytmusic-tui/releases" target="_blank" rel="noopener noreferrer" class="text-sky-400 hover:underline font-medium">GitHub Releases</a> page, or run an installer script:
+        Download pre-built binaries from the <a href="https://github.com/Kumneger0/yt-tracks/releases" target="_blank" rel="noopener noreferrer" class="text-sky-400 hover:underline font-medium">GitHub Releases</a> page, or run an installer script:
       </p>
 
       <div class="space-y-4">
         <div>
           <span class="block text-sm font-semibold text-zinc-200 mb-2">Linux / macOS</span>
-          <pre class="bg-black border border-zinc-800/90 rounded-xl p-4 sm:p-5 text-sm sm:text-base font-mono text-zinc-200 overflow-x-auto"><code>curl -fsSL https://raw.githubusercontent.com/Kumneger0/ytmusic-tui/main/install.sh | bash</code></pre>
+          <pre class="bg-black border border-zinc-800/90 rounded-xl p-4 sm:p-5 text-sm sm:text-base font-mono text-zinc-200 overflow-x-auto"><code>curl -fsSL https://raw.githubusercontent.com/Kumneger0/yt-tracks/main/install.sh | bash</code></pre>
         </div>
 
         <div>
           <span class="block text-sm font-semibold text-zinc-200 mb-2">Windows (PowerShell)</span>
-          <pre class="bg-black border border-zinc-800/90 rounded-xl p-4 sm:p-5 text-sm sm:text-base font-mono text-zinc-200 overflow-x-auto"><code>iwr -useb https://raw.githubusercontent.com/Kumneger0/ytmusic-tui/main/install.ps1 | iex</code></pre>
+          <pre class="bg-black border border-zinc-800/90 rounded-xl p-4 sm:p-5 text-sm sm:text-base font-mono text-zinc-200 overflow-x-auto"><code>iwr -useb https://raw.githubusercontent.com/Kumneger0/yt-tracks/main/install.ps1 | iex</code></pre>
         </div>
       </div>
 
@@ -89,10 +89,10 @@ import '../styles/global.css';
         Authenticate with your local browser session and launch the client:
       </p>
       <pre class="bg-black border border-zinc-800/90 rounded-xl p-4 sm:p-5 text-sm sm:text-base font-mono text-zinc-200 overflow-x-auto"><code># 1. Extract session cookies automatically from installed browser (chrome, firefox, safari)
-ytmusic-tui extract-cookies
+yt-tracks extract-cookies
 
 # 2. Launch the client
-ytmusic-tui</code></pre>
+yt-tracks</code></pre>
     </section>
 
     <!-- 3. CLI Commands & Subcommands -->
@@ -110,11 +110,11 @@ ytmusic-tui</code></pre>
           </thead>
           <tbody class="divide-y divide-zinc-800/90 text-zinc-300">
             <tr>
-              <td class="px-5 py-3.5 font-mono text-zinc-200 whitespace-nowrap">ytmusic-tui</td>
+              <td class="px-5 py-3.5 font-mono text-zinc-200 whitespace-nowrap">yt-tracks</td>
               <td class="px-5 py-3.5">Launch the interactive terminal user interface.</td>
             </tr>
             <tr>
-              <td class="px-5 py-3.5 font-mono text-zinc-200 whitespace-nowrap">ytmusic-tui extract-cookies</td>
+              <td class="px-5 py-3.5 font-mono text-zinc-200 whitespace-nowrap">yt-tracks extract-cookies</td>
               <td class="px-5 py-3.5">Extract YouTube Music cookies from supported browsers (<code class="bg-zinc-900 border border-zinc-800 text-zinc-200 px-1.5 py-0.5 rounded font-mono text-xs">chrome</code>, <code class="bg-zinc-900 border border-zinc-800 text-zinc-200 px-1.5 py-0.5 rounded font-mono text-xs">firefox</code>, <code class="bg-zinc-900 border border-zinc-800 text-zinc-200 px-1.5 py-0.5 rounded font-mono text-xs">safari</code>), verify via API, and store locally.</td>
             </tr>
           </tbody>
@@ -130,7 +130,7 @@ ytmusic-tui</code></pre>
       
       <div>
         <h3 class="text-base sm:text-lg font-semibold text-zinc-200 mb-2">Automatic Cookie Extraction</h3>
-        <pre class="bg-black border border-zinc-800/90 rounded-xl p-4 sm:p-5 text-sm sm:text-base font-mono text-zinc-200 overflow-x-auto mb-3"><code>ytmusic-tui extract-cookies</code></pre>
+        <pre class="bg-black border border-zinc-800/90 rounded-xl p-4 sm:p-5 text-sm sm:text-base font-mono text-zinc-200 overflow-x-auto mb-3"><code>yt-tracks extract-cookies</code></pre>
         <p class="text-sm sm:text-base text-zinc-400">
           Supported browsers: <code class="bg-zinc-900 border border-zinc-800 text-zinc-200 px-1.5 py-0.5 rounded font-mono text-xs sm:text-sm">chrome</code>, <code class="bg-zinc-900 border border-zinc-800 text-zinc-200 px-1.5 py-0.5 rounded font-mono text-xs sm:text-sm">firefox</code>, <code class="bg-zinc-900 border border-zinc-800 text-zinc-200 px-1.5 py-0.5 rounded font-mono text-xs sm:text-sm">safari</code>.
         </p>
@@ -141,9 +141,9 @@ ytmusic-tui</code></pre>
           Credentials are saved locally as <code class="bg-zinc-900 border border-zinc-800 text-zinc-200 px-1.5 py-0.5 rounded font-mono text-xs sm:text-sm">browser.json</code> in your config path:
         </p>
         <ul class="list-disc list-inside space-y-1 text-sm sm:text-base text-zinc-300 ml-2 font-mono">
-          <li>Linux: ~/.config/ytmusic-tui/browser.json</li>
-          <li>macOS: ~/Library/Application Support/ytmusic-tui/browser.json</li>
-          <li>Windows: %APPDATA%\ytmusic-tui\browser.json</li>
+          <li>Linux: ~/.config/yt-tracks/browser.json</li>
+          <li>macOS: ~/Library/Application Support/yt-tracks/browser.json</li>
+          <li>Windows: %APPDATA%\yt-tracks\browser.json</li>
         </ul>
       </div>
     </section>
@@ -250,7 +250,7 @@ ytmusic-tui</code></pre>
 
     <!-- Footer -->
     <footer class="pt-8 border-t border-zinc-800/80 text-center text-sm text-zinc-500">
-      ytmusic-tui &bull; <a href="https://github.com/Kumneger0/ytmusic-tui" target="_blank" rel="noopener noreferrer" class="text-zinc-400 hover:text-zinc-200 transition-colors">GitHub Repository</a>
+      yt-tracks &bull; <a href="https://github.com/Kumneger0/yt-tracks" target="_blank" rel="noopener noreferrer" class="text-zinc-400 hover:text-zinc-200 transition-colors">GitHub Repository</a>
     </footer>
 
   </div>
