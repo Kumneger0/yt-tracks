@@ -3,8 +3,8 @@
 package mpris
 
 import (
-	"github.com/kumneger0/ytmusic-tui/internal/types"
-	"github.com/kumneger0/ytmusic-tui/internal/ui"
+	"github.com/kumneger0/yt-tracks/internal/types"
+	"github.com/kumneger0/yt-tracks/internal/ui"
 )
 
 func GetDbusInstance() (*ui.Instance, *chan types.DBusMessage, error) {

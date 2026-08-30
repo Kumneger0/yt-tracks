@@ -1,4 +1,4 @@
-module github.com/kumneger0/ytmusic-tui
+module github.com/kumneger0/yt-tracks
 
 go 1.26
 

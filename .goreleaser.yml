@@ -1,5 +1,5 @@
 version: 2
-project_name: ytmusic-tui
+project_name: yt-tracks
 
 env:
   - GO111MODULE=on
@@ -11,11 +11,11 @@ before:
     - ./scripts/completions.sh {{ .Env.SERVER_URL }}
 
 builds:
-  - id: ytmusic-tui
+  - id: yt-tracks
     main: .
     ldflags:
       - -s -w -X main.version={{ .Version }} -X main.serverURL={{ .Env.SERVER_URL }}
-    binary: ytmusic-tui
+    binary: yt-tracks
     env:
       - CGO_ENABLED=0
     goos:
@@ -51,7 +51,7 @@ builds:
 
 archives:
   - ids:
-      - ytmusic-tui
+      - yt-tracks
     format_overrides: []
     name_template: >-
       {{ .ProjectName }}_
@@ -61,9 +61,9 @@ archives:
 
 nfpms:
   - ids:
-      - ytmusic-tui
+      - yt-tracks
     vendor: kumneger0
-    homepage: https://github.com/kumneger0/ytmusic-tui
+    homepage: https://github.com/kumneger0/yt-tracks
     maintainer: "Kumneger wondimu <Kumnegerwondimu@gmail.com>"
     description: "CLI-based Spotify client"
     license: GPL-3.0
@@ -73,20 +73,20 @@ nfpms:
       - rpm
     bindir: /usr/bin
     contents:
-      - src: ./manpages/ytmusic-tui.1.gz
-        dst: /usr/share/man/man1/ytmusic-tui.1.gz
+      - src: ./manpages/yt-tracks.1.gz
+        dst: /usr/share/man/man1/yt-tracks.1.gz
         file_info:
           mode: 0644
-      - src: ./completions/ytmusic-tui.bash
-        dst: /usr/share/bash-completion/completions/ytmusic-tui
+      - src: ./completions/yt-tracks.bash
+        dst: /usr/share/bash-completion/completions/yt-tracks
         file_info:
           mode: 0644
-      - src: ./completions/ytmusic-tui.fish
-        dst: /usr/share/fish/vendor_completions.d/ytmusic-tui.fish
+      - src: ./completions/yt-tracks.fish
+        dst: /usr/share/fish/vendor_completions.d/yt-tracks.fish
         file_info:
           mode: 0644
-      - src: ./completions/ytmusic-tui.zsh
-        dst: /usr/share/zsh/vendor-completions/_ytmusic-tui
+      - src: ./completions/yt-tracks.zsh
+        dst: /usr/share/zsh/vendor-completions/_yt-tracks
         file_info:
           mode: 0644
 

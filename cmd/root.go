@@ -15,11 +15,11 @@ import (
 	"time"
 
 	"github.com/gofrs/flock"
-	"github.com/kumneger0/ytmusic-tui/internal/config"
-	logSetup "github.com/kumneger0/ytmusic-tui/internal/logger"
-	"github.com/kumneger0/ytmusic-tui/internal/queue"
-	"github.com/kumneger0/ytmusic-tui/internal/youtube"
-	ytMusicClient "github.com/kumneger0/ytmusic-tui/internal/yt-music-client"
+	"github.com/kumneger0/yt-tracks/internal/config"
+	logSetup "github.com/kumneger0/yt-tracks/internal/logger"
+	"github.com/kumneger0/yt-tracks/internal/queue"
+	"github.com/kumneger0/yt-tracks/internal/youtube"
+	ytMusicClient "github.com/kumneger0/yt-tracks/internal/yt-music-client"
 	"go.dalton.dog/bubbleup"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -28,9 +28,9 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
-	"github.com/kumneger0/ytmusic-tui/internal/mpris"
-	"github.com/kumneger0/ytmusic-tui/internal/types"
-	"github.com/kumneger0/ytmusic-tui/internal/ui"
+	"github.com/kumneger0/yt-tracks/internal/mpris"
+	"github.com/kumneger0/yt-tracks/internal/types"
+	"github.com/kumneger0/yt-tracks/internal/ui"
 )
 
 var (
@@ -39,19 +39,10 @@ var (
 
 func newRootCmd(version string, debug bool, serverURL string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "ytmusic-tui",
+		Use:   "yt-tracks",
 		Short: "youtube music player",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			legacyLockPath := filepath.Join(os.TempDir(), "clispot.lock")
-			if pidBytes, err := os.ReadFile(legacyLockPath); err == nil {
-				if pid, err := strconv.Atoi(string(pidBytes)); err == nil && isProcessRunning(pid) {
-					showAnotherProcessIsRunning(legacyLockPath)
-					os.Exit(1)
-				}
-				_ = os.Remove(legacyLockPath)
-			}
-
-			lockFilePath := filepath.Join(os.TempDir(), "ytmusic-tui.lock")
+			lockFilePath := filepath.Join(os.TempDir(), "yt-tracks.lock")
 
 			fileLock := flock.New(lockFilePath)
 			locked, err := fileLock.TryLock()
@@ -97,7 +88,7 @@ func newRootCmd(version string, debug bool, serverURL string) *cobra.Command {
 	}
 
 	cmd.AddCommand(newVersionCmd(version))
-	cmd.AddCommand(ytmusicTuiLog())
+	cmd.AddCommand(ytTracksLog())
 	cmd.AddCommand(ManCmd(cmd))
 	cmd.AddCommand(newExtractCookieCmd(serverURL))
 	return cmd
@@ -114,7 +105,7 @@ func isProcessRunning(pid int) bool {
 
 func showAnotherProcessIsRunning(lockFilePath string) {
 	if runtime.GOOS == "windows" {
-		fmt.Fprintf(os.Stderr, "Another instance of ytmusic-tui is already running.\n")
+		fmt.Fprintf(os.Stderr, "Another instance of yt-tracks is already running.\n")
 		return
 	}
 	pidBytes, readErr := os.ReadFile(lockFilePath)
@@ -132,12 +123,13 @@ func showAnotherProcessIsRunning(lockFilePath string) {
 		os.Exit(1)
 	}
 
-	if !isProcessRunning(pid) {
-		fmt.Fprintf(os.Stderr, "Another instance of ytmusic-tui is not running (stale lock file for PID %d).\n", pid)
-		fmt.Fprintf(os.Stderr, "Please try removing %s and running again if this persists.\n", lockFilePath)
+	if isProcessRunning(pid) {
+		fmt.Fprintf(os.Stderr, "Another instance of yt-tracks is already running (PID: %d).\n", pid)
 		os.Exit(1)
 	}
-	fmt.Fprintf(os.Stderr, "Another instance of ytmusic-tui is already running (PID: %d).\n", pid)
+	fmt.Fprintf(os.Stderr, "Another instance of yt-tracks is not running (stale lock file for PID %d).\n", pid)
+	fmt.Fprintf(os.Stderr, "Please try removing %s and running again if this persists.\n", lockFilePath)
+	os.Exit(1)
 }
 
 func runRoot(cmd *cobra.Command, serverURL string) error {
@@ -248,7 +240,7 @@ func runRoot(cmd *cobra.Command, serverURL string) error {
 
 	if len(missingDeps) > 0 {
 		for _, dep := range missingDeps {
-			fmt.Printf("%s, is missing use ytmusic-tui install to install the missing dependencies ", dep.ToolName)
+			fmt.Fprintf(os.Stderr, "Error: %s is missing. Please install %s using your system package manager.\n", dep.ToolName, dep.ToolName)
 		}
 		os.Exit(1)
 	}
@@ -326,7 +318,7 @@ func runRoot(cmd *cobra.Command, serverURL string) error {
 	model.Search = input
 
 	model.SideBarList = list.New(SideBarMenuList, ui.CustomDelegate{Model: &model}, dims.SidebarWidth, dims.ContentHeight)
-	model.SideBarList.Title = "Youtube Music tui"
+	model.SideBarList.Title = "yt-tracks"
 	ui.RemoveListDefaults(&model.SideBarList)
 
 	queueList := list.New([]list.Item{}, ui.CustomDelegate{Model: &model}, dims.SidebarWidth, dims.ContentHeight)

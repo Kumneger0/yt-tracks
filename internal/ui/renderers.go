@@ -10,7 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/kumneger0/ytmusic-tui/internal/types"
+	"github.com/kumneger0/yt-tracks/internal/types"
 )
 
 type CustomDelegate struct {

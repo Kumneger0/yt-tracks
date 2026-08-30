@@ -12,10 +12,10 @@ import (
 	"strings"
 	"time"
 
-	musicpb "github.com/kumneger0/ytmusic-tui/gen"
-	"github.com/kumneger0/ytmusic-tui/internal/config"
-	"github.com/kumneger0/ytmusic-tui/internal/cookie"
-	ytMusicClient "github.com/kumneger0/ytmusic-tui/internal/yt-music-client"
+	musicpb "github.com/kumneger0/yt-tracks/gen"
+	"github.com/kumneger0/yt-tracks/internal/config"
+	"github.com/kumneger0/yt-tracks/internal/cookie"
+	ytMusicClient "github.com/kumneger0/yt-tracks/internal/yt-music-client"
 
 	"github.com/browserutils/kooky"
 	_ "github.com/browserutils/kooky/browser/all"

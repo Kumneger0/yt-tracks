@@ -2,10 +2,10 @@ $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 # Variables
-$repo = "kumneger0/ytmusic-tui"
-$ytmusicTuiDir = "$env:LOCALAPPDATA\ytmusic-tui"
-$binDir = "$ytmusicTuiDir\bin"
-$exe = "$binDir\ytmusic-tui.exe"
+$repo = "kumneger0/yt-tracks"
+$ytTracksDir = "$env:LOCALAPPDATA\yt-tracks"
+$binDir = "$ytTracksDir\bin"
+$exe = "$binDir\yt-tracks.exe"
 
 # Functions
 function Write-Success {
@@ -25,7 +25,7 @@ function Test-Admin {
 
 # Checks
 if (Test-Admin) {
-    Write-Warning "The script is running as administrator. It is recommended to install ytmusic-tui as a regular user."
+    Write-Warning "The script is running as administrator. It is recommended to install yt-tracks as a regular user."
     $choices = [System.Management.Automation.Host.ChoiceDescription[]] @(
         (New-Object System.Management.Automation.Host.ChoiceDescription '&Yes', 'Abort installation.'),
         (New-Object System.Management.Automation.Host.ChoiceDescription '&No', 'Resume installation.')
@@ -69,11 +69,11 @@ else {
     }
 }
 
-Write-Info "Installing ytmusic-tui v$version for $target..."
+Write-Info "Installing yt-tracks v$version for $target..."
 
 # Download
-$archivePath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "ytmusic-tui.tar.gz")
-$downloadUrl = "https://github.com/$repo/releases/download/v$version/ytmusic-tui_$($target).tar.gz"
+$archivePath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "yt-tracks.tar.gz")
+$downloadUrl = "https://github.com/$repo/releases/download/v$version/yt-tracks_$($target).tar.gz"
 
 Write-Info "Downloading from $downloadUrl..."
 Invoke-WebRequest -Uri $downloadUrl -OutFile $archivePath -UseBasicParsing
@@ -86,21 +86,26 @@ if (-not (Test-Path $binDir)) {
 Write-Info "Extracting to $binDir..."
 tar -xzf $archivePath -C $binDir
 
+if (-not (Test-Path $exe)) {
+    Write-Error "Extraction failed: $exe was not found."
+    exit 1
+}
+
 # Cleanup
 Remove-Item -Path $archivePath -Force -ErrorAction SilentlyContinue
 
 # PATH Update
-Write-Info "Adding ytmusic-tui to PATH..."
+Write-Info "Adding yt-tracks to PATH..."
 $userPath = [Environment]::GetEnvironmentVariable('PATH', [EnvironmentVariableTarget]::User)
 if ($userPath -notlike "*$binDir*") {
     $newPath = "$userPath;$binDir"
     [Environment]::SetEnvironmentVariable('PATH', $newPath, [EnvironmentVariableTarget]::User)
     $env:PATH = "$env:PATH;$binDir"
-    Write-Success "ytmusic-tui added to User PATH."
+    Write-Success "yt-tracks added to User PATH."
 }
 else {
-    Write-Info "ytmusic-tui is already in PATH."
+    Write-Info "yt-tracks is already in PATH."
 }
 
-Write-Success "ytmusic-tui v$version was successfully installed!"
-Write-Host "Restart your terminal to start using 'ytmusic-tui'."
+Write-Success "yt-tracks v$version was successfully installed!"
+Write-Host "Restart your terminal to start using 'yt-tracks'."

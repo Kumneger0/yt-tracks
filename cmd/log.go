@@ -6,11 +6,11 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/kumneger0/ytmusic-tui/internal/config"
+	"github.com/kumneger0/yt-tracks/internal/config"
 	"github.com/spf13/cobra"
 )
 
-func ytmusicTuiLog() *cobra.Command {
+func ytTracksLog() *cobra.Command {
 	userConfig := config.GetUserConfig(runtime.GOOS)
 	return &cobra.Command{
 
@@ -27,7 +27,7 @@ func ytmusicTuiLog() *cobra.Command {
 				fmt.Println("No debug directory configured.")
 				return
 			}
-			logs, err := os.ReadFile(filepath.Join(*userConfig.DebugDir, "ytmusic-tui.log"))
+			logs, err := os.ReadFile(filepath.Join(*userConfig.DebugDir, "yt-tracks.log"))
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error reading log file: %v", err)
 				os.Exit(1)

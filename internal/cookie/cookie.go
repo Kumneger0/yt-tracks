@@ -12,7 +12,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kumneger0/ytmusic-tui/internal/config"
+	"github.com/kumneger0/yt-tracks/internal/config"
 )
 
 var (

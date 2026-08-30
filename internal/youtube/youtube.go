@@ -15,10 +15,10 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/ebitengine/oto/v3"
-	"github.com/kumneger0/ytmusic-tui/internal/command"
-	"github.com/kumneger0/ytmusic-tui/internal/config"
-	"github.com/kumneger0/ytmusic-tui/internal/cookie"
-	"github.com/kumneger0/ytmusic-tui/internal/types"
+	"github.com/kumneger0/yt-tracks/internal/command"
+	"github.com/kumneger0/yt-tracks/internal/config"
+	"github.com/kumneger0/yt-tracks/internal/cookie"
+	"github.com/kumneger0/yt-tracks/internal/types"
 	"github.com/smallnest/ringbuffer"
 )
 

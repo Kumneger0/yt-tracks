@@ -17,9 +17,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/godbus/dbus/v5"
-	musicpb "github.com/kumneger0/ytmusic-tui/gen"
-	"github.com/kumneger0/ytmusic-tui/internal/types"
-	"github.com/kumneger0/ytmusic-tui/internal/youtube"
+	musicpb "github.com/kumneger0/yt-tracks/gen"
+	"github.com/kumneger0/yt-tracks/internal/types"
+	"github.com/kumneger0/yt-tracks/internal/youtube"
 	"go.dalton.dog/bubbleup"
 )
 
@@ -1079,7 +1079,7 @@ func fetchLrclib(ctx context.Context, q lrclibQuery) *lrclibResponse {
 		slog.Debug("lrclib NewRequest error", "err", err)
 		return nil
 	}
-	req.Header.Set("User-Agent", "ytmusic-tui/1.0")
+	req.Header.Set("User-Agent", "yt-tracks/1.0")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -1284,7 +1284,7 @@ func (m Model) handleMusicChange(isForward bool) (Model, tea.Cmd) {
 			fromHistory = true
 		}
 
-		if !fromHistory && m.PlayedSeconds > 30 &&
+		if !fromHistory &&
 			m.SelectedTrack != nil && m.SelectedTrack.Track != nil {
 			appendToPlayHistory(&m, &m.SelectedTrack.PlaylistTrackObject)
 		}

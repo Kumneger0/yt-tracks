@@ -8,9 +8,9 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	musicpb "github.com/kumneger0/ytmusic-tui/gen"
-	"github.com/kumneger0/ytmusic-tui/internal/queue"
-	"github.com/kumneger0/ytmusic-tui/internal/types"
+	musicpb "github.com/kumneger0/yt-tracks/gen"
+	"github.com/kumneger0/yt-tracks/internal/queue"
+	"github.com/kumneger0/yt-tracks/internal/types"
 	"go.dalton.dog/bubbleup"
 )
 

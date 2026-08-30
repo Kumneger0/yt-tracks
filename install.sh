@@ -80,7 +80,7 @@ else
     command -v unzip >/dev/null || { log "unzip is required for installation." >&2; exit 1; }
 fi
 
-repo="kumneger0/ytmusic-tui"
+repo="kumneger0/yt-tracks"
 releases_uri="https://github.com/$repo/releases"
 
 if [ -z "$tag" ]; then
@@ -90,14 +90,14 @@ fi
 
 version=${tag#v}
 
-log "Installing ytmusic-tui v$version for $target..."
+log "Installing yt-tracks v$version for $target..."
 
-download_uri="$releases_uri/download/v$version/ytmusic-tui_${target}.${ext}"
+download_uri="$releases_uri/download/v$version/yt-tracks_${target}.${ext}"
 
-ytmusic_tui_dir="$HOME/.ytmusic-tui"
-bin_dir="$ytmusic_tui_dir/bin"
-exe="$bin_dir/ytmusic-tui"
-archive="$ytmusic_tui_dir/ytmusic-tui.$ext"
+yt_tracks_dir="$HOME/.yt-tracks"
+bin_dir="$yt_tracks_dir/bin"
+exe="$bin_dir/yt-tracks"
+archive="$yt_tracks_dir/yt-tracks.$ext"
 mkdir -p "$bin_dir"
 
 curl --fail --location --progress-bar --output "$archive" "$download_uri"
@@ -167,6 +167,6 @@ case "$current_shell" in
         ;;
 esac
 
-log "Successfully installed ytmusic-tui to $exe"
+log "Successfully installed yt-tracks to $exe"
 log "Please restart your terminal or source your shell config to apply changes."
-log "Run 'ytmusic-tui --help' to get started!"
+log "Run 'yt-tracks --help' to get started!"
