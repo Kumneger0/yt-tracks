@@ -39,11 +39,11 @@ func (d CustomDelegate) Render(w io.Writer, m list.Model, index int, item list.I
 	if d.Model != nil {
 		switch d.Model.FocusedOn {
 		case SideView:
-			if m.Title == "Youtube Music tui" || m.Title == "Library" {
+			if strings.EqualFold(m.Title, "yt-tracks") || strings.EqualFold(m.Title, "Library") {
 				isSelected = m.Index() == index
 			}
 		case MainView:
-			if m.Title != "Related" && m.Title != "Queue" && m.Title != "Youtube Music tui" {
+			if m.Title != "Related" && m.Title != "Queue" && !strings.EqualFold(m.Title, "yt-tracks") {
 				isSelected = m.Index() == index
 			}
 		case QueueList:
