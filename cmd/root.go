@@ -68,7 +68,7 @@ func newRootCmd(version string, debug bool, serverURL string) *cobra.Command {
 					fmt.Fprintf(os.Stderr, "Warning: could not write PID to lock file: %v\n", err)
 				}
 			}
-			return runRoot(cmd, serverURL)
+			return root(cmd, serverURL)
 		},
 		PersistentPostRun: func(cmd *cobra.Command, args []string) {
 			if memFile != "" && debug {
@@ -132,7 +132,16 @@ func showAnotherProcessIsRunning(lockFilePath string) {
 	os.Exit(1)
 }
 
-func runRoot(cmd *cobra.Command, serverURL string) error {
+type CLIFlags struct {
+	DebugDir           string
+	CacheDir           string
+	DisableCache       bool
+	CookiesFromBrowser string
+	Cookies            string
+	ConfigFromFile     *config.Config
+}
+
+func getCLIFlags(cmd *cobra.Command) *CLIFlags {
 	debugDir, err := cmd.Flags().GetString("debug-dir")
 	configFromFile := config.GetUserConfig(runtime.GOOS)
 
@@ -141,46 +150,22 @@ func runRoot(cmd *cobra.Command, serverURL string) error {
 	}
 
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+		slog.Error(err.Error())
 	}
 
 	cacheDir, err := cmd.Flags().GetString("cache-dir")
+	if err != nil {
+		slog.Error(err.Error())
+	}
 	if !cmd.Flags().Changed("cache-dir") && configFromFile.CacheDir != nil {
 		cacheDir = *configFromFile.CacheDir
 	}
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
 	isCacheDisabled, err := cmd.Flags().GetBool("disable-cache")
+	if err != nil {
+		slog.Error(err.Error())
+	}
 	if !cmd.Flags().Changed("disable-cache") {
 		isCacheDisabled = configFromFile.CacheDisabled
-	}
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-
-	if err := os.MkdirAll(debugDir, 0755); err != nil {
-		fmt.Printf("failed to create debug directory '%s': %v\n", debugDir, err)
-		os.Exit(1)
-	}
-
-	fileInfo, err := os.Stat(debugDir)
-	if err != nil {
-		fmt.Printf("failed to stat debug directory '%s': %v\n", debugDir, err)
-		os.Exit(1)
-	}
-
-	if !fileInfo.IsDir() {
-		fmt.Printf("the debug path '%v' is not a directory\n", debugDir)
-		os.Exit(1)
-	}
-
-	ytDlpArgs := config.YtDlpArgs{
-		CookiesFromBrowser: nil,
-		Cookies:            nil,
 	}
 
 	cookiesFromBrowser, err := cmd.Flags().GetString("cookies-from-browser")
@@ -195,11 +180,11 @@ func runRoot(cmd *cobra.Command, serverURL string) error {
 		slog.Error(err.Error())
 	}
 
-	if cookiesFromBrowser != "" {
-		ytDlpArgs.CookiesFromBrowser = (&cookiesFromBrowser)
-	}
-
 	cookiesFile, err := cmd.Flags().GetString("cookies")
+
+	if err != nil {
+		slog.Error(err.Error())
+	}
 
 	if !cmd.Flags().Changed("cookies") {
 		if configFromFile.YtDlpArgs != nil && configFromFile.YtDlpArgs.Cookies != nil {
@@ -207,23 +192,53 @@ func runRoot(cmd *cobra.Command, serverURL string) error {
 		}
 	}
 
-	if err != nil {
-		slog.Error(err.Error())
+	return &CLIFlags{
+		DebugDir:           debugDir,
+		CacheDir:           cacheDir,
+		DisableCache:       isCacheDisabled,
+		CookiesFromBrowser: cookiesFromBrowser,
+		Cookies:            cookiesFile,
+		ConfigFromFile:     configFromFile,
+	}
+}
+
+func root(cmd *cobra.Command, serverURL string) error {
+	flags := getCLIFlags(cmd)
+
+	if err := os.MkdirAll(flags.DebugDir, 0755); err != nil {
+		fmt.Printf("failed to create debug directory '%s': %v\n", flags.DebugDir, err)
+		os.Exit(1)
 	}
 
-	if cookiesFile != "" {
-		ytDlpArgs.Cookies = &cookiesFile
+	fileInfo, err := os.Stat(flags.DebugDir)
+	if err != nil {
+		fmt.Printf("failed to stat debug directory '%s': %v\n", flags.DebugDir, err)
+		os.Exit(1)
+	}
+
+	if !fileInfo.IsDir() {
+		fmt.Printf("the debug path '%v' is not a directory\n", flags.DebugDir)
+		os.Exit(1)
+	}
+
+	ytDlpArgs := config.YtDlpArgs{
+		CookiesFromBrowser: nil,
+		Cookies:            nil,
+	}
+
+	if flags.Cookies != "" {
+		ytDlpArgs.Cookies = &flags.Cookies
 	}
 
 	config.SetConfig(&config.Config{
-		DebugDir:      &debugDir,
-		CacheDisabled: isCacheDisabled,
-		CacheDir:      &cacheDir,
+		DebugDir:      &flags.DebugDir,
+		CacheDisabled: flags.DisableCache,
+		CacheDir:      &flags.CacheDir,
 		YtDlpArgs:     &ytDlpArgs,
-		SkipOnNoMatch: configFromFile.SkipOnNoMatch,
+		SkipOnNoMatch: flags.ConfigFromFile.SkipOnNoMatch,
 	})
 
-	logger := logSetup.Init(debugDir)
+	logger := logSetup.Init(flags.DebugDir)
 	defer logger.Close()
 
 	slog.Info("starting the application")
@@ -237,7 +252,6 @@ func runRoot(cmd *cobra.Command, serverURL string) error {
 	}
 
 	coreDepsPath := &youtube.CoreDepsPath{}
-
 	if len(missingDeps) > 0 {
 		for _, dep := range missingDeps {
 			fmt.Fprintf(os.Stderr, "Error: %s is missing. Please install %s using your system package manager.\n", dep.ToolName, dep.ToolName)
@@ -338,6 +352,21 @@ func runRoot(cmd *cobra.Command, serverURL string) error {
 		Background:   model,
 		OverlayMode:  ui.Search,
 	}
+
+	err = runProgram(manager, messageChan)
+
+	if err != nil {
+		slog.Error(err.Error())
+	}
+
+	if ins != nil {
+		_ = ins.Conn.Close()
+	}
+
+	return nil
+}
+
+func runProgram(manager ui.Manager, messageChan *chan types.DBusMessage) error {
 	Program := tea.NewProgram(manager, tea.WithAltScreen(), tea.WithMouseCellMotion())
 
 	go func() {
@@ -358,14 +387,10 @@ func runRoot(cmd *cobra.Command, serverURL string) error {
 		}
 	}()
 
-	_, err = Program.Run()
+	_, err := Program.Run()
 	if err != nil {
 		slog.Error(err.Error())
 		return err
-	}
-
-	if ins != nil {
-		ins.Conn.Close()
 	}
 
 	return nil

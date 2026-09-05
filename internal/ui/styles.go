@@ -48,18 +48,12 @@ func getBorderColor(isFocused bool) lipgloss.Color {
 
 func getPlayerStyles(m *Model, dims LayoutDimensions) lipgloss.Style {
 	width := dims.MainWidth + (dims.SidebarWidth*2 + 4)
-	inputStyle := getStyle(m, dims.InputHeight, width, Player, false)
+	inputStyle := getStyle(m, dims.InputHeight, width, Player)
 	return inputStyle
 }
 
-func getStyle(m *Model, height, width int, focusedOn FocusedOn, isSearchResult bool) lipgloss.Style {
-	if isSearchResult {
-		return lipgloss.NewStyle().
-			Width(width).
-			Height(height-5).
-			Padding(1, 0, 0, 0)
-	}
-	isFocused := m.FocusedOn == focusedOn
+func getStyle(model *Model, height, width int, focusedOn FocusedOn) lipgloss.Style {
+	isFocused := model.FocusedOn == focusedOn
 	border := lipgloss.RoundedBorder()
 	style := lipgloss.NewStyle().
 		Width(width).

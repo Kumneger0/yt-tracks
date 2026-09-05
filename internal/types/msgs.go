@@ -88,9 +88,9 @@ type ByteCounterReader struct {
 }
 
 func (b *ByteCounterReader) Read(p []byte) (int, error) {
-	n, err := b.R.Read(p)
-	if n > 0 {
-		atomic.AddInt64(&b.total, int64(n))
+	bytesRead, err := b.R.Read(p)
+	if bytesRead > 0 {
+		atomic.AddInt64(&b.total, int64(bytesRead))
 		currentSeconds := b.CurrentSeconds()
 		go func() {
 			PlayedSecondsUpdateChan <- PlayedSecondsUpdateMsg{
@@ -101,7 +101,7 @@ func (b *ByteCounterReader) Read(p []byte) (int, error) {
 	if err != nil && err != io.EOF {
 		slog.Error(err.Error())
 	}
-	return n, err
+	return bytesRead, err
 }
 
 func (b *ByteCounterReader) CurrentSeconds() float64 {

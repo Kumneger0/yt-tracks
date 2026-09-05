@@ -143,7 +143,7 @@ func (rq *RingQueue) AllTracks() []*types.PlaylistTrackObject {
 	n := rq.current.Len()
 	tracks := make([]*types.PlaylistTrackObject, 0, n)
 	curr := rq.current
-	for i := 0; i < n; i++ {
+	for range n {
 		if track, ok := curr.Value.(*types.PlaylistTrackObject); ok && track != nil {
 			tracks = append(tracks, track)
 		}
@@ -166,7 +166,7 @@ func (rq *RingQueue) RemoveTrackAtIndex(index int) {
 	}
 
 	target := rq.current
-	for i := 0; i < index; i++ {
+	for range index {
 		target = target.Next()
 	}
 

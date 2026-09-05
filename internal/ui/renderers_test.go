@@ -109,37 +109,37 @@ func TestExtractItemDisplayInfo(t *testing.T) {
 }
 
 func TestIsItemSelected(t *testing.T) {
-	d := CustomDelegate{
+	delegate := CustomDelegate{
 		Model: &Model{
 			FocusedOn: SideView,
 		},
 	}
 
-	m := list.New([]list.Item{types.SidebarItem{Name: "Home"}}, d, 20, 10)
-	m.Title = "yt-tracks"
+	model := list.New([]list.Item{types.SidebarItem{Name: "Home"}}, delegate, 20, 10)
+	model.Title = "yt-tracks"
 
-	assert.True(t, isItemSelected(d, m, 0))
+	assert.True(t, isItemSelected(delegate, model, 0))
 
-	d.Model.FocusedOn = MainView
-	m.Title = "Search Results"
-	assert.True(t, isItemSelected(d, m, 0))
+	delegate.Model.FocusedOn = MainView
+	model.Title = "Search Results"
+	assert.True(t, isItemSelected(delegate, model, 0))
 
-	m.Title = "Queue"
-	assert.False(t, isItemSelected(d, m, 0))
+	model.Title = "Queue"
+	assert.False(t, isItemSelected(delegate, model, 0))
 }
 
 func TestCustomDelegate_Render(t *testing.T) {
-	d := CustomDelegate{
+	delegate := CustomDelegate{
 		Model: &Model{
 			FocusedOn: SideView,
 		},
 	}
 
-	m := list.New([]list.Item{types.SidebarItem{Name: "Home", Icon: "⌂"}}, d, 30, 10)
-	m.Title = "yt-tracks"
+	model := list.New([]list.Item{types.SidebarItem{Name: "Home", Icon: "⌂"}}, delegate, 30, 10)
+	model.Title = "yt-tracks"
 
 	var buf bytes.Buffer
-	d.Render(&buf, m, 0, types.SidebarItem{Name: "Home", Icon: "⌂"})
+	delegate.Render(&buf, model, 0, types.SidebarItem{Name: "Home", Icon: "⌂"})
 	assert.NotEmpty(t, buf.String())
 	assert.Contains(t, buf.String(), "Home")
 }

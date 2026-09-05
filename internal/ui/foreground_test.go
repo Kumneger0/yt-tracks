@@ -9,45 +9,45 @@ import (
 )
 
 func TestForegroundModel_CreatePlaylistModal(t *testing.T) {
-	fg := NewForegroundModel()
+	foreground := NewForegroundModel()
 
-	model, _ := fg.Update(types.OpenModalMsg{ModalType: types.ModalTypeCreatePlaylist})
-	fg = model.(*ForegroundModel)
+	model, _ := foreground.Update(types.OpenModalMsg{ModalType: types.ModalTypeCreatePlaylist})
+	foreground = model.(*ForegroundModel)
 
-	if fg.ActiveModal != types.ModalTypeCreatePlaylist {
-		t.Fatalf("expected ActiveModal to be ModalTypeCreatePlaylist, got %v", fg.ActiveModal)
+	if foreground.ActiveModal != types.ModalTypeCreatePlaylist {
+		t.Fatalf("expected ActiveModal to be ModalTypeCreatePlaylist, got %v", foreground.ActiveModal)
 	}
-	if fg.FocusIndex != FieldTitle {
-		t.Fatalf("expected initial FocusIndex to be FieldTitle, got %v", fg.FocusIndex)
+	if foreground.FocusIndex != FieldTitle {
+		t.Fatalf("expected initial FocusIndex to be FieldTitle, got %v", foreground.FocusIndex)
 	}
 
-	view := fg.View()
+	view := foreground.View()
 	if view == "" {
 		t.Fatalf("expected non-empty view when modal is active")
 	}
 
-	model, _ = fg.Update(tea.KeyMsg{Type: tea.KeyTab})
-	fg = model.(*ForegroundModel)
-	if fg.FocusIndex != FieldDescription {
-		t.Fatalf("expected FocusIndex to be FieldDescription after Tab, got %v", fg.FocusIndex)
+	model, _ = foreground.Update(tea.KeyMsg{Type: tea.KeyTab})
+	foreground = model.(*ForegroundModel)
+	if foreground.FocusIndex != FieldDescription {
+		t.Fatalf("expected FocusIndex to be FieldDescription after Tab, got %v", foreground.FocusIndex)
 	}
 
-	model, _ = fg.Update(tea.KeyMsg{Type: tea.KeyTab})
-	fg = model.(*ForegroundModel)
-	if fg.FocusIndex != FieldPrivacy {
-		t.Fatalf("expected FocusIndex to be FieldPrivacy after second Tab, got %v", fg.FocusIndex)
+	model, _ = foreground.Update(tea.KeyMsg{Type: tea.KeyTab})
+	foreground = model.(*ForegroundModel)
+	if foreground.FocusIndex != FieldPrivacy {
+		t.Fatalf("expected FocusIndex to be FieldPrivacy after second Tab, got %v", foreground.FocusIndex)
 	}
 
-	model, _ = fg.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{' '}})
-	fg = model.(*ForegroundModel)
-	if fg.PrivacyOptions[fg.PrivacyIndex] != "PUBLIC" {
-		t.Fatalf("expected Privacy status to be PUBLIC after Space, got %s", fg.PrivacyOptions[fg.PrivacyIndex])
+	model, _ = foreground.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{' '}})
+	foreground = model.(*ForegroundModel)
+	if foreground.PrivacyOptions[foreground.PrivacyIndex] != "PUBLIC" {
+		t.Fatalf("expected Privacy status to be PUBLIC after Space, got %s", foreground.PrivacyOptions[foreground.PrivacyIndex])
 	}
 
-	model, cmd := fg.Update(tea.KeyMsg{Type: tea.KeyEsc})
-	fg = model.(*ForegroundModel)
-	if fg.ActiveModal != types.ModalTypeNone {
-		t.Fatalf("expected ActiveModal to be ModalTypeNone after Esc, got %v", fg.ActiveModal)
+	model, cmd := foreground.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	foreground = model.(*ForegroundModel)
+	if foreground.ActiveModal != types.ModalTypeNone {
+		t.Fatalf("expected ActiveModal to be ModalTypeNone after Esc, got %v", foreground.ActiveModal)
 	}
 	if cmd == nil {
 		t.Fatalf("expected CloseModalMsg command on Esc")
@@ -55,19 +55,19 @@ func TestForegroundModel_CreatePlaylistModal(t *testing.T) {
 }
 
 func TestForegroundModel_AddToPlaylistModal(t *testing.T) {
-	fg := NewForegroundModel()
+	foreground := NewForegroundModel()
 
-	model, _ := fg.Update(types.OpenAddToPlaylistLoadingMsg{
+	model, _ := foreground.Update(types.OpenAddToPlaylistLoadingMsg{
 		TrackID:    "track123",
 		TrackTitle: "Blinding Lights",
 	})
-	fg = model.(*ForegroundModel)
+	foreground = model.(*ForegroundModel)
 
-	if fg.ActiveModal != types.ModalTypePlaylistManagement || !fg.IsLoading {
+	if foreground.ActiveModal != types.ModalTypePlaylistManagement || !foreground.IsLoading {
 		t.Fatalf("expected ModalTypePlaylistManagement with IsLoading=true")
 	}
 
-	loadingView := fg.View()
+	loadingView := foreground.View()
 	if loadingView == "" {
 		t.Fatalf("expected non-empty loading view")
 	}
@@ -77,62 +77,62 @@ func TestForegroundModel_AddToPlaylistModal(t *testing.T) {
 		{PlaylistId: "PL2", Title: "Workout Hits", Count: 25},
 	}
 
-	model, _ = fg.Update(types.OpenAddToPlaylistModalMsg{
+	model, _ = foreground.Update(types.OpenAddToPlaylistModalMsg{
 		TrackID:    "track123",
 		TrackTitle: "Blinding Lights",
 		Playlists:  pls,
 	})
-	fg = model.(*ForegroundModel)
+	foreground = model.(*ForegroundModel)
 
-	if fg.IsLoading {
+	if foreground.IsLoading {
 		t.Fatalf("expected IsLoading=false after playlists arrive")
 	}
 
-	model, _ = fg.Update(tea.KeyMsg{Type: tea.KeyDown})
-	fg = model.(*ForegroundModel)
-	if fg.PlaylistSelectIndex != 1 {
-		t.Fatalf("expected PlaylistSelectIndex to be 1 after Down, got %d", fg.PlaylistSelectIndex)
+	model, _ = foreground.Update(tea.KeyMsg{Type: tea.KeyDown})
+	foreground = model.(*ForegroundModel)
+	if foreground.PlaylistSelectIndex != 1 {
+		t.Fatalf("expected PlaylistSelectIndex to be 1 after Down, got %d", foreground.PlaylistSelectIndex)
 	}
 
-	model, cmd := fg.Update(tea.KeyMsg{Type: tea.KeyEnter})
-	fg = model.(*ForegroundModel)
-	if !fg.IsSubmitting {
+	model, cmd := foreground.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	foreground = model.(*ForegroundModel)
+	if !foreground.IsSubmitting {
 		t.Fatalf("expected IsSubmitting to be true on Enter")
 	}
 	if cmd == nil {
 		t.Fatalf("expected command on Enter")
 	}
 
-	model, _ = fg.Update(types.AddToPlaylistResponseMsg{Success: true})
-	fg = model.(*ForegroundModel)
-	if fg.ActiveModal != types.ModalTypeNone {
-		t.Fatalf("expected modal to close on Success, got %v", fg.ActiveModal)
+	model, _ = foreground.Update(types.AddToPlaylistResponseMsg{Success: true})
+	foreground = model.(*ForegroundModel)
+	if foreground.ActiveModal != types.ModalTypeNone {
+		t.Fatalf("expected modal to close on Success, got %v", foreground.ActiveModal)
 	}
 }
 
 func TestForegroundModel_DuplicateConfirmModal(t *testing.T) {
-	fg := NewForegroundModel()
+	foreground := NewForegroundModel()
 
-	model, _ := fg.Update(types.PromptDuplicateConfirmMsg{
+	model, _ := foreground.Update(types.PromptDuplicateConfirmMsg{
 		PlaylistID:   "PL1",
 		PlaylistName: "Chill Vibes",
 		TrackID:      "track123",
 		TrackTitle:   "Blinding Lights",
 	})
-	fg = model.(*ForegroundModel)
+	foreground = model.(*ForegroundModel)
 
-	if fg.ActiveModal != types.ModalTypeDuplicateConfirm {
-		t.Fatalf("expected ModalTypeDuplicateConfirm, got %v", fg.ActiveModal)
+	if foreground.ActiveModal != types.ModalTypeDuplicateConfirm {
+		t.Fatalf("expected ModalTypeDuplicateConfirm, got %v", foreground.ActiveModal)
 	}
 
-	view := fg.View()
+	view := foreground.View()
 	if view == "" {
 		t.Fatalf("expected non-empty view for DuplicateConfirm modal")
 	}
 
-	model, _ = fg.Update(tea.KeyMsg{Type: tea.KeyRight})
-	fg = model.(*ForegroundModel)
-	if fg.ConfirmDuplicateIndex != 1 {
-		t.Fatalf("expected ConfirmDuplicateIndex to be 1 (No), got %d", fg.ConfirmDuplicateIndex)
+	model, _ = foreground.Update(tea.KeyMsg{Type: tea.KeyRight})
+	foreground = model.(*ForegroundModel)
+	if foreground.ConfirmDuplicateIndex != 1 {
+		t.Fatalf("expected ConfirmDuplicateIndex to be 1 (No), got %d", foreground.ConfirmDuplicateIndex)
 	}
 }

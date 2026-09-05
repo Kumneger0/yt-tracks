@@ -31,34 +31,34 @@ func (d CustomDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	return nil
 }
 
-func (d CustomDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
-	isSelected := isItemSelected(d, m, index)
+func (d CustomDelegate) Render(writer io.Writer, listModel list.Model, index int, item list.Item) {
+	isSelected := isItemSelected(d, listModel, index)
 	var selectedTrack *SelectedTrack
 	if d.Model != nil {
 		selectedTrack = d.Model.SelectedTrack
 	}
 	icon, title, subtitle := extractItemDisplayInfo(item, selectedTrack)
-	rendered := formatRenderedItemLine(icon, title, subtitle, m.Width(), isSelected)
-	fmt.Fprint(w, rendered)
+	rendered := formatRenderedItemLine(icon, title, subtitle, listModel.Width(), isSelected)
+	fmt.Fprint(writer, rendered)
 }
 
-func isItemSelected(d CustomDelegate, m list.Model, index int) bool {
+func isItemSelected(d CustomDelegate, listModel list.Model, index int) bool {
 	if d.Model == nil {
 		return false
 	}
-	title := m.Title
+	title := listModel.Title
 	switch d.Model.FocusedOn {
 	case SideView:
 		if strings.EqualFold(title, "yt-tracks") || strings.EqualFold(title, "Library") {
-			return m.Index() == index
+			return listModel.Index() == index
 		}
 	case MainView:
 		if !strings.EqualFold(title, "Related") && !strings.EqualFold(title, "Queue") && !strings.EqualFold(title, "yt-tracks") {
-			return m.Index() == index
+			return listModel.Index() == index
 		}
 	case QueueList:
 		if strings.EqualFold(title, "Related") || strings.EqualFold(title, "Queue") {
-			return m.Index() == index
+			return listModel.Index() == index
 		}
 	}
 	return false
@@ -71,6 +71,7 @@ const (
 	contentTypeVideo        = "video"
 )
 
+//nolint:gocyclo // i think this is fine for now, as it is just a renderer function
 func extractItemDisplayInfo(item list.Item, selectedTrack *SelectedTrack) (icon, title, subtitle string) {
 	switch item := item.(type) {
 	case types.SongItem:
@@ -276,14 +277,14 @@ func formatRenderedItemLine(icon, title, subtitle string, availableWidth int, is
 	return normalStyle.Render(str)
 }
 
-func truncateText(s string, maxW int) string {
+func truncateText(text string, maxW int) string {
 	if maxW <= 0 {
 		return ""
 	}
-	if lipgloss.Width(s) <= maxW {
-		return s
+	if lipgloss.Width(text) <= maxW {
+		return text
 	}
-	runes := []rune(s)
+	runes := []rune(text)
 	for len(runes) > 0 && lipgloss.Width(string(runes)+"…") > maxW {
 		runes = runes[:len(runes)-1]
 	}
@@ -293,11 +294,11 @@ func truncateText(s string, maxW int) string {
 	return string(runes) + "…"
 }
 
-func renderSearchBar(m *Model, width int) string {
+func renderSearchBar(model *Model, width int) string {
 	if width < 20 {
 		width = 20
 	}
-	m.Search.Width = width - 6
+	model.Search.Width = width - 6
 
 	box := lipgloss.NewStyle().
 		Width(width).
@@ -309,16 +310,16 @@ func renderSearchBar(m *Model, width int) string {
 		Foreground(textPrimary)
 
 	var content string
-	if m.Search.Value() == "" && !m.Search.Focused() {
+	if model.Search.Value() == "" && !model.Search.Focused() {
 		content = dimmerStyle.Render("🔍 Search tracks, artists, playlists...")
 	} else {
-		content = strings.TrimRight(m.Search.View(), "\n")
+		content = strings.TrimRight(model.Search.View(), "\n")
 	}
 	return strings.TrimRight(box.Render(content), "\n")
 }
 
-func renderNowPlaying(m *Model, currentPosition, totalDuration time.Duration) string {
-	selectedTrack := m.SelectedTrack
+func renderNowPlaying(model *Model, currentPosition, totalDuration time.Duration) string {
+	selectedTrack := model.SelectedTrack
 	if selectedTrack == nil || selectedTrack.Track == nil {
 		return ""
 	}
@@ -337,7 +338,7 @@ func renderNowPlaying(m *Model, currentPosition, totalDuration time.Duration) st
 		likedIndicator = " " + UnlikedIcon
 	}
 
-	barWidth := m.Width
+	barWidth := model.Width
 	var progressFloat float64
 	if totalDuration == 0 {
 		progressFloat = 1.0
@@ -350,7 +351,7 @@ func renderNowPlaying(m *Model, currentPosition, totalDuration time.Duration) st
 	empty := lipgloss.NewStyle().Foreground(progressEmpty).Render(strings.Repeat("─", max(barWidth-progress, 0)))
 
 	playIcon := PauseIcon
-	if m.IsPlaying() {
+	if model.IsPlaying() {
 		playIcon = PlayIcon
 	}
 
@@ -370,22 +371,22 @@ func renderNowPlaying(m *Model, currentPosition, totalDuration time.Duration) st
 	)
 }
 
-func renderPlayerControls(m *Model) string {
+func renderPlayerControls(model *Model) string {
 	key := lipgloss.NewStyle().Foreground(accentColor).Bold(true)
 	sep := dimmerStyle.Render("  │  ")
 	label := lipgloss.NewStyle().Foreground(textSecondary)
 
 	playPauseIcon := "▶"
 	playPauseLabel := " play"
-	if m.IsPlaying() {
+	if model.IsPlaying() {
 		playPauseIcon = "⏸"
 		playPauseLabel = " pause"
 	}
 
 	var parts []string
-	hasTrack := m.isCurrentFocusTrack()
+	hasTrack := model.isCurrentFocusTrack()
 
-	switch m.FocusedOn {
+	switch model.FocusedOn {
 	case SideView:
 		parts = append(parts,
 			key.Render("↵")+label.Render(" select")+dimmerStyle.Render("(enter)"),
@@ -396,7 +397,7 @@ func renderPlayerControls(m *Model) string {
 			key.Render("✕")+label.Render(" quit")+dimmerStyle.Render("(q)"),
 		)
 	case MainView:
-		if m.MainViewMode == LyricsMode {
+		if model.MainViewMode == LyricsMode {
 			parts = append(parts,
 				key.Render("↕")+label.Render(" scroll")+dimmerStyle.Render("(j/k)"),
 				key.Render("→")+label.Render(" queue")+dimmerStyle.Render("(tab)"),

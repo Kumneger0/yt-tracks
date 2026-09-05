@@ -13,40 +13,40 @@ import (
 	"github.com/kumneger0/yt-tracks/internal/ui"
 )
 
-func newProp(value any, cb func(*prop.Change) *dbus.Error) *prop.Prop {
+func newProp(value any) *prop.Prop {
 	return &prop.Prop{
 		Value:    value,
 		Writable: true,
 		Emit:     prop.EmitTrue,
-		Callback: cb,
+		Callback: nil,
 	}
 }
 
 func getPlayer() map[string]*prop.Prop {
 	return map[string]*prop.Prop{
-		"PlaybackStatus": newProp("paused", nil),
-		"Rate":           newProp(1.0, nil),
-		"Metadata":       newProp(map[string]interface{}{}, nil),
-		"Volume":         newProp(float64(100), nil),
-		"Position":       newProp(int64(0), nil),
-		"MinimumRate":    newProp(1.0, nil),
-		"MaximumRate":    newProp(1.0, nil),
-		"CanGoNext":      newProp(true, nil),
-		"CanGoPrevious":  newProp(true, nil),
-		"CanPlay":        newProp(true, nil),
-		"CanPause":       newProp(true, nil),
-		"CanSeek":        newProp(false, nil),
-		"CanControl":     newProp(true, nil),
+		"PlaybackStatus": newProp("paused"),
+		"Rate":           newProp(1.0),
+		"Metadata":       newProp(map[string]any{}),
+		"Volume":         newProp(float64(100)),
+		"Position":       newProp(int64(0)),
+		"MinimumRate":    newProp(1.0),
+		"MaximumRate":    newProp(1.0),
+		"CanGoNext":      newProp(true),
+		"CanGoPrevious":  newProp(true),
+		"CanPlay":        newProp(true),
+		"CanPause":       newProp(true),
+		"CanSeek":        newProp(false),
+		"CanControl":     newProp(true),
 	}
 }
 
 var mediaPlayer2 = map[string]*prop.Prop{
-	"CanQuit":             newProp(false, nil),
-	"CanRaise":            newProp(false, nil),
-	"HasTrackList":        newProp(false, nil),
-	"Identity":            newProp("yt-tracks", nil),
-	"SupportedUriSchemes": newProp([]string{}, nil),
-	"SupportedMimeTypes":  newProp([]string{}, nil),
+	"CanQuit":             newProp(false),
+	"CanRaise":            newProp(false),
+	"HasTrackList":        newProp(false),
+	"Identity":            newProp("yt-tracks"),
+	"SupportedUriSchemes": newProp([]string{}),
+	"SupportedMimeTypes":  newProp([]string{}),
 }
 
 type MediaPlayer2 struct {

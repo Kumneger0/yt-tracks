@@ -72,7 +72,7 @@ func (m Manager) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Manager) View() string {
 	if m.State == Foreground {
-		ov := overlay.New(
+		overlayView := overlay.New(
 			m.Foreground,
 			m.Background,
 			overlay.Center,
@@ -80,7 +80,7 @@ func (m Manager) View() string {
 			0,
 			0,
 		)
-		return ov.View()
+		return overlayView.View()
 	}
 	return m.Background.View()
 }

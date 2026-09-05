@@ -15,31 +15,31 @@ import (
 )
 
 func newTestModel() Model {
-	m := Model{
+	model := Model{
 		FocusedOn:    SideView,
 		MainViewMode: HomePageMode,
 		Alert:        *bubbleup.NewAlertModel(80, false, 5*time.Second),
 		Width:        120,
 		Height:       40,
 	}
-	dims := CalculateLayoutDimensions(&m)
-	d := CustomDelegate{Model: &m}
-	m.SideBarList = list.New(nil, d, dims.SidebarWidth, dims.ContentHeight)
-	m.SelectedPlayListItems = list.New(nil, d, dims.MainWidth, dims.ContentHeight)
-	m.HomePageList = list.New(nil, d, dims.MainWidth, dims.ContentHeight)
-	m.SearchResult = list.New(nil, d, dims.MainWidth, dims.ContentHeight)
-	m.RelatedList = list.New(nil, d, dims.SidebarWidth, dims.ContentHeight)
-	m.QueueList = list.New(nil, d, dims.SidebarWidth, dims.ContentHeight)
-	m.Queue = queue.NewRingQueue()
-	m.Search = textinput.New()
-	return m
+	dims := CalculateLayoutDimensions(&model)
+	delegate := CustomDelegate{Model: &model}
+	model.SideBarList = list.New(nil, delegate, dims.SidebarWidth, dims.ContentHeight)
+	model.SelectedPlayListItems = list.New(nil, delegate, dims.MainWidth, dims.ContentHeight)
+	model.HomePageList = list.New(nil, delegate, dims.MainWidth, dims.ContentHeight)
+	model.SearchResult = list.New(nil, delegate, dims.MainWidth, dims.ContentHeight)
+	model.RelatedList = list.New(nil, delegate, dims.SidebarWidth, dims.ContentHeight)
+	model.QueueList = list.New(nil, delegate, dims.SidebarWidth, dims.ContentHeight)
+	model.Queue = queue.NewRingQueue()
+	model.Search = textinput.New()
+	return model
 }
 
 func TestUpdate_WindowSizeMsg(t *testing.T) {
-	m := newTestModel()
+	model := newTestModel()
 	msg := tea.WindowSizeMsg{Width: 120, Height: 40}
 
-	result, _ := m.Update(msg)
+	result, _ := model.Update(msg)
 	updated := result.(Model)
 
 	if updated.Width != 116 {
@@ -57,10 +57,10 @@ func TestUpdate_WindowSizeMsg(t *testing.T) {
 }
 
 func TestUpdate_SearchingMsg(t *testing.T) {
-	m := newTestModel()
-	m.IsSearchLoading = false
+	model := newTestModel()
+	model.IsSearchLoading = false
 
-	result, _ := m.Update(types.SearchingMsg{})
+	result, _ := model.Update(types.SearchingMsg{})
 	updated := result.(Model)
 
 	if !updated.IsSearchLoading {
@@ -69,10 +69,10 @@ func TestUpdate_SearchingMsg(t *testing.T) {
 }
 
 func TestUpdate_PlayedSecondsUpdateMsg_NilTrack(t *testing.T) {
-	m := newTestModel()
-	m.SelectedTrack = nil
+	model := newTestModel()
+	model.SelectedTrack = nil
 
-	result, _ := m.Update(types.PlayedSecondsUpdateMsg{CurrentSeconds: 42.0})
+	result, _ := model.Update(types.PlayedSecondsUpdateMsg{CurrentSeconds: 42.0})
 	updated := result.(Model)
 
 	if updated.PlayedSeconds != 0 {
@@ -81,14 +81,14 @@ func TestUpdate_PlayedSecondsUpdateMsg_NilTrack(t *testing.T) {
 }
 
 func TestUpdate_PlayedSecondsUpdateMsg_UpdatesSeconds(t *testing.T) {
-	m := newTestModel()
-	m.SelectedTrack = &SelectedTrack{
+	model := newTestModel()
+	model.SelectedTrack = &SelectedTrack{
 		PlaylistTrackObject: types.PlaylistTrackObject{
 			Track: &musicpb.Song{DurationSeconds: 200},
 		},
 	}
 
-	result, _ := m.Update(types.PlayedSecondsUpdateMsg{CurrentSeconds: 55.5})
+	result, _ := model.Update(types.PlayedSecondsUpdateMsg{CurrentSeconds: 55.5})
 	updated := result.(Model)
 
 	if updated.PlayedSeconds != 55.5 {
@@ -97,15 +97,15 @@ func TestUpdate_PlayedSecondsUpdateMsg_UpdatesSeconds(t *testing.T) {
 }
 
 func TestUpdate_LikeUnlikeTrackMsg(t *testing.T) {
-	m := newTestModel()
-	m.SelectedTrack = &SelectedTrack{
+	model := newTestModel()
+	model.SelectedTrack = &SelectedTrack{
 		isLiked: false,
 		PlaylistTrackObject: types.PlaylistTrackObject{
 			Track: &musicpb.Song{VideoId: "vid1"},
 		},
 	}
 
-	result, _ := m.Update(types.LikeUnlikeTrackResponseMsg{TrackID: "vid1", Liked: true})
+	result, _ := model.Update(types.LikeUnlikeTrackResponseMsg{TrackID: "vid1", Liked: true})
 	updated := result.(Model)
 
 	if !updated.SelectedTrack.isLiked {
@@ -114,15 +114,15 @@ func TestUpdate_LikeUnlikeTrackMsg(t *testing.T) {
 }
 
 func TestUpdate_LikeUnlikeTrackMsg_DifferentID(t *testing.T) {
-	m := newTestModel()
-	m.SelectedTrack = &SelectedTrack{
+	model := newTestModel()
+	model.SelectedTrack = &SelectedTrack{
 		isLiked: false,
 		PlaylistTrackObject: types.PlaylistTrackObject{
 			Track: &musicpb.Song{VideoId: "vid1"},
 		},
 	}
 
-	result, _ := m.Update(types.LikeUnlikeTrackResponseMsg{TrackID: "other", Liked: true})
+	result, _ := model.Update(types.LikeUnlikeTrackResponseMsg{TrackID: "other", Liked: true})
 	updated := result.(Model)
 
 	if updated.SelectedTrack.isLiked {
@@ -131,15 +131,15 @@ func TestUpdate_LikeUnlikeTrackMsg_DifferentID(t *testing.T) {
 }
 
 func TestUpdate_CheckUserSavedTrackMsg(t *testing.T) {
-	m := newTestModel()
-	m.SelectedTrack = &SelectedTrack{
+	model := newTestModel()
+	model.SelectedTrack = &SelectedTrack{
 		isLiked: false,
 		PlaylistTrackObject: types.PlaylistTrackObject{
 			Track: &musicpb.Song{VideoId: "vid1"},
 		},
 	}
 
-	result, _ := m.Update(types.CheckUserSavedTrackResponseMsg{Saved: true})
+	result, _ := model.Update(types.CheckUserSavedTrackResponseMsg{Saved: true})
 	updated := result.(Model)
 
 	if !updated.SelectedTrack.isLiked {
@@ -148,8 +148,8 @@ func TestUpdate_CheckUserSavedTrackMsg(t *testing.T) {
 }
 
 func TestUpdate_HomePageResponseMsg_Success(t *testing.T) {
-	m := newTestModel()
-	m.IsSearchLoading = true
+	model := newTestModel()
+	model.IsSearchLoading = true
 
 	resp := &musicpb.GetHomePageResponse{
 		Sections: []*musicpb.HomePageSection{
@@ -158,7 +158,7 @@ func TestUpdate_HomePageResponseMsg_Success(t *testing.T) {
 		},
 	}
 
-	result, _ := m.Update(types.HomePageResponseMsg{Response: resp})
+	result, _ := model.Update(types.HomePageResponseMsg{Response: resp})
 	updated := result.(Model)
 
 	if updated.IsSearchLoading {
@@ -180,10 +180,10 @@ func TestUpdate_HomePageResponseMsg_Success(t *testing.T) {
 }
 
 func TestUpdate_HomePageResponseMsg_Error(t *testing.T) {
-	m := newTestModel()
-	m.IsSearchLoading = true
+	model := newTestModel()
+	model.IsSearchLoading = true
 
-	result, cmd := m.Update(types.HomePageResponseMsg{Err: errors.New("network down")})
+	result, cmd := model.Update(types.HomePageResponseMsg{Err: errors.New("network down")})
 	updated := result.(Model)
 
 	if updated.IsSearchLoading {
@@ -195,10 +195,10 @@ func TestUpdate_HomePageResponseMsg_Error(t *testing.T) {
 }
 
 func TestUpdate_LyricsMsg_NoLyrics(t *testing.T) {
-	m := newTestModel()
-	m.CurrentLyrics = &musicpb.GetLyricsResponse{}
+	model := newTestModel()
+	model.CurrentLyrics = &musicpb.GetLyricsResponse{}
 
-	result, _ := m.Update(types.LyricsMsg{LyricsResponse: nil})
+	result, _ := model.Update(types.LyricsMsg{LyricsResponse: nil})
 	updated := result.(Model)
 
 	if updated.CurrentLyrics != nil {
@@ -207,13 +207,13 @@ func TestUpdate_LyricsMsg_NoLyrics(t *testing.T) {
 }
 
 func TestUpdate_LyricsMsg_WithLyrics(t *testing.T) {
-	m := newTestModel()
+	model := newTestModel()
 
 	lyrics := &musicpb.GetLyricsResponse{
 		Lyrics: "Hello world",
 	}
 
-	result, _ := m.Update(types.LyricsMsg{LyricsResponse: lyrics})
+	result, _ := model.Update(types.LyricsMsg{LyricsResponse: lyrics})
 	updated := result.(Model)
 
 	if updated.CurrentLyrics == nil {
@@ -225,10 +225,10 @@ func TestUpdate_LyricsMsg_WithLyrics(t *testing.T) {
 }
 
 func TestUpdate_GetLibraryMsg_Error(t *testing.T) {
-	m := newTestModel()
-	m.IsSearchLoading = true
+	model := newTestModel()
+	model.IsSearchLoading = true
 
-	result, cmd := m.Update(types.GetLibraryMsg{Err: errors.New("auth failed")})
+	result, cmd := model.Update(types.GetLibraryMsg{Err: errors.New("auth failed")})
 	updated := result.(Model)
 
 	if updated.IsSearchLoading {
@@ -240,10 +240,10 @@ func TestUpdate_GetLibraryMsg_Error(t *testing.T) {
 }
 
 func TestUpdate_KeyMsg_Quit(t *testing.T) {
-	m := newTestModel()
-	m.FocusedOn = MainView
+	model := newTestModel()
+	model.FocusedOn = MainView
 
-	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	_, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
 
 	if cmd == nil {
 		t.Fatal("cmd should not be nil after quit key")
@@ -264,24 +264,24 @@ func TestUpdate_KeyMsg_TabCyclesFocus(t *testing.T) {
 		{"MainView->shift+tab->SideView", MainView, tea.KeyShiftTab, SideView},
 		{"Player->shift+tab->QueueList", Player, tea.KeyShiftTab, QueueList},
 	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			m := newTestModel()
-			m.FocusedOn = tc.start
-			result, _ := m.Update(tea.KeyMsg{Type: tc.key})
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
+			model := newTestModel()
+			model.FocusedOn = testCase.start
+			result, _ := model.Update(tea.KeyMsg{Type: testCase.key})
 			updated := result.(Model)
-			if updated.FocusedOn != tc.wantNext {
-				t.Errorf("FocusedOn: want %q, got %q", tc.wantNext, updated.FocusedOn)
+			if updated.FocusedOn != testCase.wantNext {
+				t.Errorf("FocusedOn: want %q, got %q", testCase.wantNext, updated.FocusedOn)
 			}
 		})
 	}
 }
 
 func TestUpdate_KeyMsg_CtrlK_OpensSearchBar(t *testing.T) {
-	m := newTestModel()
-	m.FocusedOn = MainView
+	model := newTestModel()
+	model.FocusedOn = MainView
 
-	result, _ := m.Update(tea.KeyMsg{Type: tea.KeyCtrlK})
+	result, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlK})
 	updated := result.(Model)
 
 	if updated.FocusedOn != SearchBar {
@@ -290,11 +290,11 @@ func TestUpdate_KeyMsg_CtrlK_OpensSearchBar(t *testing.T) {
 }
 
 func TestUpdate_KeyMsg_CtrlQ_TogglesRightColumn(t *testing.T) {
-	m := newTestModel()
-	m.FocusedOn = QueueList
-	m.RightColumnMode = RightColumnQueue
+	model := newTestModel()
+	model.FocusedOn = QueueList
+	model.RightColumnMode = RightColumnQueue
 
-	result, _ := m.Update(tea.KeyMsg{Type: tea.KeyCtrlQ})
+	result, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlQ})
 	updated := result.(Model)
 
 	if updated.RightColumnMode == RightColumnQueue {
@@ -303,12 +303,12 @@ func TestUpdate_KeyMsg_CtrlQ_TogglesRightColumn(t *testing.T) {
 }
 
 func TestUpdate_LyricsView_JKScrolling(t *testing.T) {
-	m := newTestModel()
-	m.FocusedOn = MainView
-	m.MainViewMode = LyricsMode
-	m.LyricsView.SetContent("Line 1\nLine 2\nLine 3\nLine 4\nLine 5")
+	model := newTestModel()
+	model.FocusedOn = MainView
+	model.MainViewMode = LyricsMode
+	model.LyricsView.SetContent("Line 1\nLine 2\nLine 3\nLine 4\nLine 5")
 
-	result, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}})
+	result, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}})
 	updated := result.(Model)
 	if updated.MainViewMode != LyricsMode {
 		t.Errorf("MainViewMode: want LyricsMode, got %v", updated.MainViewMode)
@@ -322,29 +322,29 @@ func TestUpdate_LyricsView_JKScrolling(t *testing.T) {
 }
 
 func TestUpdate_QueueList_RemovalAndNavigation(t *testing.T) {
-	m := newTestModel()
-	m.FocusedOn = QueueList
-	m.RightColumnMode = RightColumnQueue
+	model := newTestModel()
+	model.FocusedOn = QueueList
+	model.RightColumnMode = RightColumnQueue
 
 	trackObj := types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "song1", Title: "Song 1"}}
-	m.Queue = queue.NewRingQueue()
-	m.Queue.AddTrack(&trackObj)
-	m.SyncQueueList()
-	m.QueueList.Select(1)
+	model.Queue = queue.NewRingQueue()
+	model.Queue.AddTrack(&trackObj)
+	model.SyncQueueList()
+	model.QueueList.Select(1)
 
-	result, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
+	result, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
 	updated := result.(Model)
 	if updated.Queue.Len() != 0 {
 		t.Errorf("Queue items: want 0 after removal, got %d", updated.Queue.Len())
 	}
 
-	resultTab, _ := m.Update(tea.KeyMsg{Type: tea.KeyTab})
+	resultTab, _ := model.Update(tea.KeyMsg{Type: tea.KeyTab})
 	updatedTab := resultTab.(Model)
 	if updatedTab.FocusedOn != Player {
 		t.Errorf("FocusedOn after tab: want Player, got %s", updatedTab.FocusedOn)
 	}
 
-	resultShiftTab, _ := m.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
+	resultShiftTab, _ := model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
 	updatedShiftTab := resultShiftTab.(Model)
 	if updatedShiftTab.FocusedOn != MainView {
 		t.Errorf("FocusedOn after shift+tab: want MainView, got %s", updatedShiftTab.FocusedOn)
@@ -352,25 +352,25 @@ func TestUpdate_QueueList_RemovalAndNavigation(t *testing.T) {
 }
 
 func TestUpdate_QueueList_MultiTrackRemovalAndPlayback(t *testing.T) {
-	m := newTestModel()
-	m.FocusedOn = QueueList
-	m.RightColumnMode = RightColumnQueue
+	model := newTestModel()
+	model.FocusedOn = QueueList
+	model.RightColumnMode = RightColumnQueue
 
 	t1 := types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "song1", Title: "Song 1"}}
 	t2 := types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "song2", Title: "Song 2"}}
 	t3 := types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "song3", Title: "Song 3"}}
 
-	m.Queue = queue.NewRingQueue()
-	m.Queue.AddTrack(&t1)
-	m.Queue.AddTrack(&t2)
-	m.Queue.AddTrack(&t3)
-	m.SyncQueueList()
+	model.Queue = queue.NewRingQueue()
+	model.Queue.AddTrack(&t1)
+	model.Queue.AddTrack(&t2)
+	model.Queue.AddTrack(&t3)
+	model.SyncQueueList()
 
 	// Select row 2 (which is track 2, since row 0 is header "Queue", row 1 is track 1, row 2 is track 2)
-	m.QueueList.Select(2)
+	model.QueueList.Select(2)
 
 	// Press 'r' to remove selected row 2 (Song 2)
-	result, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
+	result, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
 	updated := result.(Model)
 
 	if updated.Queue.Len() != 2 {
@@ -392,21 +392,21 @@ func TestUpdate_QueueList_MultiTrackRemovalAndPlayback(t *testing.T) {
 }
 
 func TestUpdate_QueueList_ContextItemSelection(t *testing.T) {
-	m := newTestModel()
-	m.FocusedOn = QueueList
-	m.RightColumnMode = RightColumnQueue
+	model := newTestModel()
+	model.FocusedOn = QueueList
+	model.RightColumnMode = RightColumnQueue
 
 	t1 := &types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "ctx1", Title: "Context 1"}}
 	t2 := &types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "ctx2", Title: "Context 2"}}
 	t3 := &types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "ctx3", Title: "Context 3"}}
 
-	m.SetPlaybackContext([]*types.PlaylistTrackObject{t1, t2, t3}, "My Playlist", 0)
-	m.SyncQueueList()
+	model.SetPlaybackContext([]*types.PlaylistTrackObject{t1, t2, t3}, "My Playlist", 0)
+	model.SyncQueueList()
 
 	// Select row 2 in QueueList (row 0 is header "Next from My Playlist", row 1 is ctx1, row 2 is ctx2)
-	m.QueueList.Select(2)
+	model.QueueList.Select(2)
 
-	resEnter, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	resEnter, _ := model.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	mPlayed := resEnter.(Model)
 
 	if mPlayed.PlaylistContextIndex != 1 {
@@ -418,31 +418,26 @@ func TestUpdate_QueueList_ContextItemSelection(t *testing.T) {
 }
 
 func TestUpdate_PlayerActions(t *testing.T) {
-	m := newTestModel()
-	m.FocusedOn = Player
-	m.SelectedTrack = &SelectedTrack{
+	model := newTestModel()
+	model.FocusedOn = Player
+	model.SelectedTrack = &SelectedTrack{
 		PlaylistTrackObject: types.PlaylistTrackObject{
 			Track: &musicpb.Song{VideoId: "v1", Title: "Test Song"},
 		},
 	}
 
-	// Space (Play/Pause)
-	_, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{' '}})
+	_, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{' '}})
 
-	// Prev ('b')
-	_, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'b'}})
+	_, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'b'}})
 
-	// Next ('n')
-	_, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
+	_, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
 
-	// Like ('l')
-	_, cmdLike := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}})
+	_, cmdLike := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}})
 	if cmdLike == nil {
 		t.Error("cmdLike should not be nil when pressing 'l' on selected track")
 	}
 
-	// LyricsKey (ctrl+l)
-	resultLyrics, _ := m.Update(tea.KeyMsg{Type: tea.KeyCtrlL})
+	resultLyrics, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlL})
 	updatedLyrics := resultLyrics.(Model)
 	if updatedLyrics.MainViewMode != LyricsMode {
 		t.Errorf("MainViewMode after ctrl+l: want LyricsMode, got %v", updatedLyrics.MainViewMode)
@@ -453,10 +448,10 @@ func TestUpdate_PlayerActions(t *testing.T) {
 }
 
 func TestUpdate_SearchBar_FocusSubmitCancel(t *testing.T) {
-	m := newTestModel()
-	m.FocusedOn = MainView
+	model := newTestModel()
+	model.FocusedOn = MainView
 
-	resFocus, _ := m.Update(tea.KeyMsg{Type: tea.KeyCtrlK})
+	resFocus, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlK})
 	updatedFocus := resFocus.(Model)
 	if updatedFocus.FocusedOn != SearchBar {
 		t.Fatalf("FocusedOn: want SearchBar, got %s", updatedFocus.FocusedOn)
@@ -486,9 +481,9 @@ func TestUpdate_SearchBar_FocusSubmitCancel(t *testing.T) {
 }
 
 func TestUpdate_SongRelatedContent_ArtistSelection(t *testing.T) {
-	m := newTestModel()
-	m.FocusedOn = QueueList
-	m.RightColumnMode = RightColumnRelated
+	model := newTestModel()
+	model.FocusedOn = QueueList
+	model.RightColumnMode = RightColumnRelated
 
 	artistItem := types.SongRelatedContentItem{
 		SongRelatedContent: &musicpb.SongRelatedContent{
@@ -499,9 +494,9 @@ func TestUpdate_SongRelatedContent_ArtistSelection(t *testing.T) {
 		},
 	}
 
-	m.RelatedList = list.New([]list.Item{artistItem}, CustomDelegate{Model: &m}, 20, 10)
+	model.RelatedList = list.New([]list.Item{artistItem}, CustomDelegate{Model: &model}, 20, 10)
 
-	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	_, cmd := model.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	if cmd == nil {
 		t.Error("cmd should not be nil when selecting related artist")
 	}
@@ -527,14 +522,14 @@ func TestParseLRCTimestamp(t *testing.T) {
 		{"fraction longer than 3 digits", "01:10.1234", 0, false},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotMs, gotOK := parseLRCTimestamp(tt.input)
-			if gotOK != tt.wantOK {
-				t.Errorf("parseLRCTimestamp(%q) ok = %v, want %v", tt.input, gotOK, tt.wantOK)
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
+			gotMs, gotOK := parseLRCTimestamp(testCase.input)
+			if gotOK != testCase.wantOK {
+				t.Errorf("parseLRCTimestamp(%q) ok = %v, want %v", testCase.input, gotOK, testCase.wantOK)
 			}
-			if gotMs != tt.wantMs {
-				t.Errorf("parseLRCTimestamp(%q) ms = %d, want %d", tt.input, gotMs, tt.wantMs)
+			if gotMs != testCase.wantMs {
+				t.Errorf("parseLRCTimestamp(%q) ms = %d, want %d", testCase.input, gotMs, testCase.wantMs)
 			}
 		})
 	}
@@ -564,9 +559,9 @@ func TestParseSyncedLyrics(t *testing.T) {
 }
 
 func TestUpdate_WatchPlaylistItemsMsg_Error(t *testing.T) {
-	m := newTestModel()
+	model := newTestModel()
 
-	result, cmd := m.Update(types.WatchPlaylistItemsMsg{Err: errors.New("fetch failed")})
+	result, cmd := model.Update(types.WatchPlaylistItemsMsg{Err: errors.New("fetch failed")})
 	updated := result.(Model)
 
 	if cmd == nil {
@@ -578,9 +573,9 @@ func TestUpdate_WatchPlaylistItemsMsg_Error(t *testing.T) {
 }
 
 func TestUpdate_WatchPlaylistItemsMsg_NilResponse(t *testing.T) {
-	m := newTestModel()
+	model := newTestModel()
 
-	result, cmd := m.Update(types.WatchPlaylistItemsMsg{WatchPlaylistItems: nil})
+	result, cmd := model.Update(types.WatchPlaylistItemsMsg{WatchPlaylistItems: nil})
 	updated := result.(Model)
 
 	if cmd != nil {
@@ -592,8 +587,8 @@ func TestUpdate_WatchPlaylistItemsMsg_NilResponse(t *testing.T) {
 }
 
 func TestUpdate_WatchPlaylistItemsMsg_AddsTracks(t *testing.T) {
-	m := newTestModel()
-	m.SelectedTrack = &SelectedTrack{
+	model := newTestModel()
+	model.SelectedTrack = &SelectedTrack{
 		PlaylistTrackObject: types.PlaylistTrackObject{
 			Track: &musicpb.Song{VideoId: "current-video", Title: "Current Song"},
 		},
@@ -612,7 +607,7 @@ func TestUpdate_WatchPlaylistItemsMsg_AddsTracks(t *testing.T) {
 		WatchPlaylistItems: watchResp,
 	}
 
-	result, _ := m.Update(msg)
+	result, _ := model.Update(msg)
 	updated := result.(Model)
 
 	if len(updated.PlaybackContext) != 3 {
@@ -629,8 +624,8 @@ func TestUpdate_WatchPlaylistItemsMsg_AddsTracks(t *testing.T) {
 }
 
 func TestUpdate_WatchPlaylistItemsMsg_SourceMismatch(t *testing.T) {
-	m := newTestModel()
-	m.SelectedTrack = &SelectedTrack{
+	model := newTestModel()
+	model.SelectedTrack = &SelectedTrack{
 		PlaylistTrackObject: types.PlaylistTrackObject{
 			Track: &musicpb.Song{VideoId: "current-video", Title: "Current Song"},
 		},
@@ -647,7 +642,7 @@ func TestUpdate_WatchPlaylistItemsMsg_SourceMismatch(t *testing.T) {
 		WatchPlaylistItems: watchResp,
 	}
 
-	result, cmd := m.Update(msg)
+	result, cmd := model.Update(msg)
 	updated := result.(Model)
 
 	if cmd != nil {
@@ -659,8 +654,8 @@ func TestUpdate_WatchPlaylistItemsMsg_SourceMismatch(t *testing.T) {
 }
 
 func TestUpdate_WatchPlaylistItemsMsg_NoSelectedTrack(t *testing.T) {
-	m := newTestModel()
-	m.SelectedTrack = nil
+	model := newTestModel()
+	model.SelectedTrack = nil
 
 	watchResp := &musicpb.GetWatchPlaylistItemsResponse{
 		Tracks: []*musicpb.Song{
@@ -674,7 +669,7 @@ func TestUpdate_WatchPlaylistItemsMsg_NoSelectedTrack(t *testing.T) {
 		WatchPlaylistItems: watchResp,
 	}
 
-	result, _ := m.Update(msg)
+	result, _ := model.Update(msg)
 	updated := result.(Model)
 
 	if len(updated.PlaybackContext) != 2 {
@@ -683,8 +678,8 @@ func TestUpdate_WatchPlaylistItemsMsg_NoSelectedTrack(t *testing.T) {
 }
 
 func TestUpdate_WatchPlaylistItemsMsg_EmptyTracks(t *testing.T) {
-	m := newTestModel()
-	m.SelectedTrack = &SelectedTrack{
+	model := newTestModel()
+	model.SelectedTrack = &SelectedTrack{
 		PlaylistTrackObject: types.PlaylistTrackObject{
 			Track: &musicpb.Song{VideoId: "current-video", Title: "Current Song"},
 		},
@@ -699,7 +694,7 @@ func TestUpdate_WatchPlaylistItemsMsg_EmptyTracks(t *testing.T) {
 		WatchPlaylistItems: watchResp,
 	}
 
-	result, _ := m.Update(msg)
+	result, _ := model.Update(msg)
 	updated := result.(Model)
 
 	if updated.Queue.Len() != 0 {
@@ -708,16 +703,16 @@ func TestUpdate_WatchPlaylistItemsMsg_EmptyTracks(t *testing.T) {
 }
 
 func TestUpdate_WatchPlaylistItemsMsg_AppendsToExistingQueue(t *testing.T) {
-	m := newTestModel()
-	m.SelectedTrack = &SelectedTrack{
+	model := newTestModel()
+	model.SelectedTrack = &SelectedTrack{
 		PlaylistTrackObject: types.PlaylistTrackObject{
 			Track: &musicpb.Song{VideoId: "current-video", Title: "Current Song"},
 		},
 	}
 
 	existing := types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "existing1", Title: "Existing Track"}}
-	m.Queue.AddTrack(&existing)
-	m.SyncQueueList()
+	model.Queue.AddTrack(&existing)
+	model.SyncQueueList()
 
 	watchResp := &musicpb.GetWatchPlaylistItemsResponse{
 		Tracks: []*musicpb.Song{
@@ -732,9 +727,9 @@ func TestUpdate_WatchPlaylistItemsMsg_AppendsToExistingQueue(t *testing.T) {
 		WatchPlaylistItems: watchResp,
 	}
 
-	result, _ := m.Update(msg)
+	result, _ := model.Update(msg)
 	updated := result.(Model)
-	m.SyncQueueList()
+	model.SyncQueueList()
 
 	items := updated.QueueList.Items()
 	var tracks []*types.PlaylistTrackObject
@@ -760,10 +755,10 @@ func TestUpdate_WatchPlaylistItemsMsg_AppendsToExistingQueue(t *testing.T) {
 }
 
 func TestUpdate_WatchPlaylistItems_EmptyContext_FirstTrackSelected(t *testing.T) {
-	m := newTestModel()
-	m.PlaybackContext = nil
-	m.PlaylistContextIndex = 0
-	m.SelectedTrack = &SelectedTrack{
+	model := newTestModel()
+	model.PlaybackContext = nil
+	model.PlaylistContextIndex = 0
+	model.SelectedTrack = &SelectedTrack{
 		PlaylistTrackObject: types.PlaylistTrackObject{
 			Track: &musicpb.Song{VideoId: "current", Title: "Current Song"},
 		},
@@ -781,7 +776,7 @@ func TestUpdate_WatchPlaylistItems_EmptyContext_FirstTrackSelected(t *testing.T)
 		},
 	}
 
-	result, _ := m.Update(msg)
+	result, _ := model.Update(msg)
 	updated := result.(Model)
 
 	if len(updated.PlaybackContext) != 3 {
@@ -797,24 +792,24 @@ func TestUpdate_WatchPlaylistItems_EmptyContext_FirstTrackSelected(t *testing.T)
 }
 
 func TestUpdate_HomePageEnter_NonVideoBeforePlayable_CorrectIndex(t *testing.T) {
-	m := newTestModel()
-	m.FocusedOn = MainView
-	m.MainViewMode = HomePageMode
-	m.HomePageViewMode = HomePageContentView
+	model := newTestModel()
+	model.FocusedOn = MainView
+	model.MainViewMode = HomePageMode
+	model.HomePageViewMode = HomePageContentView
 
-	dims := CalculateLayoutDimensions(&m)
-	d := CustomDelegate{Model: &m}
+	dims := CalculateLayoutDimensions(&model)
+	delegate := CustomDelegate{Model: &model}
 	items := []list.Item{
 		types.HomePageContentItem{ItemTitle: "Some Album", BrowseID: "MPRE_album1", ContentType: "album", VideoID: ""},
 		types.HomePageContentItem{ItemTitle: "Song A", VideoID: "vidA", Artists: []*musicpb.Artist{{Name: "Artist A"}}},
 		types.HomePageContentItem{ItemTitle: "Song B", VideoID: "vidB", Artists: []*musicpb.Artist{{Name: "Artist B"}}},
 	}
-	m.HomePageList = list.New(items, d, dims.MainWidth, dims.ContentHeight)
-	m.HomePageList.Title = "Test Section"
+	model.HomePageList = list.New(items, delegate, dims.MainWidth, dims.ContentHeight)
+	model.HomePageList.Title = "Test Section"
 
-	m.HomePageList.Select(1)
+	model.HomePageList.Select(1)
 
-	result, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	result, _ := model.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	updated := result.(Model)
 
 	if len(updated.PlaybackContext) != 2 {
@@ -834,24 +829,24 @@ func TestUpdate_HomePageEnter_NonVideoBeforePlayable_CorrectIndex(t *testing.T) 
 }
 
 func TestUpdate_PlayTrackFromList_DuplicateVideoId(t *testing.T) {
-	m := newTestModel()
-	m.FocusedOn = MainView
-	m.MainViewMode = NormalMode
+	model := newTestModel()
+	model.FocusedOn = MainView
+	model.MainViewMode = NormalMode
 
-	dims := CalculateLayoutDimensions(&m)
-	d := CustomDelegate{Model: &m}
+	dims := CalculateLayoutDimensions(&model)
+	delegate := CustomDelegate{Model: &model}
 	items := []list.Item{
 		types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "songA", Title: "Song A (1st)"}},
 		types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "songB", Title: "Song B"}},
 		types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "songA", Title: "Song A (2nd)"}},
 		types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "songC", Title: "Song C"}},
 	}
-	m.SelectedPlayListItems = list.New(items, d, dims.MainWidth, dims.ContentHeight)
-	m.SelectedPlayListItems.Title = "Test Playlist"
+	model.SelectedPlayListItems = list.New(items, delegate, dims.MainWidth, dims.ContentHeight)
+	model.SelectedPlayListItems.Title = "Test Playlist"
 
-	m.SelectedPlayListItems.Select(2)
+	model.SelectedPlayListItems.Select(2)
 
-	result, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	result, _ := model.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	updated := result.(Model)
 
 	if len(updated.PlaybackContext) != 4 {
@@ -867,25 +862,25 @@ func TestUpdate_PlayTrackFromList_DuplicateVideoId(t *testing.T) {
 }
 
 func TestUpdate_HomePageEnter_DuplicateVideoId(t *testing.T) {
-	m := newTestModel()
-	m.FocusedOn = MainView
-	m.MainViewMode = HomePageMode
-	m.HomePageViewMode = HomePageContentView
+	model := newTestModel()
+	model.FocusedOn = MainView
+	model.MainViewMode = HomePageMode
+	model.HomePageViewMode = HomePageContentView
 
-	dims := CalculateLayoutDimensions(&m)
-	d := CustomDelegate{Model: &m}
+	dims := CalculateLayoutDimensions(&model)
+	delegate := CustomDelegate{Model: &model}
 	items := []list.Item{
 		types.HomePageContentItem{ItemTitle: "Song X (1st)", VideoID: "vidX"},
 		types.HomePageContentItem{ItemTitle: "Song Y", VideoID: "vidY"},
 		types.HomePageContentItem{ItemTitle: "Song X (2nd)", VideoID: "vidX"},
 		types.HomePageContentItem{ItemTitle: "Song Z", VideoID: "vidZ"},
 	}
-	m.HomePageList = list.New(items, d, dims.MainWidth, dims.ContentHeight)
-	m.HomePageList.Title = "Test Section"
+	model.HomePageList = list.New(items, delegate, dims.MainWidth, dims.ContentHeight)
+	model.HomePageList.Title = "Test Section"
 
-	m.HomePageList.Select(2)
+	model.HomePageList.Select(2)
 
-	result, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	result, _ := model.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	updated := result.(Model)
 
 	if len(updated.PlaybackContext) != 4 {

@@ -10,6 +10,19 @@ linters:
     - dupl
     - goconst
     - gocritic
+    - goheader
+    - modernize
+    - sloglint
+    - tparallel
+    - fatcontext
+    - bodyclose
+    - nilnil
+    - nakedret
+    - wastedassign
+    - varnamelen
+    - gocyclo
+    - unparam
+    - godoclint
   settings:
     lll:
       line-length: 180
