@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"slices"
 	"strings"
 	"time"
 
@@ -322,9 +323,9 @@ func (m *Model) SyncQueueList() tea.Cmd {
 
 	if len(items) == 0 && len(m.PlayHistory) > 0 {
 		items = append(items, types.HomePageSectionItem{SectionTitle: "Recently Played"})
-		for i := len(m.PlayHistory) - 1; i >= 0; i-- {
-			if m.PlayHistory[i] != nil {
-				items = append(items, *m.PlayHistory[i])
+		for _, track := range slices.Backward(m.PlayHistory) {
+			if track != nil {
+				items = append(items, *track)
 			}
 		}
 	}

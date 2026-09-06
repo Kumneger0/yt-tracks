@@ -15,8 +15,15 @@ import (
 )
 
 const (
-	testVideoID1 = "vid1"
-	testSongID1  = "song1"
+	testVideoID1   = "vid1"
+	testSongID1    = "song1"
+	currentSong    = "Current Song"
+	currentVideoID = "current-video"
+	watchTrack1    = "Watch Track 1"
+	watchTrack2    = "Watch Track 2"
+	watchVideoID1  = "watch1"
+	watchVideoID2  = "watch2"
+	currentTrackID = "current"
 )
 
 func newTestModel() Model {
@@ -595,20 +602,20 @@ func TestUpdate_WatchPlaylistItemsMsg_AddsTracks(t *testing.T) {
 	model := newTestModel()
 	model.SelectedTrack = &SelectedTrack{
 		PlaylistTrackObject: types.PlaylistTrackObject{
-			Track: &musicpb.Song{VideoId: "current-video", Title: "Current Song"},
+			Track: &musicpb.Song{VideoId: currentVideoID, Title: currentSong},
 		},
 	}
 
 	watchResp := &musicpb.GetWatchPlaylistItemsResponse{
 		Tracks: []*musicpb.Song{
-			{VideoId: "watch1", Title: "Watch Track 1"},
-			{VideoId: "watch2", Title: "Watch Track 2"},
+			{VideoId: watchVideoID1, Title: watchTrack1},
+			{VideoId: watchVideoID2, Title: watchTrack2},
 			{VideoId: "watch3", Title: "Watch Track 3"},
 		},
 	}
 
 	msg := types.WatchPlaylistItemsMsg{
-		SourceID:           "current-video",
+		SourceID:           currentVideoID,
 		WatchPlaylistItems: watchResp,
 	}
 
@@ -620,7 +627,7 @@ func TestUpdate_WatchPlaylistItemsMsg_AddsTracks(t *testing.T) {
 	}
 
 	tracks := updated.PlaybackContext
-	expectedIDs := []string{"watch1", "watch2", "watch3"}
+	expectedIDs := []string{watchVideoID1, watchVideoID2, "watch3"}
 	for i, id := range expectedIDs {
 		if tracks[i].Track.VideoId != id {
 			t.Errorf("Track %d: want VideoId %q, got %q", i, id, tracks[i].Track.VideoId)
@@ -632,13 +639,13 @@ func TestUpdate_WatchPlaylistItemsMsg_SourceMismatch(t *testing.T) {
 	model := newTestModel()
 	model.SelectedTrack = &SelectedTrack{
 		PlaylistTrackObject: types.PlaylistTrackObject{
-			Track: &musicpb.Song{VideoId: "current-video", Title: "Current Song"},
+			Track: &musicpb.Song{VideoId: currentVideoID, Title: currentSong},
 		},
 	}
 
 	watchResp := &musicpb.GetWatchPlaylistItemsResponse{
 		Tracks: []*musicpb.Song{
-			{VideoId: "watch1", Title: "Watch Track 1"},
+			{VideoId: watchVideoID1, Title: watchTrack1},
 		},
 	}
 
@@ -664,8 +671,8 @@ func TestUpdate_WatchPlaylistItemsMsg_NoSelectedTrack(t *testing.T) {
 
 	watchResp := &musicpb.GetWatchPlaylistItemsResponse{
 		Tracks: []*musicpb.Song{
-			{VideoId: "watch1", Title: "Watch Track 1"},
-			{VideoId: "watch2", Title: "Watch Track 2"},
+			{VideoId: watchVideoID1, Title: watchTrack1},
+			{VideoId: watchVideoID2, Title: watchTrack2},
 		},
 	}
 
@@ -686,7 +693,7 @@ func TestUpdate_WatchPlaylistItemsMsg_EmptyTracks(t *testing.T) {
 	model := newTestModel()
 	model.SelectedTrack = &SelectedTrack{
 		PlaylistTrackObject: types.PlaylistTrackObject{
-			Track: &musicpb.Song{VideoId: "current-video", Title: "Current Song"},
+			Track: &musicpb.Song{VideoId: currentVideoID, Title: currentSong},
 		},
 	}
 
@@ -695,7 +702,7 @@ func TestUpdate_WatchPlaylistItemsMsg_EmptyTracks(t *testing.T) {
 	}
 
 	msg := types.WatchPlaylistItemsMsg{
-		SourceID:           "current-video",
+		SourceID:           currentVideoID,
 		WatchPlaylistItems: watchResp,
 	}
 
@@ -711,7 +718,7 @@ func TestUpdate_WatchPlaylistItemsMsg_AppendsToExistingQueue(t *testing.T) {
 	model := newTestModel()
 	model.SelectedTrack = &SelectedTrack{
 		PlaylistTrackObject: types.PlaylistTrackObject{
-			Track: &musicpb.Song{VideoId: "current-video", Title: "Current Song"},
+			Track: &musicpb.Song{VideoId: currentVideoID, Title: currentSong},
 		},
 	}
 
@@ -721,14 +728,14 @@ func TestUpdate_WatchPlaylistItemsMsg_AppendsToExistingQueue(t *testing.T) {
 
 	watchResp := &musicpb.GetWatchPlaylistItemsResponse{
 		Tracks: []*musicpb.Song{
-			{VideoId: "current-video", Title: "Current Song"},
-			{VideoId: "watch1", Title: "Watch Track 1"},
-			{VideoId: "watch2", Title: "Watch Track 2"},
+			{VideoId: currentVideoID, Title: currentSong},
+			{VideoId: watchVideoID1, Title: watchTrack1},
+			{VideoId: watchVideoID2, Title: watchTrack2},
 		},
 	}
 
 	msg := types.WatchPlaylistItemsMsg{
-		SourceID:           "current-video",
+		SourceID:           currentVideoID,
 		WatchPlaylistItems: watchResp,
 	}
 
@@ -751,10 +758,10 @@ func TestUpdate_WatchPlaylistItemsMsg_AppendsToExistingQueue(t *testing.T) {
 	if tracks[0].Track.VideoId != "existing1" {
 		t.Errorf("Track 0: want existing1, got %q", tracks[0].Track.VideoId)
 	}
-	if tracks[1].Track.VideoId != "watch1" {
+	if tracks[1].Track.VideoId != watchVideoID1 {
 		t.Errorf("Track 1: want watch1, got %q", tracks[1].Track.VideoId)
 	}
-	if tracks[2].Track.VideoId != "watch2" {
+	if tracks[2].Track.VideoId != watchVideoID2 {
 		t.Errorf("Track 2: want watch2, got %q", tracks[2].Track.VideoId)
 	}
 }
@@ -765,15 +772,15 @@ func TestUpdate_WatchPlaylistItems_EmptyContext_FirstTrackSelected(t *testing.T)
 	model.PlaylistContextIndex = 0
 	model.SelectedTrack = &SelectedTrack{
 		PlaylistTrackObject: types.PlaylistTrackObject{
-			Track: &musicpb.Song{VideoId: "current", Title: "Current Song"},
+			Track: &musicpb.Song{VideoId: currentTrackID, Title: currentSong},
 		},
 	}
 
 	msg := types.WatchPlaylistItemsMsg{
-		SourceID: "current",
+		SourceID: currentTrackID,
 		WatchPlaylistItems: &musicpb.GetWatchPlaylistItemsResponse{
 			Tracks: []*musicpb.Song{
-				{VideoId: "current", Title: "Current Song"},
+				{VideoId: currentTrackID, Title: currentSong},
 				{VideoId: "next1", Title: "Next 1"},
 				{VideoId: "next2", Title: "Next 2"},
 				{VideoId: "next3", Title: "Next 3"},

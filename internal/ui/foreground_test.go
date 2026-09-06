@@ -11,6 +11,7 @@ import (
 const (
 	testTrackID    = "track123"
 	testTrackTitle = "Blinding Lights"
+	testPlaylistID = "PL1"
 )
 
 func TestForegroundModel_CreatePlaylistModal(t *testing.T) {
@@ -78,7 +79,7 @@ func TestForegroundModel_AddToPlaylistModal(t *testing.T) {
 	}
 
 	pls := []*musicpb.Playlist{
-		{PlaylistId: "PL1", Title: "Chill Vibes", Count: 10},
+		{PlaylistId: testPlaylistID, Title: "Chill Vibes", Count: 10},
 		{PlaylistId: "PL2", Title: "Workout Hits", Count: 25},
 	}
 
@@ -119,7 +120,7 @@ func TestForegroundModel_DuplicateConfirmModal(t *testing.T) {
 	foreground := NewForegroundModel()
 
 	model, _ := foreground.Update(types.PromptDuplicateConfirmMsg{
-		PlaylistID:   "PL1",
+		PlaylistID:   testPlaylistID,
 		PlaylistName: "Chill Vibes",
 		TrackID:      testTrackID,
 		TrackTitle:   testTrackTitle,

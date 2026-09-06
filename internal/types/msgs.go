@@ -84,13 +84,13 @@ type Player struct {
 
 type ByteCounterReader struct {
 	R     io.Reader
-	total int64
+	total atomic.Int64
 }
 
 func (b *ByteCounterReader) Read(p []byte) (int, error) {
 	bytesRead, err := b.R.Read(p)
 	if bytesRead > 0 {
-		atomic.AddInt64(&b.total, int64(bytesRead))
+		b.total.Add(int64(bytesRead))
 		currentSeconds := b.CurrentSeconds()
 		go func() {
 			PlayedSecondsUpdateChan <- PlayedSecondsUpdateMsg{
@@ -105,7 +105,7 @@ func (b *ByteCounterReader) Read(p []byte) (int, error) {
 }
 
 func (b *ByteCounterReader) CurrentSeconds() float64 {
-	return float64(atomic.LoadInt64(&b.total)) / 176400.0
+	return float64(b.total.Load()) / 176400.0
 }
 
 type HomePageResponseMsg struct {

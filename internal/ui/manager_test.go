@@ -28,7 +28,7 @@ func TestManager_MessageRoutingInForegroundState(t *testing.T) {
 		Background: background,
 	}
 
-	addMsg := types.AddToPlaylistMsg{PlaylistID: "PL1", TrackID: "T1"}
+	addMsg := types.AddToPlaylistMsg{PlaylistID: testPlaylistID, TrackID: "T1"}
 	_, _ = mgr.Update(addMsg)
 
 	if background.receivedMsg != addMsg {
