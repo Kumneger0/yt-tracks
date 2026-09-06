@@ -222,15 +222,12 @@ func root(cmd *cobra.Command, serverURL string) error {
 	}
 
 	ytDlpArgs := config.YtDlpArgs{
-	ytDlpArgs := config.YtDlpArgs{
 		CookiesFromBrowser: nil,
 		Cookies:            nil,
 	}
 
 	if flags.CookiesFromBrowser != "" {
 		ytDlpArgs.CookiesFromBrowser = &flags.CookiesFromBrowser
-	}
-		Cookies:            nil,
 	}
 
 	if flags.Cookies != "" {
@@ -284,6 +281,9 @@ func root(cmd *cobra.Command, serverURL string) error {
 	termWidth, termHeight, err := term.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
 		slog.Error(err.Error())
+		if ins != nil {
+			_ = ins.Conn.Close()
+		}
 		return fmt.Errorf("failed to get terminal size: %w", err)
 	}
 

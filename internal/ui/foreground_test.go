@@ -8,6 +8,11 @@ import (
 	"github.com/kumneger0/yt-tracks/internal/types"
 )
 
+const (
+	testTrackID    = "track123"
+	testTrackTitle = "Blinding Lights"
+)
+
 func TestForegroundModel_CreatePlaylistModal(t *testing.T) {
 	foreground := NewForegroundModel()
 
@@ -58,8 +63,8 @@ func TestForegroundModel_AddToPlaylistModal(t *testing.T) {
 	foreground := NewForegroundModel()
 
 	model, _ := foreground.Update(types.OpenAddToPlaylistLoadingMsg{
-		TrackID:    "track123",
-		TrackTitle: "Blinding Lights",
+		TrackID:    testTrackID,
+		TrackTitle: testTrackTitle,
 	})
 	foreground = model.(*ForegroundModel)
 
@@ -78,8 +83,8 @@ func TestForegroundModel_AddToPlaylistModal(t *testing.T) {
 	}
 
 	model, _ = foreground.Update(types.OpenAddToPlaylistModalMsg{
-		TrackID:    "track123",
-		TrackTitle: "Blinding Lights",
+		TrackID:    testTrackID,
+		TrackTitle: testTrackTitle,
 		Playlists:  pls,
 	})
 	foreground = model.(*ForegroundModel)
@@ -116,8 +121,8 @@ func TestForegroundModel_DuplicateConfirmModal(t *testing.T) {
 	model, _ := foreground.Update(types.PromptDuplicateConfirmMsg{
 		PlaylistID:   "PL1",
 		PlaylistName: "Chill Vibes",
-		TrackID:      "track123",
-		TrackTitle:   "Blinding Lights",
+		TrackID:      testTrackID,
+		TrackTitle:   testTrackTitle,
 	})
 	foreground = model.(*ForegroundModel)
 

@@ -736,7 +736,7 @@ func (m Model) handleInputMessage(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, tea.Batch(cmd, searchCmd)
 		}
-		model, cmd := m.handleKeyPress(msg)
+		model, cmd = m.handleKeyPress(msg)
 		m = model
 		if cmd != nil {
 			var searchCmd tea.Cmd

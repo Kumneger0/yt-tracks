@@ -14,6 +14,11 @@ import (
 	"go.dalton.dog/bubbleup"
 )
 
+const (
+	testVideoID1 = "vid1"
+	testSongID1  = "song1"
+)
+
 func newTestModel() Model {
 	model := Model{
 		FocusedOn:    SideView,
@@ -101,11 +106,11 @@ func TestUpdate_LikeUnlikeTrackMsg(t *testing.T) {
 	model.SelectedTrack = &SelectedTrack{
 		isLiked: false,
 		PlaylistTrackObject: types.PlaylistTrackObject{
-			Track: &musicpb.Song{VideoId: "vid1"},
+			Track: &musicpb.Song{VideoId: testVideoID1},
 		},
 	}
 
-	result, _ := model.Update(types.LikeUnlikeTrackResponseMsg{TrackID: "vid1", Liked: true})
+	result, _ := model.Update(types.LikeUnlikeTrackResponseMsg{TrackID: testVideoID1, Liked: true})
 	updated := result.(Model)
 
 	if !updated.SelectedTrack.isLiked {
@@ -118,7 +123,7 @@ func TestUpdate_LikeUnlikeTrackMsg_DifferentID(t *testing.T) {
 	model.SelectedTrack = &SelectedTrack{
 		isLiked: false,
 		PlaylistTrackObject: types.PlaylistTrackObject{
-			Track: &musicpb.Song{VideoId: "vid1"},
+			Track: &musicpb.Song{VideoId: testVideoID1},
 		},
 	}
 
@@ -135,7 +140,7 @@ func TestUpdate_CheckUserSavedTrackMsg(t *testing.T) {
 	model.SelectedTrack = &SelectedTrack{
 		isLiked: false,
 		PlaylistTrackObject: types.PlaylistTrackObject{
-			Track: &musicpb.Song{VideoId: "vid1"},
+			Track: &musicpb.Song{VideoId: testVideoID1},
 		},
 	}
 
@@ -326,7 +331,7 @@ func TestUpdate_QueueList_RemovalAndNavigation(t *testing.T) {
 	model.FocusedOn = QueueList
 	model.RightColumnMode = RightColumnQueue
 
-	trackObj := types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "song1", Title: "Song 1"}}
+	trackObj := types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: testSongID1, Title: "Song 1"}}
 	model.Queue = queue.NewRingQueue()
 	model.Queue.AddTrack(&trackObj)
 	model.SyncQueueList()
@@ -356,7 +361,7 @@ func TestUpdate_QueueList_MultiTrackRemovalAndPlayback(t *testing.T) {
 	model.FocusedOn = QueueList
 	model.RightColumnMode = RightColumnQueue
 
-	t1 := types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "song1", Title: "Song 1"}}
+	t1 := types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: testSongID1, Title: "Song 1"}}
 	t2 := types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "song2", Title: "Song 2"}}
 	t3 := types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "song3", Title: "Song 3"}}
 
@@ -378,7 +383,7 @@ func TestUpdate_QueueList_MultiTrackRemovalAndPlayback(t *testing.T) {
 	}
 
 	tracks := updated.Queue.AllTracks()
-	if len(tracks) == 2 && (tracks[0].Track.VideoId != "song1" || tracks[1].Track.VideoId != "song3") {
+	if len(tracks) == 2 && (tracks[0].Track.VideoId != testSongID1 || tracks[1].Track.VideoId != "song3") {
 		t.Errorf("Remaining tracks want [song1, song3], got [%s, %s]", tracks[0].Track.VideoId, tracks[1].Track.VideoId)
 	}
 
@@ -386,7 +391,7 @@ func TestUpdate_QueueList_MultiTrackRemovalAndPlayback(t *testing.T) {
 	updated.QueueList.Select(1)
 	resEnter, _ := updated.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	mPlayed := resEnter.(Model)
-	if mPlayed.SelectedTrack == nil || mPlayed.SelectedTrack.Track == nil || mPlayed.SelectedTrack.Track.VideoId != "song1" {
+	if mPlayed.SelectedTrack == nil || mPlayed.SelectedTrack.Track == nil || mPlayed.SelectedTrack.Track.VideoId != testSongID1 {
 		t.Errorf("Played track: want song1, got %v", mPlayed.SelectedTrack)
 	}
 }
