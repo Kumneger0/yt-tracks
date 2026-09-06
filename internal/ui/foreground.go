@@ -44,24 +44,24 @@ type ForegroundModel struct {
 }
 
 func NewForegroundModel() *ForegroundModel {
-	ti := textinput.New()
-	ti.Placeholder = "My Awesome Playlist"
-	ti.Prompt = ""
-	ti.CharLimit = 100
-	ti.Width = 34
-	ti.Focus()
+	textInput := textinput.New()
+	textInput.Placeholder = "My Awesome Playlist"
+	textInput.Prompt = ""
+	textInput.CharLimit = 100
+	textInput.Width = 34
+	textInput.Focus()
 
-	di := textinput.New()
-	di.Placeholder = "Optional description..."
-	di.Prompt = ""
-	di.CharLimit = 200
-	di.Width = 34
+	dialogInput := textinput.New()
+	dialogInput.Placeholder = "Optional description..."
+	dialogInput.Prompt = ""
+	dialogInput.CharLimit = 200
+	dialogInput.Width = 34
 
 	return &ForegroundModel{
 		ActiveModal:    types.ModalTypeNone,
 		FocusIndex:     FieldTitle,
-		TitleInput:     ti,
-		DescInput:      di,
+		TitleInput:     textInput,
+		DescInput:      dialogInput,
 		PrivacyIndex:   0,
 		PrivacyOptions: []string{"PRIVATE", "PUBLIC", "UNLISTED"},
 	}
@@ -204,161 +204,169 @@ func (m *ForegroundModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
-		if m.ActiveModal == types.ModalTypeNone {
-			return m, nil
-		}
+		return m.handleKeyMsg(msg)
+	}
 
-		switch msg.String() {
-		case "esc", "ctrl+c":
-			currentModal := m.ActiveModal
-			m.ActiveModal = types.ModalTypeNone
-			return m, func() tea.Msg {
-				return types.CloseModalMsg{ModalType: currentModal}
-			}
-		}
+	return m, nil
+}
 
-		if m.ActiveModal == types.ModalTypeCreatePlaylist {
-			switch msg.String() {
-			case "tab", "down":
-				m.FocusIndex = (m.FocusIndex + 1) % 4
-				m.updateFocus()
-				return m, nil
-
-			case "shift+tab", "up":
-				m.FocusIndex = (m.FocusIndex - 1 + 4) % 4
-				m.updateFocus()
-				return m, nil
-
-			case "left", "h":
-				if m.FocusIndex == FieldPrivacy {
-					m.PrivacyIndex = (m.PrivacyIndex - 1 + len(m.PrivacyOptions)) % len(m.PrivacyOptions)
-					return m, nil
-				}
-
-			case "right", "l", "space", " ":
-				if m.FocusIndex == FieldPrivacy {
-					m.PrivacyIndex = (m.PrivacyIndex + 1) % len(m.PrivacyOptions)
-					return m, nil
-				}
-
-			case "enter":
-				if m.FocusIndex == FieldSubmit || m.FocusIndex == FieldTitle || m.FocusIndex == FieldDescription {
-					title := strings.TrimSpace(m.TitleInput.Value())
-					if title == "" {
-						m.ErrorMsg = "Playlist title is required"
-						return m, nil
-					}
-					m.IsSubmitting = true
-					m.ErrorMsg = ""
-					desc := strings.TrimSpace(m.DescInput.Value())
-					privacy := m.PrivacyOptions[m.PrivacyIndex]
-					return m, func() tea.Msg {
-						return types.CreatePlaylistMsg{
-							Title:         title,
-							Description:   desc,
-							PrivacyStatus: privacy,
-						}
-					}
-				}
-			}
-
-			var cmd tea.Cmd
-			switch m.FocusIndex {
-			case FieldTitle:
-				m.TitleInput, cmd = m.TitleInput.Update(msg)
-			case FieldDescription:
-				m.DescInput, cmd = m.DescInput.Update(msg)
-			}
-			return m, cmd
-		}
-
-		if m.ActiveModal == types.ModalTypePlaylistManagement {
-			if m.IsLoading || m.IsSubmitting {
-				return m, nil
-			}
-			switch msg.String() {
-			case "down", "j":
-				if len(m.Playlists) > 0 {
-					m.PlaylistSelectIndex = (m.PlaylistSelectIndex + 1) % len(m.Playlists)
-				}
-				return m, nil
-			case "up", "k":
-				if len(m.Playlists) > 0 {
-					m.PlaylistSelectIndex = (m.PlaylistSelectIndex - 1 + len(m.Playlists)) % len(m.Playlists)
-				}
-				return m, nil
-			case "r":
-				if len(m.Playlists) > 0 && m.PlaylistSelectIndex >= 0 && m.PlaylistSelectIndex < len(m.Playlists) {
-					pl := m.Playlists[m.PlaylistSelectIndex]
-					trackID := m.SelectedTrackID
-					trackTitle := m.SelectedTrackTitle
-					m.IsSubmitting = true
-					m.ErrorMsg = ""
-					return m, func() tea.Msg {
-						return types.RemoveFromPlaylistMsg{
-							PlaylistID:   pl.PlaylistId,
-							PlaylistName: pl.Title,
-							TrackID:      trackID,
-							TrackTitle:   trackTitle,
-						}
-					}
-				}
-			case "enter", "a":
-				if len(m.Playlists) > 0 && m.PlaylistSelectIndex >= 0 && m.PlaylistSelectIndex < len(m.Playlists) {
-					pl := m.Playlists[m.PlaylistSelectIndex]
-					trackID := m.SelectedTrackID
-					trackTitle := m.SelectedTrackTitle
-					m.IsSubmitting = true
-					m.ErrorMsg = ""
-					return m, func() tea.Msg {
-						return types.AddToPlaylistMsg{
-							PlaylistID:   pl.PlaylistId,
-							PlaylistName: pl.Title,
-							TrackID:      trackID,
-							TrackTitle:   trackTitle,
-							Duplicates:   false,
-						}
-					}
-				}
-			}
-			return m, nil
-		}
-
-		if m.ActiveModal == types.ModalTypeDuplicateConfirm {
-			if m.IsSubmitting {
-				return m, nil
-			}
-			switch msg.String() {
-			case "left", "h", "right", "l", "tab", "shift+tab":
-				m.ConfirmDuplicateIndex = (m.ConfirmDuplicateIndex + 1) % 2
-				return m, nil
-			case "enter":
-				if m.ConfirmDuplicateIndex == 0 {
-					plID := m.TargetPlaylistID
-					plName := m.TargetPlaylistName
-					trID := m.SelectedTrackID
-					trTitle := m.SelectedTrackTitle
-					m.IsSubmitting = true
-					m.ErrorMsg = ""
-					return m, func() tea.Msg {
-						return types.AddToPlaylistMsg{
-							PlaylistID:   plID,
-							PlaylistName: plName,
-							TrackID:      trID,
-							TrackTitle:   trTitle,
-							Duplicates:   true,
-						}
-					}
-				}
-				m.ActiveModal = types.ModalTypeNone
-				return m, func() tea.Msg {
-					return types.CloseModalMsg{ModalType: types.ModalTypeDuplicateConfirm}
-				}
-			}
-			return m, nil
+func (m *ForegroundModel) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.ActiveModal == types.ModalTypeNone {
+		return m, nil
+	}
+	switch msg.String() {
+	case "esc", keyCtrlC:
+		currentModal := m.ActiveModal
+		m.ActiveModal = types.ModalTypeNone
+		return m, func() tea.Msg {
+			return types.CloseModalMsg{ModalType: currentModal}
 		}
 	}
 
+	if m.ActiveModal == types.ModalTypeCreatePlaylist {
+		switch msg.String() {
+		case "tab", "down":
+			m.FocusIndex = (m.FocusIndex + 1) % 4
+			m.updateFocus()
+			return m, nil
+
+		case "shift+tab", "up":
+			m.FocusIndex = (m.FocusIndex - 1 + 4) % 4
+			m.updateFocus()
+			return m, nil
+
+		case "left", "h":
+			if m.FocusIndex == FieldPrivacy {
+				m.PrivacyIndex = (m.PrivacyIndex - 1 + len(m.PrivacyOptions)) % len(m.PrivacyOptions)
+				return m, nil
+			}
+
+		case "right", "l", "space", " ":
+			if m.FocusIndex == FieldPrivacy {
+				m.PrivacyIndex = (m.PrivacyIndex + 1) % len(m.PrivacyOptions)
+				return m, nil
+			}
+
+		case keyEnter:
+			if m.FocusIndex == FieldSubmit || m.FocusIndex == FieldTitle || m.FocusIndex == FieldDescription {
+				title := strings.TrimSpace(m.TitleInput.Value())
+				if title == "" {
+					m.ErrorMsg = "Playlist title is required"
+					return m, nil
+				}
+				m.IsSubmitting = true
+				m.ErrorMsg = ""
+				desc := strings.TrimSpace(m.DescInput.Value())
+				privacy := m.PrivacyOptions[m.PrivacyIndex]
+				return m, func() tea.Msg {
+					return types.CreatePlaylistMsg{
+						Title:         title,
+						Description:   desc,
+						PrivacyStatus: privacy,
+					}
+				}
+			}
+		}
+
+		var cmd tea.Cmd
+		switch m.FocusIndex {
+		case FieldTitle:
+			m.TitleInput, cmd = m.TitleInput.Update(msg)
+		case FieldDescription:
+			m.DescInput, cmd = m.DescInput.Update(msg)
+		}
+		return m, cmd
+	}
+
+	if m.ActiveModal == types.ModalTypePlaylistManagement {
+		return m.handlePlaylistManagementKeyMsg(msg)
+	}
+
+	if m.ActiveModal == types.ModalTypeDuplicateConfirm {
+		if m.IsSubmitting {
+			return m, nil
+		}
+		switch msg.String() {
+		case "left", "h", "right", "l", "tab", "shift+tab":
+			m.ConfirmDuplicateIndex = (m.ConfirmDuplicateIndex + 1) % 2
+			return m, nil
+		case "enter":
+			if m.ConfirmDuplicateIndex == 0 {
+				plID := m.TargetPlaylistID
+				plName := m.TargetPlaylistName
+				trID := m.SelectedTrackID
+				trTitle := m.SelectedTrackTitle
+				m.IsSubmitting = true
+				m.ErrorMsg = ""
+				return m, func() tea.Msg {
+					return types.AddToPlaylistMsg{
+						PlaylistID:   plID,
+						PlaylistName: plName,
+						TrackID:      trID,
+						TrackTitle:   trTitle,
+						Duplicates:   true,
+					}
+				}
+			}
+			m.ActiveModal = types.ModalTypeNone
+			return m, func() tea.Msg {
+				return types.CloseModalMsg{ModalType: types.ModalTypeDuplicateConfirm}
+			}
+		}
+		return m, nil
+	}
+	return m, nil
+}
+
+func (m *ForegroundModel) handlePlaylistManagementKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.IsLoading || m.IsSubmitting {
+		return m, nil
+	}
+	switch msg.String() {
+	case "down", "j":
+		if len(m.Playlists) > 0 {
+			m.PlaylistSelectIndex = (m.PlaylistSelectIndex + 1) % len(m.Playlists)
+		}
+		return m, nil
+	case "up", "k":
+		if len(m.Playlists) > 0 {
+			m.PlaylistSelectIndex = (m.PlaylistSelectIndex - 1 + len(m.Playlists)) % len(m.Playlists)
+		}
+		return m, nil
+	case "r":
+		if len(m.Playlists) > 0 && m.PlaylistSelectIndex >= 0 && m.PlaylistSelectIndex < len(m.Playlists) {
+			playlist := m.Playlists[m.PlaylistSelectIndex]
+			trackID := m.SelectedTrackID
+			trackTitle := m.SelectedTrackTitle
+			m.IsSubmitting = true
+			m.ErrorMsg = ""
+			return m, func() tea.Msg {
+				return types.RemoveFromPlaylistMsg{
+					PlaylistID:   playlist.PlaylistId,
+					PlaylistName: playlist.Title,
+					TrackID:      trackID,
+					TrackTitle:   trackTitle,
+				}
+			}
+		}
+	case "enter", "a":
+		if len(m.Playlists) > 0 && m.PlaylistSelectIndex >= 0 && m.PlaylistSelectIndex < len(m.Playlists) {
+			playlist := m.Playlists[m.PlaylistSelectIndex]
+			trackID := m.SelectedTrackID
+			trackTitle := m.SelectedTrackTitle
+			m.IsSubmitting = true
+			m.ErrorMsg = ""
+			return m, func() tea.Msg {
+				return types.AddToPlaylistMsg{
+					PlaylistID:   playlist.PlaylistId,
+					PlaylistName: playlist.Title,
+					TrackID:      trackID,
+					TrackTitle:   trackTitle,
+					Duplicates:   false,
+				}
+			}
+		}
+	}
 	return m, nil
 }
 
@@ -551,36 +559,37 @@ func (m *ForegroundModel) renderPlaylistManagementModal() string {
 
 	var middleSection string
 
-	if m.IsLoading {
+	switch {
+	case m.IsLoading:
 		middleSection = lipgloss.NewStyle().
 			Height(5).
 			Align(lipgloss.Center, lipgloss.Center).
 			Width(modalWidth - 4).
 			Foreground(lipgloss.Color("#A1A1AA")).
 			Render("⏳ Fetching your playlists...")
-	} else if m.IsSubmitting {
+	case m.IsSubmitting:
 		middleSection = lipgloss.NewStyle().
 			Height(5).
 			Align(lipgloss.Center, lipgloss.Center).
 			Width(modalWidth - 4).
 			Foreground(lipgloss.Color("#A1A1AA")).
 			Render("⏳ Updating playlist...")
-	} else {
+	default:
 		var listRows []string
 		if len(m.Playlists) == 0 {
 			listRows = append(listRows, dimStyle.Render("No editable playlists found in library."))
 		} else {
-			for i, pl := range m.Playlists {
-				itemTitle := pl.Title
+			for idx, playlist := range m.Playlists {
+				itemTitle := playlist.Title
 				if itemTitle == "" {
 					itemTitle = "Untitled Playlist"
 				}
 				countStr := ""
-				if pl.Count > 0 {
-					countStr = fmt.Sprintf(" (%d tracks)", pl.Count)
+				if playlist.Count > 0 {
+					countStr = fmt.Sprintf(" (%d tracks)", playlist.Count)
 				}
 				line := fmt.Sprintf("%s%s", itemTitle, countStr)
-				if i == m.PlaylistSelectIndex {
+				if idx == m.PlaylistSelectIndex {
 					listRows = append(listRows, selectedStyle.Render("▶ "+line))
 				} else {
 					listRows = append(listRows, normalStyle.Render("  "+line))

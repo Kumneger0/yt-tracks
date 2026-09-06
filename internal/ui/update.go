@@ -23,6 +23,15 @@ import (
 	"go.dalton.dog/bubbleup"
 )
 
+const (
+	keyTab      = "tab"
+	keyShiftTab = "shift+tab"
+	keyEnter    = "enter"
+	keyDown     = "down"
+	keyCtrlC    = "ctrl+c"
+	titleHome   = "Home"
+)
+
 type MusicMetadata struct {
 	artistName []string
 	title      string
@@ -41,15 +50,507 @@ func getMusicMetadata(music MusicMetadata) map[string]any {
 	return metadata
 }
 
-func (m Model) getSearchResultModel(searchResponse *types.SearchResponse) (Model, tea.Cmd) {
+func (m Model) getSearchResultModel(searchResponse *types.SearchResponse) Model {
 	dims := CalculateLayoutDimensions(&m)
 	m.SearchResult = list.New(searchResponse.Items, CustomDelegate{Model: &m}, dims.MainWidth, dims.ContentHeight-4)
 	m.SearchResult.SetShowTitle(false)
 	removeListDefaults(&m.SearchResult)
+	return m
+}
+
+func (m Model) handleAddToPlaylistMessage(msg types.AddToPlaylistMsg) (tea.Model, tea.Cmd) {
+	addCmd := func() tea.Msg {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		response, err := m.YtMusicClient.AddPlaylistItems(ctx, &musicpb.AddPlaylistItemsRequest{
+			PlaylistId: msg.PlaylistID,
+			VideoIds:   []string{msg.TrackID},
+			Duplicates: msg.Duplicates,
+		})
+
+		isDup := false
+		if err != nil || response == nil || !response.Success {
+			itemsRes, itemsErr := m.YtMusicClient.GetPlaylistItems(ctx, &musicpb.GetPlaylistItemsRequest{
+				PlaylistId: msg.PlaylistID,
+				Limit:      200,
+			})
+			if itemsErr == nil && itemsRes != nil {
+				for _, t := range itemsRes.Tracks {
+					if t.VideoId == msg.TrackID {
+						isDup = true
+						break
+					}
+				}
+			}
+		}
+
+		if !msg.Duplicates && isDup {
+			return types.PromptDuplicateConfirmMsg{
+				PlaylistID:   msg.PlaylistID,
+				PlaylistName: msg.PlaylistName,
+				TrackID:      msg.TrackID,
+				TrackTitle:   msg.TrackTitle,
+			}
+		}
+
+		if err != nil {
+			slog.Error(err.Error())
+			return types.AddToPlaylistResponseMsg{
+				PlaylistID:   msg.PlaylistID,
+				PlaylistName: msg.PlaylistName,
+				TrackID:      msg.TrackID,
+				TrackTitle:   msg.TrackTitle,
+				Success:      false,
+				Err:          err,
+			}
+		}
+		if response == nil || !response.Success {
+			errStr := "Failed to add song to playlist"
+			if response != nil && response.Error != "" {
+				errStr = response.Error
+			}
+			return types.AddToPlaylistResponseMsg{
+				PlaylistID:   msg.PlaylistID,
+				PlaylistName: msg.PlaylistName,
+				TrackID:      msg.TrackID,
+				TrackTitle:   msg.TrackTitle,
+				Success:      false,
+				Err:          fmt.Errorf("%s", errStr),
+			}
+		}
+		return types.AddToPlaylistResponseMsg{
+			PlaylistID:   msg.PlaylistID,
+			PlaylistName: msg.PlaylistName,
+			TrackID:      msg.TrackID,
+			TrackTitle:   msg.TrackTitle,
+			Status:       response.Status,
+			Success:      true,
+		}
+	}
+	return m, addCmd
+}
+
+func (m Model) handleRemoveFromPlaylistMessage(msg types.RemoveFromPlaylistMsg) (tea.Model, tea.Cmd) {
+	removeCmd := func() tea.Msg {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		result, err := m.YtMusicClient.GetPlaylistItems(ctx, &musicpb.GetPlaylistItemsRequest{
+			PlaylistId: msg.PlaylistID,
+			Limit:      200,
+		})
+		if err != nil {
+			return types.RemoveFromPlaylistResponseMsg{
+				PlaylistID:   msg.PlaylistID,
+				PlaylistName: msg.PlaylistName,
+				TrackID:      msg.TrackID,
+				TrackTitle:   msg.TrackTitle,
+				Success:      false,
+				Err:          err,
+			}
+		}
+
+		var setVideoID *string
+		for _, track := range result.Tracks {
+			if track.VideoId == msg.TrackID {
+				setVideoID = &track.SetVideoId
+				break
+			}
+		}
+
+		if setVideoID == nil {
+			return types.RemoveFromPlaylistResponseMsg{
+				PlaylistID:   msg.PlaylistID,
+				PlaylistName: msg.PlaylistName,
+				TrackID:      msg.TrackID,
+				TrackTitle:   msg.TrackTitle,
+				Success:      false,
+				Err:          errors.New("Failed to Find the track in this playlist"),
+			}
+		}
+		response, err := m.YtMusicClient.RemovePlaylistItems(ctx, &musicpb.RemovePlaylistItemsRequest{
+			PlaylistId: msg.PlaylistID,
+			Videos: []*musicpb.PlaylistItemRef{
+				{
+					VideoId:    msg.TrackID,
+					SetVideoId: *setVideoID,
+				},
+			},
+		})
+
+		if err != nil {
+			slog.Error(err.Error())
+			return types.RemoveFromPlaylistResponseMsg{
+				PlaylistID:   msg.PlaylistID,
+				PlaylistName: msg.PlaylistName,
+				TrackID:      msg.TrackID,
+				TrackTitle:   msg.TrackTitle,
+				Success:      false,
+				Err:          err,
+			}
+		}
+		if response == nil || !response.Success {
+			errStr := "Failed to remove song from playlist"
+			if response != nil && response.Error != "" {
+				errStr = response.Error
+			}
+			return types.RemoveFromPlaylistResponseMsg{
+				PlaylistID:   msg.PlaylistID,
+				PlaylistName: msg.PlaylistName,
+				TrackID:      msg.TrackID,
+				TrackTitle:   msg.TrackTitle,
+				Success:      false,
+				Err:          fmt.Errorf("%s", errStr),
+			}
+		}
+		return types.RemoveFromPlaylistResponseMsg{
+			PlaylistID:   msg.PlaylistID,
+			PlaylistName: msg.PlaylistName,
+			TrackID:      msg.TrackID,
+			TrackTitle:   msg.TrackTitle,
+			Success:      true,
+		}
+	}
+	return m, removeCmd
+}
+
+func (m Model) handleUpdatePlaylistMessage(msg types.UpdatePlaylistMsg) (tea.Model, tea.Cmd) {
+	m.IsSearchLoading = false
+	if msg.Playlist != nil {
+		var playListItemSongs []list.Item
+		for _, item := range msg.Playlist {
+			playListItemSongs = append(playListItemSongs, *item)
+		}
+		m.MainViewMode = NormalMode
+		m.IsSearchLoading = false
+		var cmd tea.Cmd
+		if m.IsOnPagination {
+			m.IsOnPagination = false
+			selectedPlayListItems := m.SelectedPlayListItems.Items()
+			selectedPlayListItems = append(selectedPlayListItems, playListItemSongs...)
+			cmd = m.SelectedPlayListItems.SetItems(selectedPlayListItems)
+		} else {
+			cmd = m.SelectedPlayListItems.SetItems(playListItemSongs)
+		}
+		if m.PendingContextName != "" {
+			m.SelectedPlayListItems.Title = m.PendingContextName
+		}
+		if msg.PaginationInfo != nil {
+			m.PaginationInfo = msg.PaginationInfo
+		} else {
+			m.PaginationInfo = nil
+		}
+		return m, cmd
+	}
+	if msg.Err != nil {
+		m.IsOnPagination = false
+		alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
+		return m, alertCmd
+	}
+	dims := CalculateLayoutDimensions(&m)
+	m.SelectedPlayListItems = list.New([]list.Item{}, CustomDelegate{Model: &m}, dims.MainWidth, dims.ContentHeight-4)
+	m.SelectedPlayListItems.SetShowTitle(false)
+	removeListDefaults(&m.SelectedPlayListItems)
 	return m, nil
 }
 
+func (m Model) handleSearchAndDownloadMusicMessage(msg types.SearchAndDownloadMusicMsg) (tea.Model, tea.Cmd) {
+	if msg.Err != nil {
+		slog.Error(msg.Err.Error())
+		alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
+		return m, alertCmd
+	}
+	if msg.Player == nil {
+		return m, nil
+	}
+	if m.SelectedTrack == nil || m.SelectedTrack.Track == nil {
+		_ = msg.Player.Close()
+		return m, nil
+	}
+	if msg.VideoID != m.SelectedTrack.Track.VideoId {
+		_ = msg.Player.Close()
+		return m, nil
+	}
+	if m.SelectedTrack.Track.DurationSeconds == 0 && msg.Duration != "" {
+		if duration, err := strconv.ParseInt(msg.Duration, 10, 64); err == nil {
+			m.SelectedTrack.Track.DurationSeconds = int32(duration)
+		} else {
+			slog.Error(err.Error())
+		}
+	}
+	likedCmd := func() tea.Msg {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		resp, err := m.YtMusicClient.CheckUserSavedTrack(ctx, &musicpb.CheckUserSavedTrackRequest{
+			VideoId: msg.VideoID,
+		})
+		if err != nil {
+			return types.CheckUserSavedTrackResponseMsg{
+				Saved: false,
+				Err:   err,
+			}
+		}
+		return types.CheckUserSavedTrackResponseMsg{
+			Saved: resp.IsSaved,
+			Err:   err,
+		}
+	}
+	m.PlayerProcess = msg.Player
+	return m, likedCmd
+}
+
+func (m Model) handleGetLibraryMessage(msg types.GetLibraryMsg) (tea.Model, tea.Cmd) {
+	m.IsSearchLoading = false
+	if msg.Err != nil {
+		slog.Error(msg.Err.Error())
+		alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
+		return m, alertCmd
+	}
+	if msg.Result == nil {
+		return m, nil
+	}
+
+	var items []list.Item
+	for _, s := range msg.Result.Songs {
+		items = append(items, types.PlaylistTrackObject{Track: s})
+	}
+	for _, p := range msg.Result.Playlists {
+		items = append(items, types.PlaylistItem{Playlist: p})
+	}
+	for _, al := range msg.Result.Albums {
+		items = append(items, types.AlbumItem{Album: al})
+	}
+	for _, a := range msg.Result.Artists {
+		items = append(items, types.FollowedArtistItem{FollowedArtist: a})
+	}
+	for _, c := range msg.Result.Channels {
+		items = append(items, types.LibraryChannelItem{LibraryChannel: c})
+	}
+	for _, pod := range msg.Result.Podcasts {
+		items = append(items, types.PodcastItem{Podcast: pod})
+	}
+	dims := CalculateLayoutDimensions(&m)
+	m.SelectedPlayListItems = list.New(items, CustomDelegate{Model: &m}, dims.MainWidth, dims.ContentHeight-4)
+	m.SelectedPlayListItems.Title = "Library"
+	m.SelectedPlayListItems.SetShowTitle(false)
+	removeListDefaults(&m.SelectedPlayListItems)
+	m.MainViewMode = NormalMode
+	m.FocusedOn = MainView
+	return m, nil
+}
+
+func (m Model) handlePlaylistDetailMessage(msg types.PlaylistDetailMsg) (tea.Model, tea.Cmd) {
+	if msg.Err != nil {
+		slog.Error(msg.Err.Error())
+		alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
+		return m, alertCmd
+	}
+	if msg.Err != nil {
+		slog.Error(msg.Err.Error())
+		alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
+		return m, alertCmd
+	}
+	if msg.Playlist == nil {
+		return m, nil
+	}
+	var tracks []*types.PlaylistTrackObject
+	for _, track := range msg.Playlist.Tracks {
+		tracks = append(tracks, &types.PlaylistTrackObject{Track: track})
+	}
+	cmd := func() tea.Msg {
+		return types.UpdatePlaylistMsg{Playlist: tracks}
+	}
+	return m, cmd
+}
+
+func (m Model) handleUpdateHomePageContentMessage(msg types.UpdateHomePageContentMsg) (tea.Model, tea.Cmd) {
+	var items []list.Item
+	contents := m.HomePageData.Sections[msg.Item.Index]
+	if contents == nil {
+		return m, nil
+	}
+	for _, content := range contents.Contents {
+		items = append(items, types.HomePageContentItem{
+			ItemTitle:       content.Title,
+			PlaylistID:      content.PlaylistId,
+			VideoID:         content.VideoId,
+			BrowseID:        content.BrowseId,
+			ContentType:     content.ContentType,
+			Description:     content.Description,
+			Artists:         content.Artists,
+			DurationSeconds: content.DurationSeconds,
+		})
+	}
+	dims := CalculateLayoutDimensions(&m)
+	m.HomePageList = list.New(items, CustomDelegate{Model: &m}, dims.MainWidth, dims.ContentHeight-4)
+	m.HomePageList.SetShowTitle(false)
+	m.IsSearchLoading = false
+	removeListDefaults(&m.HomePageList)
+	m.HomePageList.Title = msg.Item.Title()
+	m.HomePageViewMode = HomePageContentView
+	m.MainViewMode = HomePageMode
+	return m, nil
+}
+
+func (m Model) handleSearchResultMessage(msg types.SearchResultMsg) (tea.Model, tea.Cmd) {
+	var alertCmd tea.Cmd
+	if msg.Err != nil {
+		alertCmd = m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
+		return m, alertCmd
+	}
+	if msg.Result == nil {
+		return m, nil
+	}
+	m.FocusedOn = MainView
+	m.MainViewMode = SearchResultMode
+	model := m.getSearchResultModel(msg.Result)
+	m = model
+	m.IsSearchLoading = false
+	m.Search.Blur()
+	return m, nil
+}
+
+func (m Model) handleHomePageResponseMessage(msg types.HomePageResponseMsg) (tea.Model, tea.Cmd) {
+	var alertCmd tea.Cmd
+	m.IsSearchLoading = false
+	if msg.Err != nil {
+		slog.Error(msg.Err.Error())
+		alertCmd = m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
+		return m, alertCmd
+	}
+	m.HomePageData = msg.Response
+	var items []list.Item
+	for i, section := range msg.Response.Sections {
+		items = append(items, types.HomePageSectionItem{
+			SectionTitle: section.Title,
+			Index:        i,
+		})
+	}
+
+	dims := CalculateLayoutDimensions(&m)
+	m.HomePageList = list.New(items, CustomDelegate{Model: &m}, dims.MainWidth, dims.ContentHeight-4)
+	m.HomePageList.SetShowTitle(false)
+	removeListDefaults(&m.HomePageList)
+	m.HomePageList.Title = titleHome
+	m.HomePageViewMode = HomePageSectionView
+	m.MainViewMode = HomePageMode
+	return m, nil
+}
+
+func (m Model) handleRelatedSongsMessage(msg types.RelatedSongsMsg) (tea.Model, tea.Cmd) {
+	if msg.Err != nil {
+		slog.Error(msg.Err.Error())
+		alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
+		return m, alertCmd
+	}
+	if msg.Related == nil || len(msg.Related.Sections) == 0 {
+		slog.Error("Failed to Fetch Related Songs")
+		return m, nil
+	}
+	var items []list.Item
+	for _, section := range msg.Related.Sections {
+		if section.Title != "" {
+			items = append(items, types.HomePageSectionItem{SectionTitle: section.Title})
+		}
+		for _, content := range section.Contents {
+			items = append(items, types.SongRelatedContentItem{SongRelatedContent: content})
+		}
+		if section.TextContent != "" {
+			items = append(items, types.HomePageContentItem{
+				ItemTitle:   section.Title,
+				Description: section.TextContent,
+			})
+		}
+	}
+	dims := CalculateLayoutDimensions(&m)
+	m.RelatedList = list.New(items, CustomDelegate{Model: &m}, dims.SidebarWidth, dims.ContentHeight)
+	m.RelatedList.Title = "Related"
+	removeListDefaults(&m.RelatedList)
+	m.RelatedList.Title = "Related"
+	m.RightColumnMode = RightColumnRelated
+	return m, nil
+}
+
+func (m Model) handleLyricsMessage(msg types.LyricsMsg) (tea.Model, tea.Cmd) {
+	if msg.Err != nil {
+		alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
+		slog.Error(msg.Err.Error())
+		m.LyricsView.SetContent(msg.Err.Error())
+		return m, alertCmd
+	}
+	if msg.LyricsResponse == nil || (msg.LyricsResponse.Lyrics == "" && len(msg.LyricsResponse.Lines) == 0) {
+		noLyricsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#71717A")).Italic(true)
+		m.LyricsView.SetContent(noLyricsStyle.Render("No lyrics found for this song."))
+		m.CurrentLyrics = nil
+		return m, nil
+	}
+	m.MainViewMode = LyricsMode
+	m.CurrentLyrics = msg.LyricsResponse
+	m.updateLyricsView()
+	return m, nil
+}
+
+func isPlaylistMessage(msg tea.Msg) bool {
+	switch msg.(type) {
+	case types.WatchPlaylistItemsMsg, types.CreatePlaylistMsg, types.CreatePlaylistResponseMsg,
+		types.AddToPlaylistMsg, types.AddToPlaylistResponseMsg, types.RemoveFromPlaylistMsg,
+		types.RemoveFromPlaylistResponseMsg, types.UpdatePlaylistMsg, types.RelatedSongsMsg,
+		types.LyricsMsg:
+		return true
+	default:
+		return false
+	}
+}
+
+func isSearchMessage(msg tea.Msg) bool {
+	switch msg.(type) {
+	case types.GetLibraryMsg, types.PlaylistDetailMsg, types.UpdateHomePageContentMsg,
+		types.SearchAndDownloadMusicMsg, types.CheckUserSavedTrackResponseMsg,
+		types.SearchingMsg, types.SearchResultMsg, types.HomePageResponseMsg,
+		types.LikeUnlikeTrackResponseMsg:
+		return true
+	default:
+		return false
+	}
+}
+
+func isPlaybackMessage(msg tea.Msg) bool {
+	switch msg.(type) {
+	case types.DBusMessage, types.PlayedSecondsUpdateMsg:
+		return true
+	default:
+		return false
+	}
+}
+
+func isInputMessage(msg tea.Msg) bool {
+	switch msg.(type) {
+	case tea.WindowSizeMsg, tea.KeyMsg, tea.MouseMsg:
+		return true
+	default:
+		return false
+	}
+}
+
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch {
+	case isPlaylistMessage(msg):
+		return m.handlePlaylistMessage(msg)
+	case isSearchMessage(msg):
+		return m.handleSearchMessage(msg)
+	case isPlaybackMessage(msg):
+		return m.handlePlaybackMessage(msg)
+	case isInputMessage(msg):
+		return m.handleInputMessage(msg)
+	default:
+		model, cmd := updateFocusedComponent(&m, msg)
+		m = model
+		outAlert, outCmd := m.Alert.Update(msg)
+		m.Alert = outAlert.(bubbleup.AlertModel)
+		return m, tea.Batch(outCmd, cmd)
+	}
+}
+
+func (m Model) handlePlaylistMessage(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case types.WatchPlaylistItemsMsg:
 		if msg.Err != nil {
@@ -71,9 +572,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if song.VideoId == currentlyPlayingTrackID {
 				continue
 			}
-			m.PlaybackContext = append(m.PlaybackContext, &types.PlaylistTrackObject{
-				Track: song,
-			})
+			m.PlaybackContext = append(m.PlaybackContext, &types.PlaylistTrackObject{Track: song})
 		}
 		m.PlaybackContextName = ""
 		return m, m.SyncQueueList()
@@ -113,75 +612,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case types.AddToPlaylistMsg:
-		addCmd := func() tea.Msg {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			response, err := m.YtMusicClient.AddPlaylistItems(ctx, &musicpb.AddPlaylistItemsRequest{
-				PlaylistId: msg.PlaylistID,
-				VideoIds:   []string{msg.TrackID},
-				Duplicates: msg.Duplicates,
-			})
-
-			isDup := false
-			if err != nil || response == nil || !response.Success {
-				itemsRes, itemsErr := m.YtMusicClient.GetPlaylistItems(ctx, &musicpb.GetPlaylistItemsRequest{
-					PlaylistId: msg.PlaylistID,
-					Limit:      200,
-				})
-				if itemsErr == nil && itemsRes != nil {
-					for _, t := range itemsRes.Tracks {
-						if t.VideoId == msg.TrackID {
-							isDup = true
-							break
-						}
-					}
-				}
-			}
-
-			if !msg.Duplicates && isDup {
-				return types.PromptDuplicateConfirmMsg{
-					PlaylistID:   msg.PlaylistID,
-					PlaylistName: msg.PlaylistName,
-					TrackID:      msg.TrackID,
-					TrackTitle:   msg.TrackTitle,
-				}
-			}
-
-			if err != nil {
-				slog.Error(err.Error())
-				return types.AddToPlaylistResponseMsg{
-					PlaylistID:   msg.PlaylistID,
-					PlaylistName: msg.PlaylistName,
-					TrackID:      msg.TrackID,
-					TrackTitle:   msg.TrackTitle,
-					Success:      false,
-					Err:          err,
-				}
-			}
-			if response == nil || !response.Success {
-				errStr := "Failed to add song to playlist"
-				if response != nil && response.Error != "" {
-					errStr = response.Error
-				}
-				return types.AddToPlaylistResponseMsg{
-					PlaylistID:   msg.PlaylistID,
-					PlaylistName: msg.PlaylistName,
-					TrackID:      msg.TrackID,
-					TrackTitle:   msg.TrackTitle,
-					Success:      false,
-					Err:          fmt.Errorf("%s", errStr),
-				}
-			}
-			return types.AddToPlaylistResponseMsg{
-				PlaylistID:   msg.PlaylistID,
-				PlaylistName: msg.PlaylistName,
-				TrackID:      msg.TrackID,
-				TrackTitle:   msg.TrackTitle,
-				Status:       response.Status,
-				Success:      true,
-			}
-		}
-		return m, addCmd
+		return m.handleAddToPlaylistMessage(msg)
 	case types.AddToPlaylistResponseMsg:
 		if msg.Success {
 			alertCmd := m.Alert.NewAlertCmd(bubbleup.InfoKey, fmt.Sprintf("Added \"%s\" to %s", msg.TrackTitle, msg.PlaylistName))
@@ -192,86 +623,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case types.RemoveFromPlaylistMsg:
-		removeCmd := func() tea.Msg {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			result, err := m.YtMusicClient.GetPlaylistItems(ctx, &musicpb.GetPlaylistItemsRequest{
-				PlaylistId: msg.PlaylistID,
-				Limit:      200,
-			})
-			if err != nil {
-				return types.RemoveFromPlaylistResponseMsg{
-					PlaylistID:   msg.PlaylistID,
-					PlaylistName: msg.PlaylistName,
-					TrackID:      msg.TrackID,
-					TrackTitle:   msg.TrackTitle,
-					Success:      false,
-					Err:          err,
-				}
-			}
-
-			var setVideoID *string
-			for _, track := range result.Tracks {
-				if track.VideoId == msg.TrackID {
-					setVideoID = &track.SetVideoId
-					break
-				}
-			}
-
-			if setVideoID == nil {
-				return types.RemoveFromPlaylistResponseMsg{
-					PlaylistID:   msg.PlaylistID,
-					PlaylistName: msg.PlaylistName,
-					TrackID:      msg.TrackID,
-					TrackTitle:   msg.TrackTitle,
-					Success:      false,
-					Err:          errors.New("Failed to Find the track in this playlist"),
-				}
-			}
-			response, err := m.YtMusicClient.RemovePlaylistItems(ctx, &musicpb.RemovePlaylistItemsRequest{
-				PlaylistId: msg.PlaylistID,
-				Videos: []*musicpb.PlaylistItemRef{
-					{
-						VideoId:    msg.TrackID,
-						SetVideoId: *setVideoID,
-					},
-				},
-			})
-
-			if err != nil {
-				slog.Error(err.Error())
-				return types.RemoveFromPlaylistResponseMsg{
-					PlaylistID:   msg.PlaylistID,
-					PlaylistName: msg.PlaylistName,
-					TrackID:      msg.TrackID,
-					TrackTitle:   msg.TrackTitle,
-					Success:      false,
-					Err:          err,
-				}
-			}
-			if response == nil || !response.Success {
-				errStr := "Failed to remove song from playlist"
-				if response != nil && response.Error != "" {
-					errStr = response.Error
-				}
-				return types.RemoveFromPlaylistResponseMsg{
-					PlaylistID:   msg.PlaylistID,
-					PlaylistName: msg.PlaylistName,
-					TrackID:      msg.TrackID,
-					TrackTitle:   msg.TrackTitle,
-					Success:      false,
-					Err:          fmt.Errorf("%s", errStr),
-				}
-			}
-			return types.RemoveFromPlaylistResponseMsg{
-				PlaylistID:   msg.PlaylistID,
-				PlaylistName: msg.PlaylistName,
-				TrackID:      msg.TrackID,
-				TrackTitle:   msg.TrackTitle,
-				Success:      true,
-			}
-		}
-		return m, removeCmd
+		return m.handleRemoveFromPlaylistMessage(msg)
 	case types.RemoveFromPlaylistResponseMsg:
 		if msg.Success {
 			alertCmd := m.Alert.NewAlertCmd(bubbleup.InfoKey, fmt.Sprintf("Removed \"%s\" from %s", msg.TrackTitle, msg.PlaylistName))
@@ -281,161 +633,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, alertCmd
 		}
 		return m, nil
-	case types.GetLibraryMsg:
-		m.IsSearchLoading = false
-		if msg.Err != nil {
-			slog.Error(msg.Err.Error())
-			alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
-			return m, alertCmd
-		}
-		if msg.Result != nil {
-			var items []list.Item
-			for _, s := range msg.Result.Songs {
-				items = append(items, types.PlaylistTrackObject{
-					Track: s,
-				})
-			}
-			for _, p := range msg.Result.Playlists {
-				items = append(items, types.PlaylistItem{Playlist: p})
-			}
-			for _, al := range msg.Result.Albums {
-				items = append(items, types.AlbumItem{Album: al})
-			}
-			for _, a := range msg.Result.Artists {
-				items = append(items, types.FollowedArtistItem{FollowedArtist: a})
-			}
-			for _, c := range msg.Result.Channels {
-				items = append(items, types.LibraryChannelItem{LibraryChannel: c})
-			}
-			for _, pod := range msg.Result.Podcasts {
-				items = append(items, types.PodcastItem{Podcast: pod})
-			}
-			dims := CalculateLayoutDimensions(&m)
-			m.SelectedPlayListItems = list.New(items, CustomDelegate{Model: &m}, dims.MainWidth, dims.ContentHeight-4)
-			m.SelectedPlayListItems.Title = "Library"
-			m.SelectedPlayListItems.SetShowTitle(false)
-			removeListDefaults(&m.SelectedPlayListItems)
-			m.MainViewMode = NormalMode
-			m.FocusedOn = MainView
-			return m, nil
-		}
-
-	case types.PythonBackendHealthResponseMsg:
-		m.IsSearchLoading = false
-		if msg.Err != nil {
-			slog.Error(msg.Err.Error())
-			alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
-			return m, alertCmd
-		}
-		if !msg.Response.Ok {
-			alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, "Health Check Error")
-			return m, alertCmd
-		}
-		homePageFeed := func() tea.Msg {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			homePage, err := m.YtMusicClient.GetHomePage(ctx, &musicpb.GetHomePageRequest{})
-			if err != nil {
-				slog.Error(err.Error())
-				return types.HomePageResponseMsg{
-					Response: nil,
-					Err:      err,
-				}
-			}
-			return types.HomePageResponseMsg{
-				Response: homePage,
-				Err:      nil,
-			}
-		}
-		return m, tea.Batch(SendLoadingCmd(), homePageFeed)
-	case types.PlaylistDetailMsg:
-		if msg.Err != nil {
-			slog.Error(msg.Err.Error())
-			alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
-			return m, alertCmd
-		}
-		var tracks []*types.PlaylistTrackObject
-		for _, track := range msg.Playlist.Tracks {
-			tracks = append(tracks, &types.PlaylistTrackObject{
-				Track: track,
-			})
-		}
-		cmd := func() tea.Msg {
-			return types.UpdatePlaylistMsg{
-				Playlist: tracks,
-			}
-		}
-		return m, cmd
-	case types.UpdateHomePageContentMsg:
-		var items []list.Item
-		contents := m.HomePageData.Sections[msg.Item.Index]
-		if contents == nil {
-			return m, nil
-		}
-		for _, content := range contents.Contents {
-			items = append(items, types.HomePageContentItem{
-				ItemTitle:       content.Title,
-				PlaylistID:      content.PlaylistId,
-				VideoID:         content.VideoId,
-				BrowseID:        content.BrowseId,
-				ContentType:     content.ContentType,
-				Description:     content.Description,
-				Artists:         content.Artists,
-				DurationSeconds: content.DurationSeconds,
-			})
-		}
-		dims := CalculateLayoutDimensions(&m)
-		m.HomePageList = list.New(items, CustomDelegate{Model: &m}, dims.MainWidth, dims.ContentHeight-4)
-		m.HomePageList.SetShowTitle(false)
-		m.IsSearchLoading = false
-		removeListDefaults(&m.HomePageList)
-		m.HomePageList.Title = msg.Item.Title()
-		m.HomePageViewMode = HomePageContentView
-		m.MainViewMode = HomePageMode
+	case types.UpdatePlaylistMsg:
+		return m.handleUpdatePlaylistMessage(msg)
+	case types.RelatedSongsMsg:
+		return m.handleRelatedSongsMessage(msg)
+	case types.LyricsMsg:
+		return m.handleLyricsMessage(msg)
+	default:
 		return m, nil
+	}
+}
+
+func (m Model) handleSearchMessage(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case types.GetLibraryMsg:
+		return m.handleGetLibraryMessage(msg)
+	case types.PlaylistDetailMsg:
+		return m.handlePlaylistDetailMessage(msg)
+	case types.UpdateHomePageContentMsg:
+		return m.handleUpdateHomePageContentMessage(msg)
 	case types.SearchAndDownloadMusicMsg:
-		if msg.Err != nil {
-			slog.Error(msg.Err.Error())
-			alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
-			return m, alertCmd
-		}
-		if msg.Player == nil {
-			return m, nil
-		}
-		if m.SelectedTrack == nil || m.SelectedTrack.Track == nil {
-			_ = msg.Player.Close()
-			return m, nil
-		}
-		if msg.VideoID != m.SelectedTrack.Track.VideoId {
-			_ = msg.Player.Close()
-			return m, nil
-		}
-		if m.SelectedTrack.Track.DurationSeconds == 0 && msg.Duration != "" {
-			if duration, err := strconv.ParseInt(msg.Duration, 10, 64); err == nil {
-				m.SelectedTrack.Track.DurationSeconds = int32(duration)
-			} else {
-				slog.Error(err.Error())
-			}
-		}
-		likedCmd := func() tea.Msg {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			resp, err := m.YtMusicClient.CheckUserSavedTrack(ctx, &musicpb.CheckUserSavedTrackRequest{
-				VideoId: msg.VideoID,
-			})
-			if err != nil {
-				return types.CheckUserSavedTrackResponseMsg{
-					Saved: false,
-					Err:   err,
-				}
-			}
-			return types.CheckUserSavedTrackResponseMsg{
-				Saved: resp.IsSaved,
-				Err:   err,
-			}
-		}
-		m.PlayerProcess = msg.Player
-		return m, likedCmd
+		return m.handleSearchAndDownloadMusicMessage(msg)
 	case types.CheckUserSavedTrackResponseMsg:
 		if msg.Err != nil {
 			slog.Error(msg.Err.Error())
@@ -446,50 +664,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case types.SearchingMsg:
 		m.IsSearchLoading = true
-	case types.SearchResultMsg:
-		var alertCmd tea.Cmd
-		if msg.Err != nil {
-			alertCmd = m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
-			return m, alertCmd
-		}
-		if msg.Result != nil {
-			m.FocusedOn = MainView
-			m.MainViewMode = SearchResultMode
-			model, cmd := m.getSearchResultModel(msg.Result)
-			m = model
-			m.IsSearchLoading = false
-			m.Search.Blur()
-			return m, cmd
-		}
-	case types.HomePageResponseMsg:
-		var alertCmd tea.Cmd
-		m.IsSearchLoading = false
-		if msg.Err != nil {
-			slog.Error(msg.Err.Error())
-			alertCmd = m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
-			return m, alertCmd
-		}
-		m.HomePageData = msg.Response
-		var items []list.Item
-		for i, section := range msg.Response.Sections {
-			items = append(items, types.HomePageSectionItem{
-				SectionTitle: section.Title,
-				Index:        i,
-			})
-		}
-
-		dims := CalculateLayoutDimensions(&m)
-		m.HomePageList = list.New(items, CustomDelegate{Model: &m}, dims.MainWidth, dims.ContentHeight-4)
-		m.HomePageList.SetShowTitle(false)
-		removeListDefaults(&m.HomePageList)
-		m.HomePageList.Title = "Home"
-		m.HomePageViewMode = HomePageSectionView
-		m.MainViewMode = HomePageMode
 		return m, nil
-	case types.DBusMessage:
-		model, cmd := m.handleDbusMessage(msg.MessageType)
-		m = model
-		return m, cmd
+	case types.SearchResultMsg:
+		return m.handleSearchResultMessage(msg)
+	case types.HomePageResponseMsg:
+		return m.handleHomePageResponseMessage(msg)
 	case types.LikeUnlikeTrackResponseMsg:
 		if msg.Err != nil {
 			alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
@@ -498,6 +677,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.SelectedTrack != nil && m.SelectedTrack.Track != nil && m.SelectedTrack.Track.VideoId == msg.TrackID {
 			m.SelectedTrack.isLiked = msg.Liked
 		}
+		return m, nil
+	default:
+		return m, nil
+	}
+}
+
+func (m Model) handlePlaybackMessage(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case types.DBusMessage:
+		model, cmd := m.handleDbusMessage(msg.MessageType)
+		m = model
+		return m, cmd
 	case types.PlayedSecondsUpdateMsg:
 		if m.SelectedTrack == nil || m.SelectedTrack.Track == nil {
 			return m, nil
@@ -507,7 +698,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if int(m.PlayedSeconds) == oldSec {
 			return m, nil
 		}
-
 		if m.CurrentLyrics != nil {
 			m.updateLyricsView()
 		}
@@ -517,7 +707,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m = model
 			return m, cmd
 		}
+		return m, nil
+	default:
+		return m, nil
+	}
+}
 
+func (m Model) handleInputMessage(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.Width = msg.Width - 4
 		m.Height = msg.Height - 4
@@ -529,92 +726,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.LyricsView.Height = max(dims.ContentHeight-6, 10)
 		m.UpdateListDimensions()
 		return m, nil
-	case types.UpdatePlaylistMsg:
-		m.IsSearchLoading = false
-		if msg.Playlist != nil {
-			var playListItemSongs []list.Item
-			for _, item := range msg.Playlist {
-				playListItemSongs = append(playListItemSongs, *item)
-			}
-			m.MainViewMode = NormalMode
-			m.IsSearchLoading = false
-			var cmd tea.Cmd
-			if m.IsOnPagination {
-				m.IsOnPagination = false
-				existingItems := m.SelectedPlayListItems.Items()
-				allItems := append(existingItems, playListItemSongs...)
-				cmd = m.SelectedPlayListItems.SetItems(allItems)
-			} else {
-				cmd = m.SelectedPlayListItems.SetItems(playListItemSongs)
-			}
-			if m.PendingContextName != "" {
-				m.SelectedPlayListItems.Title = m.PendingContextName
-			}
-			if msg.PaginationInfo != nil {
-				m.PaginationInfo = msg.PaginationInfo
-			} else {
-				m.PaginationInfo = nil
-			}
-			return m, cmd
-		}
-		if msg.Err != nil {
-			m.IsOnPagination = false
-			alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
-			return m, alertCmd
-		}
-		dims := CalculateLayoutDimensions(&m)
-		m.SelectedPlayListItems = list.New([]list.Item{}, CustomDelegate{Model: &m}, dims.MainWidth, dims.ContentHeight-4)
-		m.SelectedPlayListItems.SetShowTitle(false)
-		removeListDefaults(&m.SelectedPlayListItems)
-	case types.RelatedSongsMsg:
-		if msg.Err != nil {
-			slog.Error(msg.Err.Error())
-			alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
-			return m, alertCmd
-		}
-		if msg.Related == nil || len(msg.Related.Sections) == 0 {
-			slog.Error("Failed to Fetch Related Songs")
-			return m, nil
-		}
-		var items []list.Item
-		for _, section := range msg.Related.Sections {
-			if section.Title != "" {
-				items = append(items, types.HomePageSectionItem{SectionTitle: section.Title})
-			}
-			for _, content := range section.Contents {
-				items = append(items, types.SongRelatedContentItem{SongRelatedContent: content})
-			}
-			if section.TextContent != "" {
-				items = append(items, types.HomePageContentItem{
-					ItemTitle:   section.Title,
-					Description: section.TextContent,
-				})
-			}
-		}
-		dims := CalculateLayoutDimensions(&m)
-		m.RelatedList = list.New(items, CustomDelegate{Model: &m}, dims.SidebarWidth, dims.ContentHeight)
-		m.RelatedList.Title = "Related"
-		removeListDefaults(&m.RelatedList)
-		m.RelatedList.Title = "Related"
-		m.RightColumnMode = RightColumnRelated
-		return m, nil
-	case types.LyricsMsg:
-		if msg.Err != nil {
-			alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
-			slog.Error(msg.Err.Error())
-			m.LyricsView.SetContent(msg.Err.Error())
-			return m, alertCmd
-		}
-		if msg.LyricsResponse == nil || (msg.LyricsResponse.Lyrics == "" && len(msg.LyricsResponse.Lines) == 0) {
-			noLyricsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#71717A")).Italic(true)
-			m.LyricsView.SetContent(noLyricsStyle.Render("No lyrics found for this song."))
-			m.CurrentLyrics = nil
-			return m, nil
-		}
-		m.MainViewMode = LyricsMode
-		m.CurrentLyrics = msg.LyricsResponse
-		m.updateLyricsView()
-		return m, nil
 	case tea.KeyMsg:
 		model, cmd := m.handleKeyPress(msg)
 		m = model
@@ -625,7 +736,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, tea.Batch(cmd, searchCmd)
 		}
-
+		model, focusCmd := updateFocusedComponent(&m, msg)
+		m = model
+		outAlert, alertCmd := m.Alert.Update(msg)
+		m.Alert = outAlert.(bubbleup.AlertModel)
+		return m, tea.Batch(focusCmd, alertCmd)
 	case tea.MouseMsg:
 		x := msg.X
 		y := msg.Y
@@ -636,14 +751,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 			}
 		}
-
+		return m, nil
 	default:
+		return m, nil
 	}
-	model, cmd := updateFocusedComponent(&m, msg)
-	m = model
-	outAlert, outCmd := m.Alert.Update(msg)
-	m.Alert = outAlert.(bubbleup.AlertModel)
-	return m, tea.Batch(outCmd, cmd)
 }
 
 func (m Model) handleDbusMessage(msg types.MessageType) (Model, tea.Cmd) {
@@ -686,184 +797,108 @@ func (m Model) handlePagination(listModel *list.Model, currentIndex *int) (Model
 }
 
 func (m Model) handleKeyPress(msg tea.KeyMsg) (Model, tea.Cmd) {
-	switch msg.String() {
+	key := msg.String()
+
+	switch key {
 	case "ctrl+t":
-		openCreatePlaylistModal := func() tea.Msg {
-			return types.OpenModalMsg{
-				ModalType: types.ModalTypeCreatePlaylist,
-			}
-		}
-		return m, openCreatePlaylistModal
+		return m.handleCreatePlaylistKey()
 	case "ctrl+p":
-		trackID, trackTitle := m.getCurrentSelectedTrack()
-		if trackID == "" {
-			return m, nil
+		return m.openPlaylistManagementModal()
+	case keyDown, "j":
+		return m.handleVerticalNavigationKey(msg, true)
+	case "up", "k":
+		return m.handleVerticalNavigationKey(msg, false)
+	case "ctrl+k":
+		return m.handleSearchFocusKey()
+	case "esc", "escape":
+		return m.handleEscapeKey()
+	case "a", "r", "ctrl+l", "l", " ", "b", "n", "ctrl+q", "q", keyCtrlC:
+		return m.handleActionKey(key)
+	case keyTab:
+		return changeFocusMode(&m, false)
+	case keyShiftTab:
+		return changeFocusMode(&m, true)
+	case keyEnter:
+		return m.handleEnterKey()
+	default:
+		return m, nil
+	}
+}
+
+func (m Model) handleCreatePlaylistKey() (Model, tea.Cmd) {
+	openCreatePlaylistModal := func() tea.Msg {
+		return types.OpenModalMsg{
+			ModalType: types.ModalTypeCreatePlaylist,
 		}
-		openAddToPlaylistCmd := func() tea.Msg {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			userPlaylists, err := m.YtMusicClient.GetUserPlaylists(ctx, &musicpb.GetUserPlaylistsRequest{Limit: 100})
-			if err != nil {
-				return types.OpenAddToPlaylistModalMsg{
-					TrackID:    trackID,
-					TrackTitle: trackTitle,
-					Err:        err,
-				}
-			}
-			var pls []*musicpb.Playlist
-			if userPlaylists != nil {
-				pls = userPlaylists.Playlists
-			}
-			return types.OpenAddToPlaylistModalMsg{
-				TrackID:    trackID,
-				TrackTitle: trackTitle,
-				Playlists:  pls,
-			}
-		}
-		return m, tea.Batch(
-			tea.Sequence(
-				func() tea.Msg {
-					return types.OpenAddToPlaylistLoadingMsg{
-						TrackID:    trackID,
-						TrackTitle: trackTitle,
-					}
-				},
-				func() tea.Msg {
-					return types.OpenModalMsg{ModalType: types.ModalTypePlaylistManagement}
-				},
-			),
-			openAddToPlaylistCmd,
-		)
-	case "down", "j":
-		if m.MainViewMode == LyricsMode && m.FocusedOn == MainView {
-			var cmd tea.Cmd
-			m.LyricsView, cmd = m.LyricsView.Update(msg)
-			return m, cmd
-		}
-		if m.FocusedOn != MainView && m.FocusedOn != QueueList {
-			return m, nil
-		}
-		if m.MainViewMode == HomePageMode {
-			var cmd tea.Cmd
-			m.HomePageList, cmd = m.HomePageList.Update(msg)
-			return m, cmd
-		}
+	}
+	return m, openCreatePlaylistModal
+}
+
+func (m Model) handleVerticalNavigationKey(msg tea.KeyMsg, isDown bool) (Model, tea.Cmd) {
+	if m.MainViewMode == LyricsMode && m.FocusedOn == MainView {
+		var cmd tea.Cmd
+		m.LyricsView, cmd = m.LyricsView.Update(msg)
+		return m, cmd
+	}
+	if m.FocusedOn != MainView && m.FocusedOn != QueueList {
+		return m, nil
+	}
+	if m.MainViewMode == HomePageMode {
+		var cmd tea.Cmd
+		m.HomePageList, cmd = m.HomePageList.Update(msg)
+		return m, cmd
+	}
+	if isDown {
 		listModel := getListItemForMusicToChoose(&m, m.FocusedOn)
 		return m.handlePagination(listModel, nil)
-	case "up", "k":
-		if m.MainViewMode == LyricsMode && m.FocusedOn == MainView {
-			var cmd tea.Cmd
-			m.LyricsView, cmd = m.LyricsView.Update(msg)
-			return m, cmd
-		}
-		if m.FocusedOn != MainView && m.FocusedOn != QueueList {
-			return m, nil
-		}
-		if m.MainViewMode == HomePageMode {
-			var cmd tea.Cmd
-			m.HomePageList, cmd = m.HomePageList.Update(msg)
-			return m, cmd
-		}
+	}
+	return m, nil
+}
+
+func (m Model) handleSearchFocusKey() (Model, tea.Cmd) {
+	m.FocusedOn = SearchBar
+	return m, m.Search.Focus()
+}
+
+func (m Model) handleEscapeKey() (Model, tea.Cmd) {
+	if m.FocusedOn == SearchBar {
+		m.Search.Blur()
+		m.FocusedOn = SideView
 		return m, nil
-	case "ctrl+k":
-		m.FocusedOn = SearchBar
-		return m, m.Search.Focus()
-	case "esc", "escape":
-		if m.FocusedOn == SearchBar {
-			m.Search.Blur()
-			m.FocusedOn = SideView
-			return m, nil
+	}
+	if m.MainViewMode == HomePageMode && m.HomePageViewMode == HomePageContentView {
+		var items []list.Item
+		for i, section := range m.HomePageData.Sections {
+			items = append(items, types.HomePageSectionItem{
+				SectionTitle: section.Title,
+				Index:        i,
+			})
 		}
-		if m.MainViewMode == HomePageMode && m.HomePageViewMode == HomePageContentView {
-			var items []list.Item
-			for i, section := range m.HomePageData.Sections {
-				items = append(items, types.HomePageSectionItem{
-					SectionTitle: section.Title,
-					Index:        i,
-				})
-			}
-			dims := CalculateLayoutDimensions(&m)
-			m.HomePageList = list.New(items, CustomDelegate{Model: &m}, dims.MainWidth, dims.ContentHeight-4)
-			m.HomePageList.SetShowTitle(false)
-			removeListDefaults(&m.HomePageList)
-			m.HomePageList.Title = "Home"
-			m.HomePageViewMode = HomePageSectionView
-			return m, nil
-		}
+		dims := CalculateLayoutDimensions(&m)
+		m.HomePageList = list.New(items, CustomDelegate{Model: &m}, dims.MainWidth, dims.ContentHeight-4)
+		m.HomePageList.SetShowTitle(false)
+		removeListDefaults(&m.HomePageList)
+		m.HomePageList.Title = "Home"
+		m.HomePageViewMode = HomePageSectionView
+		return m, nil
+	}
+	return m, nil
+}
+
+func (m Model) handleActionKey(key string) (Model, tea.Cmd) {
+	switch key {
 	case "a":
 		return m.addMusicToQueue()
 	case "r":
-		var cmd tea.Cmd
-		showRelated := (m.RightColumnMode == RightColumnRelated || m.RightColumnMode == "") && len(m.RelatedList.Items()) > 0
-		if m.FocusedOn == QueueList && !showRelated {
-			shouldIRemoveFromPlaybackContext := true
-			if m.Queue != nil && m.Queue.Len() > 0 {
-				selectedIdx := m.QueueList.Index()
-				userQueueTracks := m.Queue.AllTracks()
-				trackIdx := selectedIdx - 1
-				if trackIdx >= 0 && trackIdx < len(userQueueTracks) {
-					shouldIRemoveFromPlaybackContext = false
-					m.Queue.RemoveTrackAtIndex(trackIdx)
-				}
-				cmd = m.SyncQueueList()
-			}
-
-			if shouldIRemoveFromPlaybackContext {
-				itemIndex := -1
-				if selectedTrack, ok := m.QueueList.SelectedItem().(types.PlaylistTrackObject); ok {
-					if selectedTrack.Track != nil {
-						for i, track := range m.PlaybackContext {
-							if track != nil && track.Track != nil &&
-								track.Track.VideoId == selectedTrack.Track.VideoId {
-								itemIndex = i
-								break
-							}
-						}
-					}
-				}
-				if itemIndex != -1 && itemIndex < len(m.PlaybackContext) {
-					itemsToKeep := m.PlaybackContext[:itemIndex]
-					if itemIndex+1 < len(m.PlaybackContext) {
-						itemsToKeep = append(itemsToKeep, m.PlaybackContext[itemIndex+1:]...)
-					}
-					m.PlaybackContext = itemsToKeep
-					cmd = m.SyncQueueList()
-				}
-			}
-			return m, cmd
-		}
+		return m.removeTrackFromQueue()
 	case "ctrl+l":
 		if m.MainViewMode == LyricsMode {
 			m.MainViewMode = NormalMode
 			return m, nil
 		}
-
 		return m.getMusicLyrics()
 	case "l":
-		if m.SelectedTrack != nil && m.SelectedTrack.Track != nil {
-			trackID := m.SelectedTrack.Track.VideoId
-			shouldRemove := m.SelectedTrack.isLiked
-			targetLikedState := !shouldRemove
-
-			cmd := func() tea.Msg {
-				ctx, cancel := context.WithCancel(context.Background())
-				defer cancel()
-				_, err := m.YtMusicClient.SaveRemoveTrack(ctx, &musicpb.SaveRemoveTrackRequest{
-					VideoIds: []string{trackID},
-					IsRemove: shouldRemove,
-				})
-
-				if err != nil {
-					slog.Error(err.Error())
-				}
-				return types.LikeUnlikeTrackResponseMsg{
-					TrackID: trackID,
-					Liked:   targetLikedState,
-					Err:     err,
-				}
-			}
-			return m, cmd
-		}
+		return m.handleLikeTrack()
 	case " ":
 		if m.FocusedOn != Player {
 			return m, nil
@@ -885,7 +920,7 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (Model, tea.Cmd) {
 		}
 		m.toggleRightColumnMode()
 		return m, nil
-	case "q", "ctrl+c":
+	case "q", keyCtrlC:
 		if m.FocusedOn == SearchBar {
 			return m, nil
 		}
@@ -901,23 +936,131 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (Model, tea.Cmd) {
 			m.PlayerProcess = nil
 		}
 		return m, tea.Quit
-	case "tab":
-		return changeFocusMode(&m, false)
-	case "shift+tab":
-		return changeFocusMode(&m, true)
-	case "enter":
-		return m.handleEnterKey()
+	default:
+		return m, nil
 	}
-	return m, nil
 }
 
-func getNextPageItems(m *Model, paginationInfo *types.PaginationInfo) tea.Cmd {
+func (m *Model) removeTrackFromQueue() (Model, tea.Cmd) {
+	var cmd tea.Cmd
+	showRelated := (m.RightColumnMode == RightColumnRelated || m.RightColumnMode == "") && len(m.RelatedList.Items()) > 0
+	if m.FocusedOn == QueueList && !showRelated {
+		shouldIRemoveFromPlaybackContext := true
+		if m.Queue != nil && m.Queue.Len() > 0 {
+			selectedIdx := m.QueueList.Index()
+			userQueueTracks := m.Queue.AllTracks()
+			trackIdx := selectedIdx - 1
+			if trackIdx >= 0 && trackIdx < len(userQueueTracks) {
+				shouldIRemoveFromPlaybackContext = false
+				m.Queue.RemoveTrackAtIndex(trackIdx)
+			}
+			cmd = m.SyncQueueList()
+		}
+
+		if shouldIRemoveFromPlaybackContext {
+			itemIndex := -1
+			if selectedTrack, ok := m.QueueList.SelectedItem().(types.PlaylistTrackObject); ok {
+				if selectedTrack.Track != nil {
+					for i, track := range m.PlaybackContext {
+						if track != nil && track.Track != nil &&
+							track.Track.VideoId == selectedTrack.Track.VideoId {
+							itemIndex = i
+							break
+						}
+					}
+				}
+			}
+			if itemIndex != -1 && itemIndex < len(m.PlaybackContext) {
+				itemsToKeep := m.PlaybackContext[:itemIndex]
+				if itemIndex+1 < len(m.PlaybackContext) {
+					itemsToKeep = append(itemsToKeep, m.PlaybackContext[itemIndex+1:]...)
+				}
+				m.PlaybackContext = itemsToKeep
+				cmd = m.SyncQueueList()
+			}
+		}
+		return *m, cmd
+	}
+	return *m, nil
+}
+
+func (m *Model) openPlaylistManagementModal() (Model, tea.Cmd) {
+	trackID, trackTitle := m.getCurrentSelectedTrack()
+	if trackID == "" {
+		return *m, nil
+	}
+	openAddToPlaylistCmd := func() tea.Msg {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		userPlaylists, err := m.YtMusicClient.GetUserPlaylists(ctx, &musicpb.GetUserPlaylistsRequest{Limit: 100})
+		if err != nil {
+			return types.OpenAddToPlaylistModalMsg{
+				TrackID:    trackID,
+				TrackTitle: trackTitle,
+				Err:        err,
+			}
+		}
+		var pls []*musicpb.Playlist
+		if userPlaylists != nil {
+			pls = userPlaylists.Playlists
+		}
+		return types.OpenAddToPlaylistModalMsg{
+			TrackID:    trackID,
+			TrackTitle: trackTitle,
+			Playlists:  pls,
+		}
+	}
+	return *m, tea.Batch(
+		tea.Sequence(
+			func() tea.Msg {
+				return types.OpenAddToPlaylistLoadingMsg{
+					TrackID:    trackID,
+					TrackTitle: trackTitle,
+				}
+			},
+			func() tea.Msg {
+				return types.OpenModalMsg{ModalType: types.ModalTypePlaylistManagement}
+			},
+		),
+		openAddToPlaylistCmd,
+	)
+}
+
+func (m *Model) handleLikeTrack() (Model, tea.Cmd) {
+	if m.SelectedTrack != nil && m.SelectedTrack.Track != nil {
+		trackID := m.SelectedTrack.Track.VideoId
+		shouldRemove := m.SelectedTrack.isLiked
+		targetLikedState := !shouldRemove
+
+		cmd := func() tea.Msg {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			_, err := m.YtMusicClient.SaveRemoveTrack(ctx, &musicpb.SaveRemoveTrackRequest{
+				VideoIds: []string{trackID},
+				IsRemove: shouldRemove,
+			})
+
+			if err != nil {
+				slog.Error(err.Error())
+			}
+			return types.LikeUnlikeTrackResponseMsg{
+				TrackID: trackID,
+				Liked:   targetLikedState,
+				Err:     err,
+			}
+		}
+		return *m, cmd
+	}
+	return *m, nil
+}
+
+func getNextPageItems(model *Model, paginationInfo *types.PaginationInfo) tea.Cmd {
 	switch paginationInfo.NextPageURLType {
 	case types.NextPageURLTypePlaylistTracks:
 		return func() tea.Msg {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			playlistItems, err := m.YtMusicClient.GetPlaylistItems(ctx, &musicpb.GetPlaylistItemsRequest{
+			playlistItems, err := model.YtMusicClient.GetPlaylistItems(ctx, &musicpb.GetPlaylistItemsRequest{
 				PlaylistId: paginationInfo.NextItemID,
 				Limit:      100,
 			})
@@ -943,7 +1086,7 @@ func getNextPageItems(m *Model, paginationInfo *types.PaginationInfo) tea.Cmd {
 		return func() tea.Msg {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			userSavedTracks, err := m.YtMusicClient.GetUserSavedTracks(ctx, &musicpb.GetUserSavedTracksRequest{
+			userSavedTracks, err := model.YtMusicClient.GetUserSavedTracks(ctx, &musicpb.GetUserSavedTracksRequest{
 				Limit: 100,
 			})
 			if err != nil {
@@ -986,14 +1129,14 @@ func (m Model) getMusicLyrics() (Model, tea.Cmd) {
 	}
 
 	m.LyricsView.SetContent("  ⟳ Loading lyrics...")
-	q := lrclibQuery{
+	query := lrclibQuery{
 		videoID:     m.SelectedTrack.Track.VideoId,
 		trackName:   m.SelectedTrack.Track.Title,
 		albumName:   m.SelectedTrack.Track.Album,
 		durationSec: m.SelectedTrack.Track.DurationSeconds,
 	}
 	if len(m.SelectedTrack.Track.Artists) > 0 {
-		q.artistName = m.SelectedTrack.Track.Artists[0].Name
+		query.artistName = m.SelectedTrack.Track.Artists[0].Name
 	}
 
 	ytClient := m.YtMusicClient
@@ -1004,7 +1147,7 @@ func (m Model) getMusicLyrics() (Model, tea.Cmd) {
 
 		var backendResp *musicpb.GetLyricsResponse
 		lyricsResponse, err := ytClient.GetLyrics(ctx, &musicpb.GetLyricsRequest{
-			VideoId:    q.videoID,
+			VideoId:    query.videoID,
 			Timestamps: true,
 		})
 		if err == nil && lyricsResponse != nil {
@@ -1012,14 +1155,14 @@ func (m Model) getMusicLyrics() (Model, tea.Cmd) {
 		}
 
 		if err != nil {
-			slog.Debug("backend GetLyrics failed", "videoId", q.videoID, "err", err)
+			slog.Debug("backend GetLyrics failed", "videoId", query.videoID, "err", err)
 		}
 
 		if backendResp != nil && backendResp.HasTimestamps && len(backendResp.Lines) > 0 {
 			return types.LyricsMsg{LyricsResponse: backendResp}
 		}
 
-		lrclibResp := fetchLrclib(ctx, q)
+		lrclibResp := fetchLrclib(ctx, query)
 
 		if lrclibResp != nil && lrclibResp.SyncedLyrics != "" {
 			lines := parseSyncedLyrics(lrclibResp.SyncedLyrics)
@@ -1058,17 +1201,17 @@ type lrclibResponse struct {
 	PlainLyrics  string `json:"plainLyrics"`
 }
 
-func fetchLrclib(ctx context.Context, q lrclibQuery) *lrclibResponse {
+func fetchLrclib(ctx context.Context, query lrclibQuery) *lrclibResponse {
 	params := url.Values{}
-	params.Add("track_name", q.trackName)
-	if q.albumName != "" {
-		params.Add("album_name", q.albumName)
+	params.Add("track_name", query.trackName)
+	if query.albumName != "" {
+		params.Add("album_name", query.albumName)
 	}
-	if q.artistName != "" {
-		params.Add("artist_name", q.artistName)
+	if query.artistName != "" {
+		params.Add("artist_name", query.artistName)
 	}
-	if q.durationSec > 0 {
-		params.Add("duration", strconv.FormatInt(int64(q.durationSec), 10))
+	if query.durationSec > 0 {
+		params.Add("duration", strconv.FormatInt(int64(query.durationSec), 10))
 	}
 
 	reqCtx, reqCancel := context.WithTimeout(ctx, 5*time.Second)
@@ -1110,7 +1253,7 @@ func fetchLrclib(ctx context.Context, q lrclibQuery) *lrclibResponse {
 
 func parseSyncedLyrics(synced string) []*musicpb.LyricLine {
 	var lines []*musicpb.LyricLine
-	for _, rawLine := range strings.Split(synced, "\n") {
+	for rawLine := range strings.SplitSeq(synced, "\n") {
 		rawLine = strings.TrimSpace(rawLine)
 		if rawLine == "" || !strings.HasPrefix(rawLine, "[") {
 			continue
@@ -1122,13 +1265,13 @@ func parseSyncedLyrics(synced string) []*musicpb.LyricLine {
 		timestamp := rawLine[1:closeBracket]
 		text := strings.TrimSpace(rawLine[closeBracket+1:])
 
-		ms, ok := parseLRCTimestamp(timestamp)
+		millis, ok := parseLRCTimestamp(timestamp)
 		if !ok {
 			continue
 		}
 		lines = append(lines, &musicpb.LyricLine{
 			Text:      text,
-			StartTime: ms,
+			StartTime: millis,
 		})
 	}
 	for i := 0; i < len(lines)-1; i++ {
@@ -1203,11 +1346,9 @@ func (m *Model) updateLyricsView() {
 	inactiveStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#A1A1AA"))
 	sourceStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#71717A")).Italic(true)
 
-	if m.CurrentLyrics.HasTimestamps && len(m.CurrentLyrics.Lines) > 0 {
-		currentMS := int32(m.PlayedSeconds*1000) - 750
-		if currentMS < 0 {
-			currentMS = 0
-		}
+	switch {
+	case m.CurrentLyrics.HasTimestamps && len(m.CurrentLyrics.Lines) > 0:
+		currentMS := max(int32(m.PlayedSeconds*1000)-750, 0)
 		activeIdx := -1
 
 		for i, line := range m.CurrentLyrics.Lines {
@@ -1239,19 +1380,16 @@ func (m *Model) updateLyricsView() {
 		m.LyricsView.SetContent(lyricsText)
 
 		if activeIdx >= 0 && m.LyricsView.Height > 0 {
-			targetOffset := activeIdx - (m.LyricsView.Height / 2)
-			if targetOffset < 0 {
-				targetOffset = 0
-			}
+			targetOffset := max(activeIdx-(m.LyricsView.Height/2), 0)
 			m.LyricsView.SetYOffset(targetOffset)
 		}
-	} else if m.CurrentLyrics.Lyrics != "" {
+	case m.CurrentLyrics.Lyrics != "":
 		lyricsText := m.CurrentLyrics.Lyrics
 		if m.CurrentLyrics.Source != "" {
 			lyricsText = lyricsText + "\n\n" + sourceStyle.Render(m.CurrentLyrics.Source)
 		}
 		m.LyricsView.SetContent(lyricsText)
-	} else {
+	default:
 		noLyricsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#71717A")).Italic(true)
 		m.LyricsView.SetContent(noLyricsStyle.Render("No lyrics available for this song."))
 	}
@@ -1262,13 +1400,14 @@ func (m Model) handleMusicChange(isForward bool) (Model, tea.Cmd) {
 	fromHistory := false
 
 	if isForward {
-		if m.Queue != nil && m.Queue.Len() > 0 {
+		switch {
+		case m.Queue != nil && m.Queue.Len() > 0:
 			track = m.Queue.PopFirst()
-		} else if len(m.PlayHistory) > 0 && m.PlayHistoryIndex < len(m.PlayHistory)-1 {
+		case len(m.PlayHistory) > 0 && m.PlayHistoryIndex < len(m.PlayHistory)-1:
 			m.PlayHistoryIndex++
 			track = m.PlayHistory[m.PlayHistoryIndex]
 			fromHistory = true
-		} else if len(m.PlaybackContext) > 0 {
+		case len(m.PlaybackContext) > 0:
 			idx := m.PlaylistContextIndex
 			if idx >= 0 && idx < len(m.PlaybackContext) &&
 				m.SelectedTrack != nil && m.SelectedTrack.Track != nil &&
@@ -1276,9 +1415,11 @@ func (m Model) handleMusicChange(isForward bool) (Model, tea.Cmd) {
 				m.SelectedTrack.Track.VideoId == m.PlaybackContext[idx].Track.VideoId {
 				idx = (idx + 1) % len(m.PlaybackContext)
 			}
-			m.PlaylistContextIndex = idx
-			track = m.PlaybackContext[m.PlaylistContextIndex]
-		} else if len(m.PlayHistory) > 0 {
+			if idx >= 0 && idx < len(m.PlaybackContext) {
+				track = m.PlaybackContext[idx]
+				m.PlaylistContextIndex = idx
+			}
+		case len(m.PlayHistory) > 0:
 			m.PlayHistoryIndex = 0
 			track = m.PlayHistory[m.PlayHistoryIndex]
 			fromHistory = true
@@ -1288,11 +1429,11 @@ func (m Model) handleMusicChange(isForward bool) (Model, tea.Cmd) {
 			m.SelectedTrack != nil && m.SelectedTrack.Track != nil {
 			appendToPlayHistory(&m, &m.SelectedTrack.PlaylistTrackObject)
 		}
-	} else {
-		if len(m.PlayHistory) > 0 && m.PlayHistoryIndex > 0 {
-			m.PlayHistoryIndex--
-			track = m.PlayHistory[m.PlayHistoryIndex]
-		}
+	}
+
+	if !isForward && len(m.PlayHistory) > 0 && m.PlayHistoryIndex > 0 {
+		m.PlayHistoryIndex--
+		track = m.PlayHistory[m.PlayHistoryIndex]
 	}
 
 	if track != nil {
@@ -1309,51 +1450,51 @@ func extractTrackObject(item list.Item) *types.PlaylistTrackObject {
 	if item == nil {
 		return nil
 	}
-	switch v := item.(type) {
+	switch typedItem := item.(type) {
 	case types.PlaylistTrackObject:
-		if v.Track != nil {
-			return &v
+		if typedItem.Track != nil {
+			return &typedItem
 		}
 	case types.SongItem:
-		if v.Song != nil {
-			return &types.PlaylistTrackObject{Track: v.Song}
+		if typedItem.Song != nil {
+			return &types.PlaylistTrackObject{Track: typedItem.Song}
 		}
 	case types.SearchResultSongItem:
-		if v.SearchResultSong != nil {
+		if typedItem.SearchResultSong != nil {
 			song := &musicpb.Song{
-				VideoId:         v.VideoId,
-				Title:           v.Title,
-				Artists:         v.Artists,
-				Album:           v.Album,
-				AlbumId:         v.AlbumId,
-				DurationSeconds: v.DurationSeconds,
-				Liked:           v.Liked,
-				Thumbnails:      v.Thumbnails,
-				IsExplicit:      v.IsExplicit,
-				Url:             v.Url,
+				VideoId:         typedItem.VideoId,
+				Title:           typedItem.Title,
+				Artists:         typedItem.Artists,
+				Album:           typedItem.Album,
+				AlbumId:         typedItem.AlbumId,
+				DurationSeconds: typedItem.DurationSeconds,
+				Liked:           typedItem.Liked,
+				Thumbnails:      typedItem.Thumbnails,
+				IsExplicit:      typedItem.IsExplicit,
+				Url:             typedItem.Url,
 			}
 			return &types.PlaylistTrackObject{Track: song}
 		}
 	case types.HomePageContentItem:
-		vID := v.VideoID
+		vID := typedItem.VideoID
 		if vID == "" {
-			vID = v.PlaylistID
+			vID = typedItem.PlaylistID
 		}
 		if vID != "" {
 			return &types.PlaylistTrackObject{
 				Track: &musicpb.Song{
 					VideoId: vID,
-					Title:   v.ItemTitle,
+					Title:   typedItem.ItemTitle,
 				},
 			}
 		}
 	case types.SongRelatedContentItem:
-		if v.SongRelatedContent != nil && v.VideoId != "" {
+		if typedItem.SongRelatedContent != nil && typedItem.VideoId != "" {
 			return &types.PlaylistTrackObject{
 				Track: &musicpb.Song{
-					VideoId: v.VideoId,
-					Title:   v.Title,
-					Artists: v.Artists,
+					VideoId: typedItem.VideoId,
+					Title:   typedItem.Title,
+					Artists: typedItem.Artists,
 				},
 			}
 		}
@@ -1433,24 +1574,24 @@ func (m Model) HandleMusicPausePlay() (Model, tea.Cmd) {
 	return m, nil
 }
 
-func getListItemForMusicToChoose(m *Model, focusedOn FocusedOn) *list.Model {
-	if focusedOn == MainView && m.MainViewMode == HomePageMode {
-		if m.HomePageViewMode == HomePageSectionView {
-			return &m.HomePageList
+func getListItemForMusicToChoose(model *Model, focusedOn FocusedOn) *list.Model {
+	if focusedOn == MainView && model.MainViewMode == HomePageMode {
+		if model.HomePageViewMode == HomePageSectionView {
+			return &model.HomePageList
 		}
 	}
-	if focusedOn == MainView && m.MainViewMode == SearchResultMode {
-		return &m.SearchResult
+	if focusedOn == MainView && model.MainViewMode == SearchResultMode {
+		return &model.SearchResult
 	}
-	if focusedOn == MainView && m.MainViewMode == NormalMode {
-		return &m.SelectedPlayListItems
+	if focusedOn == MainView && model.MainViewMode == NormalMode {
+		return &model.SelectedPlayListItems
 	}
 	if focusedOn == QueueList {
-		showRelated := (m.RightColumnMode == RightColumnRelated || m.RightColumnMode == "") && len(m.RelatedList.Items()) > 0
+		showRelated := (model.RightColumnMode == RightColumnRelated || model.RightColumnMode == "") && len(model.RelatedList.Items()) > 0
 		if showRelated {
-			return &m.RelatedList
+			return &model.RelatedList
 		}
-		return &m.QueueList
+		return &model.QueueList
 	}
 	return nil
 }
@@ -1521,24 +1662,24 @@ func (m Model) navigateToDetailView(cmd tea.Cmd) (Model, tea.Cmd) {
 	return m, tea.Batch(cmd, SendLoadingCmd())
 }
 
-func appendToPlayHistory(m *Model, track *types.PlaylistTrackObject) {
+func appendToPlayHistory(model *Model, track *types.PlaylistTrackObject) {
 	if track == nil || track.Track == nil {
 		return
 	}
-	if len(m.PlayHistory) > 0 {
-		lastTrack := m.PlayHistory[len(m.PlayHistory)-1]
+	if len(model.PlayHistory) > 0 {
+		lastTrack := model.PlayHistory[len(model.PlayHistory)-1]
 		if lastTrack != nil && lastTrack.Track != nil && lastTrack.Track.VideoId == track.Track.VideoId {
-			m.PlayHistoryIndex = len(m.PlayHistory) - 1
+			model.PlayHistoryIndex = len(model.PlayHistory) - 1
 			return
 		}
 	}
 	trackCopy := *track
-	m.PlayHistory = append(m.PlayHistory, &trackCopy)
-	if len(m.PlayHistory) > 200 {
-		trim := len(m.PlayHistory) - 200
-		m.PlayHistory = m.PlayHistory[trim:]
+	model.PlayHistory = append(model.PlayHistory, &trackCopy)
+	if len(model.PlayHistory) > 200 {
+		trim := len(model.PlayHistory) - 200
+		model.PlayHistory = model.PlayHistory[trim:]
 	}
-	m.PlayHistoryIndex = len(m.PlayHistory) - 1
+	model.PlayHistoryIndex = len(model.PlayHistory) - 1
 }
 
 func (m Model) playStandaloneTrack(track types.PlaylistTrackObject) (Model, tea.Cmd) {
@@ -1715,141 +1856,37 @@ func (m Model) handleMainViewOrQueueEnter() (Model, tea.Cmd) {
 		return m, nil
 	}
 
-	switch selectedItem := listItemToChooseMusicFrom.SelectedItem().(type) {
+	return m.handleSelectedMainViewItem(listItemToChooseMusicFrom.SelectedItem())
+}
+
+func (m Model) handleSelectedMainViewItem(item any) (Model, tea.Cmd) {
+	switch selectedItem := item.(type) {
 	case types.PlaylistTrackObject:
-		if selectedItem.Track == nil {
-			return m, nil
-		}
-		relatedSongsCmd := func() tea.Msg {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			relatedSongs, err := m.YtMusicClient.GetSongRelated(ctx, &musicpb.GetSongRelatedRequest{
-				VideoId: selectedItem.Track.VideoId,
-			})
-			var relResp *musicpb.GetSongRelatedResponse
-			if relatedSongs != nil {
-				relResp = relatedSongs
-			}
-			return types.RelatedSongsMsg{
-				Related: relResp,
-				Err:     err,
-			}
-		}
-
-		var queueListUpdateCmd tea.Cmd
-		if m.FocusedOn == QueueList {
-			selectedIdx := m.QueueList.Index()
-			inQueue := false
-			if m.Queue != nil && m.Queue.Len() > 0 {
-				userQueueTracks := m.Queue.AllTracks()
-				trackIdx := selectedIdx - 1
-				if trackIdx >= 0 && trackIdx < len(userQueueTracks) {
-					inQueue = true
-					for i := 0; i <= trackIdx; i++ {
-						m.Queue.PopFirst()
-					}
-					queueListUpdateCmd = m.SyncQueueList()
-					if len(m.QueueList.Items()) > 0 {
-						m.QueueList.Select(0)
-					}
-				}
-			}
-
-			if !inQueue && len(m.PlaybackContext) > 0 {
-				for idx, ctxTrack := range m.PlaybackContext {
-					if ctxTrack != nil && ctxTrack.Track != nil && selectedItem.Track != nil && ctxTrack.Track.VideoId == selectedItem.Track.VideoId {
-						m.PlaylistContextIndex = idx
-						queueListUpdateCmd = m.SyncQueueList()
-						if len(m.QueueList.Items()) > 0 {
-							m.QueueList.Select(0)
-						}
-						break
-					}
-				}
-			}
-
-			m, cmd := m.PlaySelectedMusic(selectedItem)
-			return m, tea.Batch(cmd, relatedSongsCmd, queueListUpdateCmd)
-		}
-
-		m, cmd := m.playTrackFromList(selectedItem)
-		return m, tea.Batch(cmd, relatedSongsCmd, queueListUpdateCmd)
-
+		return m.handlePlaylistTrackEnter(selectedItem)
 	case types.SongItem:
-		playlistTrack := types.PlaylistTrackObject{Track: selectedItem.Song}
-		relatedSongsCmd := func() tea.Msg {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			relatedSongs, err := m.YtMusicClient.GetSongRelated(ctx, &musicpb.GetSongRelatedRequest{
-				VideoId: selectedItem.VideoId,
-			})
-			var relResp *musicpb.GetSongRelatedResponse
-			if relatedSongs != nil {
-				relResp = relatedSongs
-			}
-			return types.RelatedSongsMsg{
-				Related: relResp,
-				Err:     err,
-			}
-		}
-		m, cmd := m.playTrackFromList(playlistTrack)
-		return m, tea.Batch(cmd, relatedSongsCmd)
-
+		return m.handleSongItemEnter(selectedItem)
 	case types.SearchResultSongItem:
-		song := &musicpb.Song{
-			VideoId:         selectedItem.VideoId,
-			Title:           selectedItem.Title,
-			Artists:         selectedItem.Artists,
-			Album:           selectedItem.Album,
-			AlbumId:         selectedItem.AlbumId,
-			DurationSeconds: selectedItem.DurationSeconds,
-			Liked:           selectedItem.Liked,
-			Thumbnails:      selectedItem.Thumbnails,
-			IsExplicit:      selectedItem.IsExplicit,
-			Url:             selectedItem.Url,
-		}
-		playlistTrack := types.PlaylistTrackObject{Track: song}
-
-		watchPlaylistCmd := func() tea.Msg {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			watchPlaylistItems, err := m.YtMusicClient.GetWatchPlaylistItems(ctx, &musicpb.GetWatchPlaylistItemsRequest{
-				VideoId: selectedItem.VideoId,
-				Limit:   100,
-			})
-			return types.WatchPlaylistItemsMsg{
-				SourceID:           selectedItem.VideoId,
-				WatchPlaylistItems: watchPlaylistItems,
-				Err:                err,
-			}
-		}
-		m, cmd := m.playStandaloneTrack(playlistTrack)
-		return m, tea.Batch(cmd, watchPlaylistCmd)
-
+		return m.handleSearchResultSongItemEnter(selectedItem)
 	case types.SearchResultPlaylistItem:
 		if selectedItem.SearchResultPlaylist != nil {
 			m.PendingContextName = selectedItem.SearchResultPlaylist.Title
 		}
 		return m.navigateToDetailView(m.getPlaylistItems(selectedItem.BrowseId))
-
 	case types.SearchResultAlbumItem:
 		if selectedItem.SearchResultAlbum != nil {
 			m.PendingContextName = selectedItem.SearchResultAlbum.Title
 		}
 		return m.navigateToDetailView(m.getAlbumTracks(selectedItem.BrowseId))
-
 	case types.SearchResultArtistItem:
 		if selectedItem.SearchResultArtist != nil {
 			m.PendingContextName = selectedItem.SearchResultArtist.Name
 		}
 		return m.navigateToDetailView(m.getArtistTracks(selectedItem.BrowseId))
-
 	case types.SearchResultPodcastItem:
 		if selectedItem.SearchResultPodcast != nil {
 			m.PendingContextName = selectedItem.SearchResultPodcast.Title
 		}
 		return m.navigateToDetailView(m.getPlaylistItems(selectedItem.BrowseId))
-
 	case types.SearchResultEpisodeItem:
 		return m.playStandaloneTrack(types.PlaylistTrackObject{
 			Track: &musicpb.Song{
@@ -1857,88 +1894,201 @@ func (m Model) handleMainViewOrQueueEnter() (Model, tea.Cmd) {
 				Title:   selectedItem.Title,
 			},
 		})
-
 	case types.PlaylistItem:
 		if selectedItem.Playlist != nil {
 			m.PendingContextName = selectedItem.Playlist.Title
 		}
 		return m.navigateToDetailView(m.getPlaylistItems(selectedItem.PlaylistId))
-
 	case types.AlbumItem:
 		if selectedItem.Album != nil {
 			m.PendingContextName = selectedItem.Album.Title
 		}
 		return m.navigateToDetailView(m.getAlbumTracks(selectedItem.BrowseId))
-
 	case types.ArtistItem:
 		if selectedItem.Artist != nil {
 			m.PendingContextName = selectedItem.Artist.Name
 		}
 		return m.navigateToDetailView(m.getArtistTracks(selectedItem.Id))
-
 	case types.FollowedArtistItem:
 		if selectedItem.FollowedArtist != nil {
 			m.PendingContextName = selectedItem.FollowedArtist.Name
 		}
 		return m.navigateToDetailView(m.getArtistTracks(selectedItem.ChannelId))
-
 	case types.LibraryChannelItem:
 		if selectedItem.LibraryChannel != nil {
 			m.PendingContextName = selectedItem.LibraryChannel.Name
 		}
 		return m.navigateToDetailView(m.getArtistTracks(selectedItem.BrowseId))
-
 	case types.PodcastItem:
 		if selectedItem.Podcast != nil {
 			m.PendingContextName = selectedItem.Podcast.Title
 		}
 		return m.navigateToDetailView(m.getPlaylistItems(selectedItem.PodcastId))
-
 	case types.SongRelatedContentItem:
-		if selectedItem.SongRelatedContent != nil {
-			m.PendingContextName = selectedItem.SongRelatedContent.Title
+		return m.handleRelatedContentItemEnter(selectedItem)
+	default:
+		return m, nil
+	}
+}
+
+func (m Model) handlePlaylistTrackEnter(selectedItem types.PlaylistTrackObject) (Model, tea.Cmd) {
+	if selectedItem.Track == nil {
+		return m, nil
+	}
+	relatedSongsCmd := func() tea.Msg {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		relatedSongs, err := m.YtMusicClient.GetSongRelated(ctx, &musicpb.GetSongRelatedRequest{
+			VideoId: selectedItem.Track.VideoId,
+		})
+		var relResp *musicpb.GetSongRelatedResponse
+		if relatedSongs != nil {
+			relResp = relatedSongs
 		}
-		if selectedItem.VideoId != "" || selectedItem.ContentType == "song" || selectedItem.ContentType == "video" {
-			playlistTrack := types.PlaylistTrackObject{
-				Track: &musicpb.Song{
-					VideoId: selectedItem.VideoId,
-					Title:   selectedItem.Title,
-					Artists: selectedItem.Artists,
-				},
-			}
-			relatedSongsCmd := func() tea.Msg {
-				ctx, cancel := context.WithCancel(context.Background())
-				defer cancel()
-				relatedSongs, err := m.YtMusicClient.GetSongRelated(ctx, &musicpb.GetSongRelatedRequest{
-					VideoId: selectedItem.VideoId,
-				})
-				var relResp *musicpb.GetSongRelatedResponse
-				if relatedSongs != nil {
-					relResp = relatedSongs
-				}
-				return types.RelatedSongsMsg{
-					Related: relResp,
-					Err:     err,
-				}
-			}
-			m, cmd := m.PlaySelectedMusic(playlistTrack)
-			return m, tea.Batch(cmd, relatedSongsCmd)
-		} else if selectedItem.ContentType == "artist" || strings.HasPrefix(selectedItem.BrowseId, "UC") || selectedItem.Subscribers != "" {
-			return m.navigateToDetailView(m.getArtistTracks(selectedItem.BrowseId))
-		} else if selectedItem.ContentType == "album" || strings.HasPrefix(selectedItem.BrowseId, "MPRE") {
-			return m.navigateToDetailView(m.getAlbumTracks(selectedItem.BrowseId))
-		} else if selectedItem.ContentType == "playlist" || (selectedItem.PlaylistId != "" && selectedItem.ContentType == "") {
-			playlistID := selectedItem.PlaylistId
-			if playlistID == "" {
-				playlistID = selectedItem.BrowseId
-			}
-			return m.navigateToDetailView(m.getPlaylistItems(playlistID))
-		} else if selectedItem.BrowseId != "" {
-			return m.navigateToDetailView(m.getArtistTracks(selectedItem.BrowseId))
+		return types.RelatedSongsMsg{
+			Related: relResp,
+			Err:     err,
 		}
 	}
 
-	return m, nil
+	var queueListUpdateCmd tea.Cmd
+	if m.FocusedOn == QueueList {
+		selectedIdx := m.QueueList.Index()
+		inQueue := false
+		if m.Queue != nil && m.Queue.Len() > 0 {
+			userQueueTracks := m.Queue.AllTracks()
+			trackIdx := selectedIdx - 1
+			if trackIdx >= 0 && trackIdx < len(userQueueTracks) {
+				inQueue = true
+				for i := 0; i <= trackIdx; i++ {
+					m.Queue.PopFirst()
+				}
+				queueListUpdateCmd = m.SyncQueueList()
+				if len(m.QueueList.Items()) > 0 {
+					m.QueueList.Select(0)
+				}
+			}
+		}
+
+		if !inQueue && len(m.PlaybackContext) > 0 {
+			for idx, ctxTrack := range m.PlaybackContext {
+				if ctxTrack != nil && ctxTrack.Track != nil && selectedItem.Track != nil && ctxTrack.Track.VideoId == selectedItem.Track.VideoId {
+					m.PlaylistContextIndex = idx
+					queueListUpdateCmd = m.SyncQueueList()
+					if len(m.QueueList.Items()) > 0 {
+						m.QueueList.Select(0)
+					}
+					break
+				}
+			}
+		}
+
+		m, cmd := m.PlaySelectedMusic(selectedItem)
+		return m, tea.Batch(cmd, relatedSongsCmd, queueListUpdateCmd)
+	}
+
+	m, cmd := m.playTrackFromList(selectedItem)
+	return m, tea.Batch(cmd, relatedSongsCmd, queueListUpdateCmd)
+}
+
+func (m Model) handleSongItemEnter(selectedItem types.SongItem) (Model, tea.Cmd) {
+	playlistTrack := types.PlaylistTrackObject{Track: selectedItem.Song}
+	relatedSongsCmd := func() tea.Msg {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		relatedSongs, err := m.YtMusicClient.GetSongRelated(ctx, &musicpb.GetSongRelatedRequest{
+			VideoId: selectedItem.VideoId,
+		})
+		var relResp *musicpb.GetSongRelatedResponse
+		if relatedSongs != nil {
+			relResp = relatedSongs
+		}
+		return types.RelatedSongsMsg{
+			Related: relResp,
+			Err:     err,
+		}
+	}
+	m, cmd := m.playTrackFromList(playlistTrack)
+	return m, tea.Batch(cmd, relatedSongsCmd)
+}
+
+func (m Model) handleSearchResultSongItemEnter(selectedItem types.SearchResultSongItem) (Model, tea.Cmd) {
+	song := &musicpb.Song{
+		VideoId:         selectedItem.VideoId,
+		Title:           selectedItem.Title,
+		Artists:         selectedItem.Artists,
+		Album:           selectedItem.Album,
+		AlbumId:         selectedItem.AlbumId,
+		DurationSeconds: selectedItem.DurationSeconds,
+		Liked:           selectedItem.Liked,
+		Thumbnails:      selectedItem.Thumbnails,
+		IsExplicit:      selectedItem.IsExplicit,
+		Url:             selectedItem.Url,
+	}
+	playlistTrack := types.PlaylistTrackObject{Track: song}
+
+	watchPlaylistCmd := func() tea.Msg {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		watchPlaylistItems, err := m.YtMusicClient.GetWatchPlaylistItems(ctx, &musicpb.GetWatchPlaylistItemsRequest{
+			VideoId: selectedItem.VideoId,
+			Limit:   100,
+		})
+		return types.WatchPlaylistItemsMsg{
+			SourceID:           selectedItem.VideoId,
+			WatchPlaylistItems: watchPlaylistItems,
+			Err:                err,
+		}
+	}
+	m, cmd := m.playStandaloneTrack(playlistTrack)
+	return m, tea.Batch(cmd, watchPlaylistCmd)
+}
+
+func (m Model) handleRelatedContentItemEnter(selectedItem types.SongRelatedContentItem) (Model, tea.Cmd) {
+	if selectedItem.SongRelatedContent != nil {
+		m.PendingContextName = selectedItem.SongRelatedContent.Title
+	}
+	switch {
+	case selectedItem.VideoId != "" || selectedItem.ContentType == "song" || selectedItem.ContentType == "video":
+		playlistTrack := types.PlaylistTrackObject{
+			Track: &musicpb.Song{
+				VideoId: selectedItem.VideoId,
+				Title:   selectedItem.Title,
+				Artists: selectedItem.Artists,
+			},
+		}
+		relatedSongsCmd := func() tea.Msg {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			relatedSongs, err := m.YtMusicClient.GetSongRelated(ctx, &musicpb.GetSongRelatedRequest{
+				VideoId: selectedItem.VideoId,
+			})
+			var relResp *musicpb.GetSongRelatedResponse
+			if relatedSongs != nil {
+				relResp = relatedSongs
+			}
+			return types.RelatedSongsMsg{
+				Related: relResp,
+				Err:     err,
+			}
+		}
+		m, cmd := m.PlaySelectedMusic(playlistTrack)
+		return m, tea.Batch(cmd, relatedSongsCmd)
+	case selectedItem.ContentType == "artist" || strings.HasPrefix(selectedItem.BrowseId, "UC") || selectedItem.Subscribers != "":
+		return m.navigateToDetailView(m.getArtistTracks(selectedItem.BrowseId))
+	case selectedItem.ContentType == "album" || strings.HasPrefix(selectedItem.BrowseId, "MPRE"):
+		return m.navigateToDetailView(m.getAlbumTracks(selectedItem.BrowseId))
+	case selectedItem.ContentType == "playlist" || (selectedItem.PlaylistId != "" && selectedItem.ContentType == ""):
+		playlistID := selectedItem.PlaylistId
+		if playlistID == "" {
+			playlistID = selectedItem.BrowseId
+		}
+		return m.navigateToDetailView(m.getPlaylistItems(playlistID))
+	case selectedItem.BrowseId != "":
+		return m.navigateToDetailView(m.getArtistTracks(selectedItem.BrowseId))
+	default:
+		return m, nil
+	}
 }
 
 func (m Model) handleSearchBarEnter() (Model, tea.Cmd) {
@@ -2157,9 +2307,9 @@ func (m Model) PlaySelectedMusic(selectedMusic types.PlaylistTrackObject) (Model
 	return m, tea.Batch(cmds...)
 }
 
-func changeFocusMode(m *Model, shift bool) (Model, tea.Cmd) {
+func changeFocusMode(model *Model, shift bool) (Model, tea.Cmd) {
 	var next, prev FocusedOn
-	switch m.FocusedOn {
+	switch model.FocusedOn {
 	case SideView:
 		next, prev = MainView, Player
 	case MainView:
@@ -2172,73 +2322,73 @@ func changeFocusMode(m *Model, shift bool) (Model, tea.Cmd) {
 		next, prev = SideView, QueueList
 	default:
 		if shift {
-			items := m.SelectedPlayListItems.Items()
+			items := model.SelectedPlayListItems.Items()
 			if len(items) > 0 {
-				m.FocusedOn = MainView
-				m.SelectedPlayListItems.Select(len(items) - 1)
+				model.FocusedOn = MainView
+				model.SelectedPlayListItems.Select(len(items) - 1)
 			} else {
-				m.FocusedOn = SideView
+				model.FocusedOn = SideView
 			}
-			return *m, nil
+			return *model, nil
 		}
-		m.FocusedOn = SideView
-		return *m, nil
+		model.FocusedOn = SideView
+		return *model, nil
 	}
 
 	if shift {
-		m.FocusedOn = prev
+		model.FocusedOn = prev
 	} else {
-		m.FocusedOn = next
+		model.FocusedOn = next
 	}
 
-	updateDelegate(m)
-	return *m, nil
+	updateDelegate(model)
+	return *model, nil
 }
 
-func updateDelegate(m *Model) {
-	if m == nil {
+func updateDelegate(model *Model) {
+	if model == nil {
 		return
 	}
-	m.SelectedPlayListItems.SetDelegate(CustomDelegate{Model: m})
-	m.QueueList.SetDelegate(CustomDelegate{Model: m})
-	m.SideBarList.SetDelegate(CustomDelegate{Model: m})
-	m.HomePageList.SetDelegate(CustomDelegate{Model: m})
-	m.SearchResult.SetDelegate(CustomDelegate{Model: m})
-	m.RelatedList.SetDelegate(CustomDelegate{Model: m})
+	model.SelectedPlayListItems.SetDelegate(CustomDelegate{Model: model})
+	model.QueueList.SetDelegate(CustomDelegate{Model: model})
+	model.SideBarList.SetDelegate(CustomDelegate{Model: model})
+	model.HomePageList.SetDelegate(CustomDelegate{Model: model})
+	model.SearchResult.SetDelegate(CustomDelegate{Model: model})
+	model.RelatedList.SetDelegate(CustomDelegate{Model: model})
 }
 
-func updateFocusedComponent(m *Model, msg tea.Msg) (Model, tea.Cmd) {
+func updateFocusedComponent(model *Model, msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
-	switch m.FocusedOn {
+	switch model.FocusedOn {
 	case SearchBar:
-		m.Search.Focus()
-		m.Search, cmd = m.Search.Update(msg)
-		return *m, cmd
+		model.Search.Focus()
+		model.Search, cmd = model.Search.Update(msg)
+		return *model, cmd
 	case SideView:
-		m.Search.Blur()
-		m.SideBarList, cmd = m.SideBarList.Update(msg)
-		return *m, cmd
+		model.Search.Blur()
+		model.SideBarList, cmd = model.SideBarList.Update(msg)
+		return *model, cmd
 	case QueueList:
 		var cmd tea.Cmd
-		showRelated := (m.RightColumnMode == RightColumnRelated || m.RightColumnMode == "") && len(m.RelatedList.Items()) > 0
+		showRelated := (model.RightColumnMode == RightColumnRelated || model.RightColumnMode == "") && len(model.RelatedList.Items()) > 0
 		if showRelated {
-			m.RelatedList, cmd = m.RelatedList.Update(msg)
+			model.RelatedList, cmd = model.RelatedList.Update(msg)
 		} else {
-			m.QueueList, cmd = m.QueueList.Update(msg)
+			model.QueueList, cmd = model.QueueList.Update(msg)
 		}
-		return *m, cmd
+		return *model, cmd
 	case MainView:
-		switch m.MainViewMode {
+		switch model.MainViewMode {
 		case NormalMode:
-			m.SelectedPlayListItems, cmd = m.SelectedPlayListItems.Update(msg)
-			return *m, cmd
+			model.SelectedPlayListItems, cmd = model.SelectedPlayListItems.Update(msg)
+			return *model, cmd
 		case SearchResultMode:
-			m.SearchResult, cmd = m.SearchResult.Update(msg)
-			return *m, cmd
+			model.SearchResult, cmd = model.SearchResult.Update(msg)
+			return *model, cmd
 		}
 	default:
 	}
-	return *m, nil
+	return *model, nil
 }
 
 func SendLoadingCmd() tea.Cmd {

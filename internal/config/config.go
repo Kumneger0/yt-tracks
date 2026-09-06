@@ -7,6 +7,11 @@ import (
 	"path/filepath"
 )
 
+const (
+	WINDOWS = "windows"
+	DARWIN  = "darwin"
+)
+
 type YtDlpArgs struct {
 	CookiesFromBrowser *string `json:"cookies-from-browser"`
 	Cookies            *string `json:"cookies"`
@@ -27,14 +32,14 @@ var userHomeDir = os.UserHomeDir
 func GetConfigDir(goos string) string {
 	configDir, err := userConfigDir()
 	if err != nil {
-		if goos == "windows" {
+		if goos == WINDOWS {
 			return filepath.Join(os.Getenv("APPDATA"), "yt-tracks")
 		}
 		xdgConfig := os.Getenv("XDG_CONFIG_HOME")
 		if xdgConfig != "" {
 			return filepath.Join(xdgConfig, "yt-tracks")
 		}
-		if goos == "darwin" {
+		if goos == DARWIN {
 			return filepath.Join(os.Getenv("HOME"), "Library", "Application Support", "yt-tracks")
 		}
 		return filepath.Join(os.Getenv("HOME"), ".config", "yt-tracks")
@@ -43,10 +48,10 @@ func GetConfigDir(goos string) string {
 }
 
 func GetStateDir(goos string) string {
-	if goos == "windows" {
+	if goos == WINDOWS {
 		return filepath.Join(os.Getenv("APPDATA"), "yt-tracks")
 	}
-	if goos == "darwin" {
+	if goos == DARWIN {
 		return filepath.Join(os.Getenv("HOME"), "Library", "State", "yt-tracks")
 	}
 	stateDir := os.Getenv("XDG_STATE_HOME")
@@ -61,10 +66,10 @@ func GetCacheDir(goos string) string {
 	cacheDir, err := userCacheDir()
 	if err != nil {
 		homeDir, _ := userHomeDir()
-		if goos == "windows" {
+		if goos == WINDOWS {
 			return filepath.Join(os.Getenv("LOCALAPPDATA"), "yt-tracks")
 		}
-		if goos == "darwin" {
+		if goos == DARWIN {
 			return filepath.Join(os.Getenv("HOME"), "Library", "Caches", "yt-tracks")
 		}
 		return filepath.Join(homeDir, ".cache", "yt-tracks")

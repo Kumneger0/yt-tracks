@@ -26,7 +26,7 @@ var supportedBrowsers = []string{"chrome", "firefox", "safari"}
 
 const youtubeOrigin = "https://music.youtube.com"
 
-func extractFromBrowserStore(ctx context.Context, targetBrowser string) ([]*kooky.Cookie, error) {
+func extractFromBrowserStore(ctx context.Context, targetBrowser string) []*kooky.Cookie {
 	stores := kooky.FindAllCookieStores(ctx)
 	var cookies []*kooky.Cookie
 	for _, store := range stores {
@@ -40,7 +40,7 @@ func extractFromBrowserStore(ctx context.Context, targetBrowser string) ([]*kook
 		}
 		_ = store.Close()
 	}
-	return cookies, nil
+	return cookies
 }
 
 func buildAuthJSON(cookies []*kooky.Cookie) (string, error) {
@@ -55,13 +55,13 @@ func buildAuthJSON(cookies []*kooky.Cookie) (string, error) {
 	}
 	header := strings.Join(parts, "; ")
 	var sapisid string
-	for _, c := range cookies {
-		if c.Name == "SAPISID" {
-			sapisid = c.Value
+	for _, httpCookie := range cookies {
+		if httpCookie.Name == "SAPISID" {
+			sapisid = httpCookie.Value
 			break
 		}
-		if c.Name == "__Secure-3PAPISID" && sapisid == "" {
-			sapisid = c.Value
+		if httpCookie.Name == "__Secure-3PAPISID" && sapisid == "" {
+			sapisid = httpCookie.Value
 		}
 	}
 	if sapisid == "" {
@@ -102,9 +102,9 @@ func newExtractCookieCmd(serverURL string) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 			var isAuthenticated bool
-			for _, b := range supportedBrowsers {
-				cookies, err := extractFromBrowserStore(ctx, b)
-				if err != nil || len(cookies) == 0 {
+			for _, browser := range supportedBrowsers {
+				cookies := extractFromBrowserStore(ctx, browser)
+				if len(cookies) == 0 {
 					continue
 				}
 
@@ -124,7 +124,7 @@ func newExtractCookieCmd(serverURL string) *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("failed to save credentials: %w", err)
 				}
-				fmt.Printf("Authenticated as: %s (%s)\n", resp.UserName, b)
+				fmt.Printf("Authenticated as: %s (%s)\n", resp.UserName, browser)
 				fmt.Printf("Saved credentials to: %s\n", path)
 				isAuthenticated = resp.Authenticated
 				break

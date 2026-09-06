@@ -116,7 +116,7 @@ func SearchAndDownloadMusic(
 			"pipe:1",
 		)
 
-		ff, err := command.ExecCommand(ctx, coreDepsPath.FFmpeg, ffArgs...)
+		ffmpegCmd, err := command.ExecCommand(ctx, coreDepsPath.FFmpeg, ffArgs...)
 
 		if err != nil {
 			_ = ffStderr.Close()
@@ -129,14 +129,14 @@ func SearchAndDownloadMusic(
 			}
 		}
 
-		pr, pw := ringbuffer.New(1024 * 1024 * 5).Pipe()
+		pipeReader, pipeWriter := ringbuffer.New(1024 * 1024 * 5).Pipe()
 
-		ff.Stderr = ffStderr
-		ff.Stdout = pw
+		ffmpegCmd.Stderr = ffStderr
+		ffmpegCmd.Stdout = pipeWriter
 
-		if err := ff.Start(); err != nil {
-			_ = pw.Close()
-			_ = pr.Close()
+		if err := ffmpegCmd.Start(); err != nil {
+			_ = pipeWriter.Close()
+			_ = pipeReader.Close()
 			if ffStderr != nil {
 				_ = ffStderr.Close()
 			}
@@ -152,22 +152,22 @@ func SearchAndDownloadMusic(
 		}
 
 		go func() {
-			err := ff.Wait()
+			err := ffmpegCmd.Wait()
 			if err != nil {
 				slog.Info("ffmpeg exited", "err", err)
-				_ = pw.CloseWithError(fmt.Errorf("ffmpeg: %w", err))
+				_ = pipeWriter.CloseWithError(fmt.Errorf("ffmpeg: %w", err))
 			} else {
-				_ = pw.Close()
+				_ = pipeWriter.Close()
 			}
 		}()
 
 		otoCtx, ready, err := getOtoContext()
 		if err != nil {
-			if ff.Process != nil {
-				_ = command.KillProcess(ff.Process)
+			if ffmpegCmd.Process != nil {
+				_ = command.KillProcess(ffmpegCmd.Process)
 			}
-			_ = pw.Close()
-			_ = pr.Close()
+			_ = pipeWriter.Close()
+			_ = pipeReader.Close()
 			if ffStderr != nil {
 				_ = ffStderr.Close()
 			}
@@ -186,11 +186,11 @@ func SearchAndDownloadMusic(
 		}
 
 		if ctx.Err() != nil {
-			if ff.Process != nil {
-				_ = command.KillProcess(ff.Process)
+			if ffmpegCmd.Process != nil {
+				_ = command.KillProcess(ffmpegCmd.Process)
 			}
-			_ = pw.Close()
-			_ = pr.Close()
+			_ = pipeWriter.Close()
+			_ = pipeReader.Close()
 			if ffStderr != nil {
 				_ = ffStderr.Close()
 			}
@@ -198,7 +198,7 @@ func SearchAndDownloadMusic(
 		}
 
 		counter := &types.ByteCounterReader{
-			R: pr,
+			R: pipeReader,
 		}
 
 		player := otoCtx.NewPlayer(counter)
@@ -209,11 +209,11 @@ func SearchAndDownloadMusic(
 		cleanup := func() error {
 			var closeErr error
 			once.Do(func() {
-				if ff.Process != nil {
-					_ = command.KillProcess(ff.Process)
+				if ffmpegCmd.Process != nil {
+					_ = command.KillProcess(ffmpegCmd.Process)
 				}
-				_ = pw.CloseWithError(fmt.Errorf("player closed"))
-				_ = pr.Close()
+				_ = pipeWriter.CloseWithError(fmt.Errorf("player closed"))
+				_ = pipeReader.Close()
 				if player != nil {
 					player.Pause()
 				}
@@ -250,6 +250,10 @@ func GetStreamURLAndDuration(ctx context.Context, videoID string, ytdlpPath stri
 	appConfig := config.GetConfig()
 	logPathName := appConfig.DebugDir
 	ytDlpError, err := os.Create(filepath.Join(*logPathName, "yt-dlp-error.log"))
+
+	if err != nil {
+		slog.Error(err.Error())
+	}
 
 	cookiePath := cookie.EnsureCookieFile()
 	targetURL := "https://www.youtube.com/watch?v=" + videoID

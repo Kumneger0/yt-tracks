@@ -19,54 +19,51 @@ func (d *dummyModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (d *dummyModel) View() string { return "dummy" }
 
 func TestManager_MessageRoutingInForegroundState(t *testing.T) {
-	fg := &dummyModel{}
-	bg := &dummyModel{}
+	foreground := &dummyModel{}
+	background := &dummyModel{}
 
 	mgr := Manager{
 		State:      Foreground,
-		Foreground: fg,
-		Background: bg,
+		Foreground: foreground,
+		Background: background,
 	}
 
-	addMsg := types.AddToPlaylistMsg{PlaylistID: "PL1", TrackID: "T1"}
-	updatedMgr, _ := mgr.Update(addMsg)
-	mgr = updatedMgr.(Manager)
+	addMsg := types.AddToPlaylistMsg{PlaylistID: testPlaylistID, TrackID: "T1"}
+	_, _ = mgr.Update(addMsg)
 
-	if bg.receivedMsg != addMsg {
-		t.Fatalf("expected Background model to receive AddToPlaylistMsg, got %v", bg.receivedMsg)
+	if background.receivedMsg != addMsg {
+		t.Fatalf("expected Background model to receive AddToPlaylistMsg, got %v", background.receivedMsg)
 	}
 
 	respMsg := types.AddToPlaylistResponseMsg{Success: true}
-	updatedMgr, _ = mgr.Update(respMsg)
-	mgr = updatedMgr.(Manager)
+	_, _ = mgr.Update(respMsg)
 
-	if fg.receivedMsg != respMsg {
-		t.Fatalf("expected Foreground model to receive AddToPlaylistResponseMsg, got %v", fg.receivedMsg)
+	if foreground.receivedMsg != respMsg {
+		t.Fatalf("expected Foreground model to receive AddToPlaylistResponseMsg, got %v", foreground.receivedMsg)
 	}
-	if bg.receivedMsg != respMsg {
-		t.Fatalf("expected Background model to receive AddToPlaylistResponseMsg, got %v", bg.receivedMsg)
+	if background.receivedMsg != respMsg {
+		t.Fatalf("expected Background model to receive AddToPlaylistResponseMsg, got %v", background.receivedMsg)
 	}
 }
 
 func TestManager_KeyMsgIsolationInForegroundState(t *testing.T) {
-	fg := &dummyModel{}
-	bg := &dummyModel{}
+	foreground := &dummyModel{}
+	background := &dummyModel{}
 
 	mgr := Manager{
 		State:      Foreground,
-		Foreground: fg,
-		Background: bg,
+		Foreground: foreground,
+		Background: background,
 	}
 
 	keyMsg := tea.KeyMsg{Type: tea.KeyDown}
-	updatedMgr, _ := mgr.Update(keyMsg)
-	mgr = updatedMgr.(Manager)
+	_, _ = mgr.Update(keyMsg)
 
-	k, ok := fg.receivedMsg.(tea.KeyMsg)
+	k, ok := foreground.receivedMsg.(tea.KeyMsg)
 	if !ok || k.Type != keyMsg.Type {
-		t.Fatalf("expected Foreground model to receive KeyMsg, got %v", fg.receivedMsg)
+		t.Fatalf("expected Foreground model to receive KeyMsg, got %v", foreground.receivedMsg)
 	}
-	if bg.receivedMsg != nil {
-		t.Fatalf("expected Background model NOT to receive KeyMsg while in Foreground state, got %v", bg.receivedMsg)
+	if background.receivedMsg != nil {
+		t.Fatalf("expected Background model NOT to receive KeyMsg while in Foreground state, got %v", background.receivedMsg)
 	}
 }

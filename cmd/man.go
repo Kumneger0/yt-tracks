@@ -10,7 +10,7 @@ import (
 )
 
 func ManCmd(root *cobra.Command) *cobra.Command {
-	c := &cobra.Command{
+	cmd := &cobra.Command{
 		Use:                   "man",
 		Short:                 "Generates command line manpages",
 		SilenceUsage:          true,
@@ -29,5 +29,5 @@ func ManCmd(root *cobra.Command) *cobra.Command {
 		},
 	}
 
-	return c
+	return cmd
 }

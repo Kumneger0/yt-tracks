@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"slices"
 	"strings"
 	"time"
 
@@ -143,20 +144,20 @@ func renderBreadcrumbs(items []types.Breadcrumb) string {
 	}
 
 	parts := make([]string, 0, len(items)*2)
-	for i, item := range items {
+	for idx, item := range items {
 		label := item.Name
 		if item.Icon != "" {
 			label = fmt.Sprintf("%s %s", item.Icon, item.Name)
 		}
 		itemStyle := lipgloss.NewStyle().Foreground(accentColor).Bold(true)
-		if i == len(items)-1 {
+		if idx == len(items)-1 {
 			itemStyle = itemStyle.Foreground(textPrimary).Bold(true)
 		} else {
 			itemStyle = itemStyle.Foreground(accentColor)
 		}
 
 		parts = append(parts, itemStyle.Render(label))
-		if i < len(items)-1 {
+		if idx < len(items)-1 {
 			parts = append(parts, lipgloss.NewStyle().Foreground(textDim).Render("▸"))
 		}
 	}
@@ -166,36 +167,37 @@ func renderBreadcrumbs(items []types.Breadcrumb) string {
 
 func (m Model) View() string {
 	dimensions := calculateLayoutDimensions(&m)
-	sideBarView := getStyle(&m, dimensions.ContentHeight, dimensions.SidebarWidth, SideView, false).Render(m.SideBarList.View())
+	sideBarView := getStyle(&m, dimensions.ContentHeight, dimensions.SidebarWidth, SideView).Render(m.SideBarList.View())
 	searchBar := renderSearchBar(&m, dimensions.MainWidth)
 	breadcrumb := renderBreadcrumbs(m.BreadcrumbItems)
 	var mainView string
-	if m.IsSearchLoading {
+	switch {
+	case m.IsSearchLoading:
 		loadingText := dimmerStyle.Render("  ⟳ Loading...")
-		mainView = getStyle(&m, dimensions.ContentHeight, dimensions.MainWidth, MainView, false).Render(
+		mainView = getStyle(&m, dimensions.ContentHeight, dimensions.MainWidth, MainView).Render(
 			lipgloss.JoinVertical(lipgloss.Top, searchBar, breadcrumb, loadingText),
 		)
-	} else if m.MainViewMode == SearchResultMode {
+	case m.MainViewMode == SearchResultMode:
 		resultHeader := titleStyle.Render("  Search Results")
-		mainView = getStyle(&m, dimensions.ContentHeight, dimensions.MainWidth, MainView, false).Render(
+		mainView = getStyle(&m, dimensions.ContentHeight, dimensions.MainWidth, MainView).Render(
 			lipgloss.JoinVertical(lipgloss.Top, searchBar, resultHeader, lipgloss.NewStyle().Padding(1, 0, 0, 0).Render(m.SearchResult.View())),
 		)
-	} else if m.MainViewMode == LyricsMode {
+	case m.MainViewMode == LyricsMode:
 		trackName := ""
 		if m.SelectedTrack != nil && m.SelectedTrack.Track != nil {
 			trackName = " • " + m.SelectedTrack.Track.Title
 		}
 		lyricsHeader := titleStyle.Render("  📝 Lyrics" + trackName)
 		lyricsPadded := lipgloss.NewStyle().Padding(1, 2).Render(m.LyricsView.View())
-		mainView = getStyle(&m, dimensions.ContentHeight, dimensions.MainWidth, MainView, false).Render(
+		mainView = getStyle(&m, dimensions.ContentHeight, dimensions.MainWidth, MainView).Render(
 			lipgloss.JoinVertical(lipgloss.Top, searchBar, breadcrumb, lyricsHeader, lyricsPadded),
 		)
-	} else if m.MainViewMode == HomePageMode {
-		mainView = getStyle(&m, dimensions.ContentHeight, dimensions.MainWidth, MainView, false).Render(
+	case m.MainViewMode == HomePageMode:
+		mainView = getStyle(&m, dimensions.ContentHeight, dimensions.MainWidth, MainView).Render(
 			lipgloss.JoinVertical(lipgloss.Top, searchBar, breadcrumb, lipgloss.NewStyle().Padding(1, 0, 0, 0).Render(m.HomePageList.View())),
 		)
-	} else {
-		mainView = getStyle(&m, dimensions.ContentHeight, dimensions.MainWidth, MainView, false).
+	default:
+		mainView = getStyle(&m, dimensions.ContentHeight, dimensions.MainWidth, MainView).
 			Render(lipgloss.JoinVertical(lipgloss.Top, searchBar, breadcrumb, lipgloss.NewStyle().Padding(1, 0, 0, 0).Render(m.SelectedPlayListItems.View())))
 	}
 
@@ -221,7 +223,7 @@ func (m Model) View() string {
 	} else {
 		rightColumnView = m.QueueList.View()
 	}
-	queueList := getStyle(&m, dimensions.ContentHeight, dimensions.SidebarWidth, QueueList, false).Render(rightColumnView)
+	queueList := getStyle(&m, dimensions.ContentHeight, dimensions.SidebarWidth, QueueList).Render(rightColumnView)
 	combinedView := lipgloss.JoinVertical(lipgloss.Top,
 		lipgloss.JoinHorizontal(lipgloss.Top, sideBarView, mainView, queueList),
 		playing,
@@ -243,22 +245,19 @@ type LayoutDimensions struct {
 	InputHeight   int
 }
 
-func CalculateLayoutDimensions(m *Model) LayoutDimensions {
-	if m.Width <= 0 || m.Height <= 0 {
-		m.Width = 100
-		m.Height = 30
+func CalculateLayoutDimensions(model *Model) LayoutDimensions {
+	if model.Width <= 0 || model.Height <= 0 {
+		model.Width = 100
+		model.Height = 30
 	}
-	sidebarWidth := m.Width * 22 / 100
-	inputHeight := min(max(m.Height*10/100, 2), 3)
-	mainCenterArea := m.Width - (sidebarWidth * 2) - 2
-	if mainCenterArea < 10 {
-		mainCenterArea = 10
-	}
+	sidebarWidth := model.Width * 22 / 100
+	inputHeight := min(max(model.Height*10/100, 2), 3)
+	mainCenterArea := max(model.Width-(sidebarWidth*2)-2, 10)
 
 	return LayoutDimensions{
 		SidebarWidth:  sidebarWidth,
 		MainWidth:     mainCenterArea,
-		ContentHeight: m.Height * 90 / 100,
+		ContentHeight: model.Height * 90 / 100,
 		InputHeight:   inputHeight,
 	}
 }
@@ -324,9 +323,9 @@ func (m *Model) SyncQueueList() tea.Cmd {
 
 	if len(items) == 0 && len(m.PlayHistory) > 0 {
 		items = append(items, types.HomePageSectionItem{SectionTitle: "Recently Played"})
-		for i := len(m.PlayHistory) - 1; i >= 0; i-- {
-			if m.PlayHistory[i] != nil {
-				items = append(items, *m.PlayHistory[i])
+		for _, track := range slices.Backward(m.PlayHistory) {
+			if track != nil {
+				items = append(items, *track)
 			}
 		}
 	}
