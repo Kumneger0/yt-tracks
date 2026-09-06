@@ -736,7 +736,20 @@ func (m Model) handleInputMessage(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, tea.Batch(cmd, searchCmd)
 		}
-		return m, nil
+		model, cmd := m.handleKeyPress(msg)
+		m = model
+		if cmd != nil {
+			var searchCmd tea.Cmd
+			if m.FocusedOn == SearchBar {
+				m.Search, searchCmd = m.Search.Update(msg)
+			}
+			return m, tea.Batch(cmd, searchCmd)
+		}
+		model, focusCmd := updateFocusedComponent(&m, msg)
+		m = model
+		outAlert, alertCmd := m.Alert.Update(msg)
+		m.Alert = outAlert.(bubbleup.AlertModel)
+		return m, tea.Batch(focusCmd, alertCmd)
 	case tea.MouseMsg:
 		x := msg.X
 		y := msg.Y
