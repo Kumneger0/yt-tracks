@@ -222,7 +222,14 @@ func root(cmd *cobra.Command, serverURL string) error {
 	}
 
 	ytDlpArgs := config.YtDlpArgs{
+	ytDlpArgs := config.YtDlpArgs{
 		CookiesFromBrowser: nil,
+		Cookies:            nil,
+	}
+
+	if flags.CookiesFromBrowser != "" {
+		ytDlpArgs.CookiesFromBrowser = &flags.CookiesFromBrowser
+	}
 		Cookies:            nil,
 	}
 
