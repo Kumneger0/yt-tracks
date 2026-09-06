@@ -370,7 +370,7 @@ func root(cmd *cobra.Command, serverURL string) error {
 		_ = ins.Conn.Close()
 	}
 
-	return nil
+	return err
 }
 
 func runProgram(manager ui.Manager, messageChan *chan types.DBusMessage) error {
