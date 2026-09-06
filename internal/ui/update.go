@@ -736,15 +736,6 @@ func (m Model) handleInputMessage(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, tea.Batch(cmd, searchCmd)
 		}
-		model, cmd = m.handleKeyPress(msg)
-		m = model
-		if cmd != nil {
-			var searchCmd tea.Cmd
-			if m.FocusedOn == SearchBar {
-				m.Search, searchCmd = m.Search.Update(msg)
-			}
-			return m, tea.Batch(cmd, searchCmd)
-		}
 		model, focusCmd := updateFocusedComponent(&m, msg)
 		m = model
 		outAlert, alertCmd := m.Alert.Update(msg)
@@ -808,26 +799,26 @@ func (m Model) handlePagination(listModel *list.Model, currentIndex *int) (Model
 func (m Model) handleKeyPress(msg tea.KeyMsg) (Model, tea.Cmd) {
 	key := msg.String()
 
-	switch {
-	case key == "ctrl+t":
+	switch key {
+	case "ctrl+t":
 		return m.handleCreatePlaylistKey()
-	case key == "ctrl+p":
+	case "ctrl+p":
 		return m.openPlaylistManagementModal()
-	case key == keyDown || key == "j":
+	case keyDown, "j":
 		return m.handleVerticalNavigationKey(msg, true)
-	case key == "up" || key == "k":
+	case "up", "k":
 		return m.handleVerticalNavigationKey(msg, false)
-	case key == "ctrl+k":
+	case "ctrl+k":
 		return m.handleSearchFocusKey()
-	case key == "esc" || key == "escape":
+	case "esc", "escape":
 		return m.handleEscapeKey()
-	case key == "a" || key == "r" || key == "ctrl+l" || key == "l" || key == " " || key == "b" || key == "n" || key == "ctrl+q" || key == "q" || key == keyCtrlC:
+	case "a", "r", "ctrl+l", "l", " ", "b", "n", "ctrl+q", "q", keyCtrlC:
 		return m.handleActionKey(key)
-	case key == keyTab:
+	case keyTab:
 		return changeFocusMode(&m, false)
-	case key == keyShiftTab:
+	case keyShiftTab:
 		return changeFocusMode(&m, true)
-	case key == keyEnter:
+	case keyEnter:
 		return m.handleEnterKey()
 	default:
 		return m, nil
