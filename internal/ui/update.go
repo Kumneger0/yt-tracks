@@ -344,6 +344,14 @@ func (m Model) handlePlaylistDetailMessage(msg types.PlaylistDetailMsg) (tea.Mod
 		alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
 		return m, alertCmd
 	}
+	if msg.Err != nil {
+		slog.Error(msg.Err.Error())
+		alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
+		return m, alertCmd
+	}
+	if msg.Playlist == nil {
+		return m, nil
+	}
 	var tracks []*types.PlaylistTrackObject
 	for _, track := range msg.Playlist.Tracks {
 		tracks = append(tracks, &types.PlaylistTrackObject{Track: track})
