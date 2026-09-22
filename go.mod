@@ -13,7 +13,7 @@ require (
 	github.com/gen2brain/beeep v0.11.2
 	github.com/go-critic/go-critic v0.15.0
 	github.com/godbus/dbus/v5 v5.2.2
-	github.com/gofrs/flock v0.13.0
+	github.com/gofrs/flock v0.13.1
 	github.com/golangci/golangci-lint v1.64.8
 	github.com/gotesttools/gotestfmt/v2 v2.5.0
 	github.com/muesli/mango-cobra v1.3.0
