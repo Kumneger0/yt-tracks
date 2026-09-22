@@ -21,12 +21,17 @@ build/
 dist/
 wheels/
 *.egg-info
+grpc_server/gen/
 
 # Virtual environments
 .venv
 .env
 browser.json
-gen/
+gen/*
+!gen/stub.go
+!gen/genconnect/
+gen/genconnect/*
+!gen/genconnect/stub.go
 backend/binaries/python-*
 .vercel
 .env*
