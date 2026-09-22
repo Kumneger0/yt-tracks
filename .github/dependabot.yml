@@ -30,3 +30,13 @@ updates:
     commit-message:
       prefix: "feat"
       include: "scope"
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "08:00"
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "feat"
+      include: "scope"
