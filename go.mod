@@ -1,6 +1,6 @@
 module github.com/kumneger0/yt-tracks
 
-go 1.26
+go 1.26.0
 
 require (
 	connectrpc.com/connect v1.20.0
@@ -24,7 +24,7 @@ require (
 	github.com/stretchr/testify v1.12.1
 	go.dalton.dog/bubbleup v1.4.0
 	golang.org/x/lint v0.0.0-20241112194109-818c5a804067
-	golang.org/x/sys v0.47.0
+	golang.org/x/sys v0.48.0
 	golang.org/x/term v0.45.0
 	golang.org/x/tools v0.49.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
