@@ -137,8 +137,8 @@ github.com/charmbracelet/colorprofile v0.4.3 h1:QPa1IWkYI+AOB+fE+mg/5/4HRMZcaXex
 github.com/charmbracelet/colorprofile v0.4.3/go.mod h1:/zT4BhpD5aGFpqQQqw7a+VtHCzu+zrQtt1zhMt9mR4Q=
 github.com/charmbracelet/lipgloss v1.1.0 h1:vYXsiLHVkK7fp74RkV7b2kq9+zDLoEU4MZoFqR/noCY=
 github.com/charmbracelet/lipgloss v1.1.0/go.mod h1:/6Q8FR2o+kj8rz4Dq0zQc3vYf7X+B0binUUBwA0aL30=
-github.com/charmbracelet/x/ansi v0.11.7 h1:kzv1kJvjg2S3r9KHo8hDdHFQLEqn4RBCb39dAYC84jI=
-github.com/charmbracelet/x/ansi v0.11.7/go.mod h1:9qGpnAVYz+8ACONkZBUWPtL7lulP9No6p1epAihUZwQ=
+github.com/charmbracelet/x/ansi v0.11.8 h1:JMFwp0CgDC2+jcOB162HH5k7I3FVbgFSMMYg7dSPBQQ=
+github.com/charmbracelet/x/ansi v0.11.8/go.mod h1:ZNN+3mXny/516oTQPLMPIBeSINvNJJQ8uQXDgbeJxY0=
 github.com/charmbracelet/x/cellbuf v0.0.16-0.20260602025815-df92a5806f7e h1:jmKdbZvhoY5ia2gIQHKpt+/iv45YYBnn1XS5hsjkUNA=
 github.com/charmbracelet/x/cellbuf v0.0.16-0.20260602025815-df92a5806f7e/go.mod h1:Px5TfcpvKtcs8SAIarHwSZjHkJ7aXxl6+tpMy5xmGHc=
 github.com/charmbracelet/x/exp/golden v0.0.0-20241011142426-46044092ad91 h1:payRxjMjKgx2PaCWLZ4p3ro9y97+TVLZNaRZgJwSVDQ=
@@ -548,8 +548,8 @@ github.com/rivo/uniseg v0.1.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJ
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rivo/uniseg v0.4.7 h1:WUdvkW8uEhrYfLC4ZzdpI2ztxP1I582+49Oc5Mq64VQ=
 github.com/rivo/uniseg v0.4.7/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUcx88=
-github.com/rmhubbert/bubbletea-overlay v0.6.7 h1:czTGRD7ZOVHLeOipnef3Lw7UQw0Ms66Z6aAjJIoZFOo=
-github.com/rmhubbert/bubbletea-overlay v0.6.7/go.mod h1:tR94NxVER/vn6BWMaHcwDMjUghsCvJb2uC3iDkYslww=
+github.com/rmhubbert/bubbletea-overlay v0.6.9 h1:SzSxkXVEu7Tf/xeqex0uP4h1fKwKU8uNT7FRfgzzQbk=
+github.com/rmhubbert/bubbletea-overlay v0.6.9/go.mod h1:w1hoI1LF8BsX2T1wRMTC3Wi2vT9X2OHvb0aGeKyXAqY=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=
 github.com/rogpeppe/go-internal v1.14.1/go.mod h1:MaRKkUm5W0goXpeCfT7UZI6fk/L7L7so1lCWt35ZSgc=
