@@ -25,7 +25,7 @@ require (
 	go.dalton.dog/bubbleup v1.4.0
 	golang.org/x/lint v0.0.0-20241112194109-818c5a804067
 	golang.org/x/sys v0.48.0
-	golang.org/x/term v0.45.0
+	golang.org/x/term v0.46.0
 	golang.org/x/tools v0.49.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	mvdan.cc/gofumpt v0.10.0
