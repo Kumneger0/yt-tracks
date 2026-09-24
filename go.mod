@@ -3,7 +3,7 @@ module github.com/kumneger0/yt-tracks
 go 1.26.0
 
 require (
-	connectrpc.com/connect v1.20.0
+	connectrpc.com/connect v1.21.0
 	github.com/browserutils/kooky v0.2.10
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
