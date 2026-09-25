@@ -1403,10 +1403,6 @@ func (m Model) handleMusicChange(isForward bool) (Model, tea.Cmd) {
 		switch {
 		case m.Queue != nil && m.Queue.Len() > 0:
 			track = m.Queue.PopFirst()
-		case len(m.PlayHistory) > 0 && m.PlayHistoryIndex < len(m.PlayHistory)-1:
-			m.PlayHistoryIndex++
-			track = m.PlayHistory[m.PlayHistoryIndex]
-			fromHistory = true
 		case len(m.PlaybackContext) > 0:
 			idx := m.PlaylistContextIndex
 			if idx >= 0 && idx < len(m.PlaybackContext) &&
@@ -1419,6 +1415,10 @@ func (m Model) handleMusicChange(isForward bool) (Model, tea.Cmd) {
 				track = m.PlaybackContext[idx]
 				m.PlaylistContextIndex = idx
 			}
+		case len(m.PlayHistory) > 0 && m.PlayHistoryIndex < len(m.PlayHistory)-1:
+			m.PlayHistoryIndex++
+			track = m.PlayHistory[m.PlayHistoryIndex]
+			fromHistory = true
 		case len(m.PlayHistory) > 0:
 			m.PlayHistoryIndex = 0
 			track = m.PlayHistory[m.PlayHistoryIndex]
@@ -1431,9 +1431,11 @@ func (m Model) handleMusicChange(isForward bool) (Model, tea.Cmd) {
 		}
 	}
 
-	if !isForward && len(m.PlayHistory) > 0 && m.PlayHistoryIndex > 0 {
-		m.PlayHistoryIndex--
+	if !isForward && len(m.PlayHistory) > 0 {
 		track = m.PlayHistory[m.PlayHistoryIndex]
+		if m.PlayHistoryIndex > 0 {
+			m.PlayHistoryIndex--
+		}
 	}
 
 	if track != nil {
