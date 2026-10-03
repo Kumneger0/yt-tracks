@@ -49,7 +49,7 @@ func isItemSelected(d CustomDelegate, listModel list.Model, index int) bool {
 	title := listModel.Title
 	switch d.Model.FocusedOn {
 	case SideView:
-		if strings.EqualFold(title, "yt-tracks") || strings.EqualFold(title, "Library") {
+		if strings.EqualFold(title, "yt-tracks") {
 			return listModel.Index() == index
 		}
 	case MainView:

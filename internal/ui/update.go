@@ -335,6 +335,7 @@ func (m Model) handleGetLibraryMessage(msg types.GetLibraryMsg) (tea.Model, tea.
 	removeListDefaults(&m.SelectedPlayListItems)
 	m.MainViewMode = NormalMode
 	m.FocusedOn = MainView
+	updateDelegate(&m)
 	return m, nil
 }
 
@@ -433,6 +434,8 @@ func (m Model) handleHomePageResponseMessage(msg types.HomePageResponseMsg) (tea
 	m.HomePageList.Title = titleHome
 	m.HomePageViewMode = HomePageSectionView
 	m.MainViewMode = HomePageMode
+	m.FocusedOn = MainView
+	updateDelegate(&m)
 	return m, nil
 }
 
