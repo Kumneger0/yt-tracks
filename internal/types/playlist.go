@@ -10,9 +10,10 @@ type PlaylistItemsResponse struct {
 }
 
 type PlaylistTrackObject struct {
-	Track          *musicpb.Song `json:"track"`
-	IsItFromQueue  bool          `json:"isItFromQueue"`
-	IsItFromSearch bool          `json:"-"`
+	Track             *musicpb.Song      `json:"track"`
+	StreamAndDuration *StreamAndDuration `json:"streamAndDuration"`
+	IsItFromQueue     bool               `json:"isItFromQueue"`
+	IsItFromSearch    bool               `json:"-"`
 }
 
 func (playlist PlaylistTrackObject) FilterValue() string {

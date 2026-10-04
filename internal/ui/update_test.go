@@ -906,3 +906,48 @@ func TestUpdate_HomePageEnter_DuplicateVideoId(t *testing.T) {
 		t.Errorf("Next track after 2nd vidX: want vidZ at index 3, got %s", updated.PlaybackContext[3].Track.VideoId)
 	}
 }
+
+func TestUpdate_NextTrackMsg(t *testing.T) {
+	model := newTestModel()
+
+	qTrack := &types.PlaylistTrackObject{
+		Track: &musicpb.Song{VideoId: "next-in-queue", Title: "Queue Track"},
+	}
+	model.Queue.AddTrack(qTrack)
+
+	ctxTrack := &types.PlaylistTrackObject{
+		Track: &musicpb.Song{VideoId: "next-in-ctx", Title: "Context Track"},
+	}
+	model.PlaybackContext = []*types.PlaylistTrackObject{ctxTrack}
+
+	// 1. Update queue track
+	queueMsg := types.NextTrackMsg{}
+	queueMsg.Result.TrackID = "next-in-queue"
+	queueMsg.Result.StreamAndDuration = types.StreamAndDuration{
+		URL:      "http://stream.url/queue",
+		Duration: "180",
+	}
+
+	res, _ := model.Update(queueMsg)
+	updated := res.(Model)
+
+	tracks := updated.Queue.AllTracks()
+	if len(tracks) != 1 || tracks[0].StreamAndDuration == nil || tracks[0].StreamAndDuration.URL != "http://stream.url/queue" {
+		t.Fatalf("expected queue track to have stream URL updated")
+	}
+
+	// 2. Update context track
+	ctxMsg := types.NextTrackMsg{}
+	ctxMsg.Result.TrackID = "next-in-ctx"
+	ctxMsg.Result.StreamAndDuration = types.StreamAndDuration{
+		URL:      "http://stream.url/ctx",
+		Duration: "200",
+	}
+
+	res, _ = updated.Update(ctxMsg)
+	updated = res.(Model)
+
+	if len(updated.PlaybackContext) != 1 || updated.PlaybackContext[0].StreamAndDuration == nil || updated.PlaybackContext[0].StreamAndDuration.URL != "http://stream.url/ctx" {
+		t.Fatalf("expected context track to have stream URL updated")
+	}
+}

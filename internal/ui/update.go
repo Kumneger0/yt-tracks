@@ -270,8 +270,8 @@ func (m Model) handleSearchAndDownloadMusicMessage(msg types.SearchAndDownloadMu
 		_ = msg.Player.Close()
 		return m, nil
 	}
-	if m.SelectedTrack.Track.DurationSeconds == 0 && msg.Duration != "" {
-		if duration, err := strconv.ParseInt(msg.Duration, 10, 64); err == nil {
+	if m.SelectedTrack.Track.DurationSeconds == 0 && msg.StreamAndDuration.Duration != "" {
+		if duration, err := strconv.ParseInt(msg.StreamAndDuration.Duration, 10, 64); err == nil {
 			m.SelectedTrack.Track.DurationSeconds = int32(duration)
 		} else {
 			slog.Error(err.Error())
@@ -294,8 +294,64 @@ func (m Model) handleSearchAndDownloadMusicMessage(msg types.SearchAndDownloadMu
 			Err:   err,
 		}
 	}
+
+	nextTrack := m.peekNextTrack()
+	var nextTrackStreamURLAndDurationCMD tea.Cmd
+	if nextTrack != nil && nextTrack.Track != nil && m.CoreDepsPath != nil {
+		nextTrackStreamURLAndDurationCMD = func() tea.Msg {
+			playCtx, cancel := context.WithCancel(context.Background())
+			m.playbackCancel = cancel
+			streamAndDuration, err := youtube.GetStreamURLAndDuration(playCtx, nextTrack.Track.VideoId, m.CoreDepsPath.YtDlp)
+			msg := types.NextTrackMsg{}
+			msg.Result.TrackID = nextTrack.Track.VideoId
+
+			if err != nil {
+				msg.Err = err
+				return msg
+			}
+
+			if streamAndDuration != nil {
+				msg.Result.StreamAndDuration = *streamAndDuration
+			}
+
+			return msg
+		}
+	}
 	m.PlayerProcess = msg.Player
-	return m, likedCmd
+	return m, tea.Batch(likedCmd, nextTrackStreamURLAndDurationCMD)
+}
+
+func (m Model) handleNextTrackMessage(msg types.NextTrackMsg) (tea.Model, tea.Cmd) {
+	if msg.Err != nil {
+		slog.Error(msg.Err.Error())
+		alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
+		return m, alertCmd
+	}
+
+	if msg.Result.TrackID == "" {
+		return m, nil
+	}
+
+	// 1. Check and update the track in Queue
+	if m.Queue != nil {
+		for _, track := range m.Queue.AllTracks() {
+			if track != nil && track.Track != nil && track.Track.VideoId == msg.Result.TrackID {
+				track.StreamAndDuration = &msg.Result.StreamAndDuration
+				m.Queue.UpdateTrack(track)
+				break
+			}
+		}
+	}
+
+	// 2. Check and update the track in PlaybackContext
+	for _, track := range m.PlaybackContext {
+		if track != nil && track.Track != nil && track.Track.VideoId == msg.Result.TrackID {
+			track.StreamAndDuration = &msg.Result.StreamAndDuration
+			break
+		}
+	}
+
+	return m, m.SyncQueueList()
 }
 
 func (m Model) handleGetLibraryMessage(msg types.GetLibraryMsg) (tea.Model, tea.Cmd) {
@@ -509,6 +565,7 @@ func isSearchMessage(msg tea.Msg) bool {
 	case types.GetLibraryMsg, types.PlaylistDetailMsg, types.UpdateHomePageContentMsg,
 		types.SearchAndDownloadMusicMsg, types.CheckUserSavedTrackResponseMsg,
 		types.SearchingMsg, types.SearchResultMsg, types.HomePageResponseMsg,
+		types.NextTrackMsg,
 		types.LikeUnlikeTrackResponseMsg:
 		return true
 	default:
@@ -657,6 +714,8 @@ func (m Model) handleSearchMessage(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.handleUpdateHomePageContentMessage(msg)
 	case types.SearchAndDownloadMusicMsg:
 		return m.handleSearchAndDownloadMusicMessage(msg)
+	case types.NextTrackMsg:
+		return m.handleNextTrackMessage(msg)
 	case types.CheckUserSavedTrackResponseMsg:
 		if msg.Err != nil {
 			slog.Error(msg.Err.Error())
@@ -1396,6 +1455,35 @@ func (m *Model) updateLyricsView() {
 		noLyricsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#71717A")).Italic(true)
 		m.LyricsView.SetContent(noLyricsStyle.Render("No lyrics available for this song."))
 	}
+}
+
+func (m Model) peekNextTrack() *types.PlaylistTrackObject {
+	if m.Queue != nil && m.Queue.Len() > 0 {
+		return m.Queue.Current()
+	}
+
+	if len(m.PlaybackContext) > 0 {
+		idx := m.PlaylistContextIndex
+		if idx >= 0 && idx < len(m.PlaybackContext) &&
+			m.SelectedTrack != nil && m.SelectedTrack.Track != nil &&
+			m.PlaybackContext[idx].Track != nil &&
+			m.SelectedTrack.Track.VideoId == m.PlaybackContext[idx].Track.VideoId {
+			idx = (idx + 1) % len(m.PlaybackContext)
+		}
+		if idx >= 0 && idx < len(m.PlaybackContext) {
+			return m.PlaybackContext[idx]
+		}
+	}
+
+	if len(m.PlayHistory) > 0 {
+		nextIdx := m.PlayHistoryIndex + 1
+		if nextIdx < len(m.PlayHistory) {
+			return m.PlayHistory[nextIdx]
+		}
+		return m.PlayHistory[0]
+	}
+
+	return nil
 }
 
 func (m Model) handleMusicChange(isForward bool) (Model, tea.Cmd) {
@@ -2266,7 +2354,7 @@ func (m Model) PlaySelectedMusic(selectedMusic types.PlaylistTrackObject) (Model
 
 	playCtx, cancel := context.WithCancel(context.Background())
 	m.playbackCancel = cancel
-	cmd := youtube.SearchAndDownloadMusic(playCtx, selectedMusic.Track.VideoId, m.CoreDepsPath)
+	cmd := youtube.SearchAndDownloadMusic(playCtx, &selectedMusic, m.CoreDepsPath)
 	m.CurrentLyrics = nil
 	m.LyricsView.SetContent("")
 

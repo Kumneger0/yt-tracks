@@ -70,10 +70,24 @@ type LikeUnlikeTrackResponseMsg struct {
 }
 
 type SearchAndDownloadMusicMsg struct {
-	Player   *Player
-	VideoID  string
-	Err      error
-	Duration string
+	Player            *Player
+	VideoID           string
+	Err               error
+	StreamAndDuration *StreamAndDuration
+}
+
+type StreamAndDuration struct {
+	URL         string
+	Duration    string
+	HTTPHeaders map[string]string
+}
+
+type NextTrackMsg struct {
+	Result struct {
+		TrackID           string
+		StreamAndDuration StreamAndDuration
+	}
+	Err error
 }
 
 type Player struct {

@@ -72,6 +72,29 @@ func (rq *RingQueue) PlayNextTrack(track *types.PlaylistTrackObject) {
 	}
 }
 
+func (rq *RingQueue) UpdateTrack(track *types.PlaylistTrackObject) bool {
+	rq.mu.Lock()
+	defer rq.mu.Unlock()
+
+	if rq.current == nil || track == nil || track.Track == nil || track.Track.VideoId == "" {
+		return false
+	}
+
+	n := rq.current.Len()
+	curr := rq.current
+	for range n {
+		if t, ok := curr.Value.(*types.PlaylistTrackObject); ok && t != nil && t.Track != nil {
+			if t.Track.VideoId == track.Track.VideoId {
+				curr.Value = track
+				return true
+			}
+		}
+		curr = curr.Next()
+	}
+
+	return false
+}
+
 func (rq *RingQueue) Next() *types.PlaylistTrackObject {
 	rq.mu.Lock()
 	defer rq.mu.Unlock()
