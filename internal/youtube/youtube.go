@@ -47,15 +47,26 @@ type CoreDepsPath struct {
 	YtDlp  string
 }
 
+const StreamURLMaxAge = 20 * time.Minute
+
+// SearchAndDownloadMusic streams or downloads music for the given track.
+//
+//nolint:gocyclo
 func SearchAndDownloadMusic(
 	ctx context.Context,
-	videoID string,
+	track *types.PlaylistTrackObject,
 	coreDepsPath *CoreDepsPath,
 ) tea.Cmd {
 	return func() tea.Msg {
+		if track == nil || track.Track == nil {
+			return nil
+		}
 		if ctx.Err() != nil {
 			return nil
 		}
+
+		videoID := track.Track.VideoId
+		streamAndDuration := track.StreamAndDuration
 
 		if coreDepsPath == nil {
 			return types.SearchAndDownloadMusicMsg{
@@ -65,29 +76,41 @@ func SearchAndDownloadMusic(
 			}
 		}
 
-		streamURL, err := GetStreamURLAndDuration(ctx, videoID, coreDepsPath.YtDlp)
-		if err != nil || streamURL == nil {
-			if ctx.Err() != nil {
-				return nil
+		var streamURL *types.StreamAndDuration
+		if streamAndDuration != nil && streamAndDuration.IsFresh(StreamURLMaxAge) {
+			streamURL = streamAndDuration
+		} else {
+			result, err := GetStreamURLAndDuration(ctx, videoID, coreDepsPath.YtDlp)
+			if err != nil || result == nil {
+				if ctx.Err() != nil {
+					return nil
+				}
+				if err != nil {
+					slog.Error(err.Error())
+				}
+				return types.SearchAndDownloadMusicMsg{Player: nil, VideoID: videoID, Err: err}
 			}
-			slog.Error(err.Error())
-			return types.SearchAndDownloadMusicMsg{Player: nil, VideoID: videoID, Err: err}
+			streamURL = result
 		}
+		track.StreamAndDuration = nil
 
 		if ctx.Err() != nil {
 			return nil
 		}
 
 		appConfig := config.GetConfig()
-		logPathName := appConfig.DebugDir
-		ffStderr, err := os.Create(filepath.Join(*logPathName, "ffstderr.log"))
+		logPath := os.TempDir()
+		if appConfig != nil && appConfig.DebugDir != nil {
+			logPath = *appConfig.DebugDir
+		}
+		ffStderr, err := os.Create(filepath.Join(logPath, "ffstderr.log"))
 		if err != nil {
 			slog.Error(err.Error())
 			return types.SearchAndDownloadMusicMsg{
-				Player:   nil,
-				VideoID:  videoID,
-				Duration: "",
-				Err:      err,
+				Player:            nil,
+				VideoID:           videoID,
+				StreamAndDuration: streamURL,
+				Err:               err,
 			}
 		}
 
@@ -122,10 +145,10 @@ func SearchAndDownloadMusic(
 			_ = ffStderr.Close()
 			slog.Error(err.Error())
 			return types.SearchAndDownloadMusicMsg{
-				Player:   nil,
-				VideoID:  videoID,
-				Duration: streamURL.Duration,
-				Err:      err,
+				Player:            nil,
+				VideoID:           videoID,
+				StreamAndDuration: streamURL,
+				Err:               err,
 			}
 		}
 
@@ -144,10 +167,9 @@ func SearchAndDownloadMusic(
 				return nil
 			}
 			return types.SearchAndDownloadMusicMsg{
-				Player:   nil,
-				VideoID:  videoID,
-				Duration: streamURL.Duration,
-				Err:      err,
+				Player:  nil,
+				VideoID: videoID,
+				Err:     err,
 			}
 		}
 
@@ -175,10 +197,10 @@ func SearchAndDownloadMusic(
 				return nil
 			}
 			return types.SearchAndDownloadMusicMsg{
-				Player:   nil,
-				Duration: streamURL.Duration,
-				VideoID:  videoID,
-				Err:      err,
+				Player:            nil,
+				StreamAndDuration: streamURL,
+				VideoID:           videoID,
+				Err:               err,
 			}
 		}
 		if ready != nil {
@@ -230,26 +252,23 @@ func SearchAndDownloadMusic(
 				ByteCounterReader: counter,
 				Close:             cleanup,
 			},
-			VideoID:  videoID,
-			Duration: streamURL.Duration,
-			Err:      nil,
+			VideoID:           videoID,
+			StreamAndDuration: streamURL,
+			Err:               nil,
 		}
 	}
 }
 
-type StreamAndDuration struct {
-	URL         string
-	Duration    string
-	HTTPHeaders map[string]string
-}
-
-func GetStreamURLAndDuration(ctx context.Context, videoID string, ytdlpPath string) (*StreamAndDuration, error) {
+func GetStreamURLAndDuration(ctx context.Context, videoID string, ytdlpPath string) (*types.StreamAndDuration, error) {
 	timeoutCtx, cancel := context.WithTimeout(ctx, 45*time.Second)
 	defer cancel()
 
 	appConfig := config.GetConfig()
-	logPathName := appConfig.DebugDir
-	ytDlpError, err := os.Create(filepath.Join(*logPathName, "yt-dlp-error.log"))
+	logPath := os.TempDir()
+	if appConfig != nil && appConfig.DebugDir != nil {
+		logPath = *appConfig.DebugDir
+	}
+	ytDlpError, err := os.Create(filepath.Join(logPath, "yt-dlp-error.log"))
 
 	if err != nil {
 		slog.Error(err.Error())
@@ -329,9 +348,10 @@ func GetStreamURLAndDuration(ctx context.Context, videoID string, ytdlpPath stri
 	}
 
 	durationInSeconds := int64(data.Duration)
-	return &StreamAndDuration{
+	return &types.StreamAndDuration{
 		URL:         data.URL,
 		Duration:    strconv.FormatInt(durationInSeconds, 10),
 		HTTPHeaders: data.HTTPHeaders,
+		FetchedAt:   time.Now(),
 	}, nil
 }

@@ -4,6 +4,7 @@ import (
 	"io"
 	"log/slog"
 	"sync/atomic"
+	"time"
 
 	"github.com/ebitengine/oto/v3"
 	musicpb "github.com/kumneger0/yt-tracks/gen"
@@ -70,10 +71,32 @@ type LikeUnlikeTrackResponseMsg struct {
 }
 
 type SearchAndDownloadMusicMsg struct {
-	Player   *Player
-	VideoID  string
-	Err      error
-	Duration string
+	Player            *Player
+	VideoID           string
+	Err               error
+	StreamAndDuration *StreamAndDuration
+}
+
+type StreamAndDuration struct {
+	URL         string
+	Duration    string
+	HTTPHeaders map[string]string
+	FetchedAt   time.Time
+}
+
+func (s *StreamAndDuration) IsFresh(maxAge time.Duration) bool {
+	if s == nil || s.URL == "" || s.FetchedAt.IsZero() {
+		return false
+	}
+	return time.Since(s.FetchedAt) < maxAge
+}
+
+type NextTrackMsg struct {
+	Result struct {
+		TrackID           string
+		StreamAndDuration StreamAndDuration
+	}
+	Err error
 }
 
 type Player struct {

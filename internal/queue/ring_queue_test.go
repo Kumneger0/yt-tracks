@@ -95,3 +95,56 @@ func TestRingQueue_SetAndRemove(t *testing.T) {
 		t.Fatalf("expected current v2 after remove, got %s", ringQueue.Current().Track.VideoId)
 	}
 }
+
+func TestRingQueue_UpdateTrack(t *testing.T) {
+	ringQueue := NewRingQueue()
+
+	// Update on empty queue
+	track1 := &types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "v1", Title: "Original 1"}}
+	if ringQueue.UpdateTrack(track1) {
+		t.Fatal("expected update to fail on empty queue")
+	}
+
+	// Update with invalid inputs
+	ringQueue.AddTrack(track1)
+	if ringQueue.UpdateTrack(nil) {
+		t.Fatal("expected update to fail with nil track")
+	}
+	if ringQueue.UpdateTrack(&types.PlaylistTrackObject{}) {
+		t.Fatal("expected update to fail with track without musicpb Song")
+	}
+
+	// Update single element
+	updatedT1 := &types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "v1", Title: "Updated 1"}}
+	if !ringQueue.UpdateTrack(updatedT1) {
+		t.Fatal("expected update to succeed for v1")
+	}
+	if ringQueue.Current().Track.Title != "Updated 1" {
+		t.Fatalf("expected title 'Updated 1', got '%s'", ringQueue.Current().Track.Title)
+	}
+
+	// Update with multiple elements
+	track2 := &types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "v2", Title: "Original 2"}}
+	track3 := &types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "v3", Title: "Original 3"}}
+	ringQueue.AddTrack(track2)
+	ringQueue.AddTrack(track3)
+
+	updatedT2 := &types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "v2", Title: "Updated 2"}}
+	if !ringQueue.UpdateTrack(updatedT2) {
+		t.Fatal("expected update to succeed for v2")
+	}
+
+	all := ringQueue.AllTracks()
+	if len(all) != 3 {
+		t.Fatalf("expected 3 tracks, got %d", len(all))
+	}
+	if all[1].Track.Title != "Updated 2" {
+		t.Fatalf("expected title 'Updated 2' at index 1, got '%s'", all[1].Track.Title)
+	}
+
+	// Non-existent videoId
+	tUnknown := &types.PlaylistTrackObject{Track: &musicpb.Song{VideoId: "v99", Title: "Unknown"}}
+	if ringQueue.UpdateTrack(tUnknown) {
+		t.Fatal("expected update to fail for non-existent videoId")
+	}
+}
