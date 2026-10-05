@@ -1008,6 +1008,10 @@ func (m Model) handleActionKey(key string) (Model, tea.Cmd) {
 			m.playbackCancel()
 			m.playbackCancel = nil
 		}
+		if m.navigationCancel != nil {
+			m.navigationCancel()
+			m.navigationCancel = nil
+		}
 		if m.prefetchCancel != nil {
 			m.prefetchCancel()
 			m.prefetchCancel = nil
@@ -1734,11 +1738,11 @@ func (m Model) handleSidebarEnter() (Model, tea.Cmd) {
 	itemName := strings.ToLower(strings.TrimSpace(item.Name))
 
 	if itemName == "home" {
-		if m.playbackCancel != nil {
-			m.playbackCancel()
+		if m.navigationCancel != nil {
+			m.navigationCancel()
 		}
 		ctx, cancel := context.WithCancel(context.Background())
-		m.playbackCancel = cancel
+		m.navigationCancel = cancel
 		homePageFeed := func() tea.Msg {
 			homePage, err := m.YtMusicClient.GetHomePage(ctx, &musicpb.GetHomePageRequest{})
 			if ctx.Err() != nil {
@@ -1757,11 +1761,11 @@ func (m Model) handleSidebarEnter() (Model, tea.Cmd) {
 	}
 
 	if itemName == "library" {
-		if m.playbackCancel != nil {
-			m.playbackCancel()
+		if m.navigationCancel != nil {
+			m.navigationCancel()
 		}
 		ctx, cancel := context.WithCancel(context.Background())
-		m.playbackCancel = cancel
+		m.navigationCancel = cancel
 		m.PendingContextName = "Library"
 		libraryCmd := func() tea.Msg {
 			library, err := m.YtMusicClient.GetLibrary(ctx, &musicpb.GetLibraryRequest{Limit: 100})

@@ -81,6 +81,7 @@ type Model struct {
 	MainViewMode
 	PlayerProcess        *types.Player
 	playbackCancel       context.CancelFunc
+	navigationCancel     context.CancelFunc
 	prefetchCancel       context.CancelFunc
 	SelectedTrack        *SelectedTrack
 	PlayedSeconds        float64
