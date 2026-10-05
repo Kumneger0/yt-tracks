@@ -298,10 +298,17 @@ func (m Model) handleSearchAndDownloadMusicMessage(msg types.SearchAndDownloadMu
 	nextTrack := m.peekNextTrack()
 	var nextTrackStreamURLAndDurationCMD tea.Cmd
 	if nextTrack != nil && nextTrack.Track != nil && m.CoreDepsPath != nil {
+		if m.prefetchCancel != nil {
+			m.prefetchCancel()
+			m.prefetchCancel = nil
+		}
+		prefetchCtx, cancel := context.WithCancel(context.Background())
+		m.prefetchCancel = cancel
 		nextTrackStreamURLAndDurationCMD = func() tea.Msg {
-			playCtx, cancel := context.WithCancel(context.Background())
-			m.playbackCancel = cancel
-			streamAndDuration, err := youtube.GetStreamURLAndDuration(playCtx, nextTrack.Track.VideoId, m.CoreDepsPath.YtDlp)
+			streamAndDuration, err := youtube.GetStreamURLAndDuration(prefetchCtx, nextTrack.Track.VideoId, m.CoreDepsPath.YtDlp)
+			if prefetchCtx.Err() != nil {
+				return nil
+			}
 			msg := types.NextTrackMsg{}
 			msg.Result.TrackID = nextTrack.Track.VideoId
 
@@ -322,7 +329,12 @@ func (m Model) handleSearchAndDownloadMusicMessage(msg types.SearchAndDownloadMu
 }
 
 func (m Model) handleNextTrackMessage(msg types.NextTrackMsg) (tea.Model, tea.Cmd) {
+	m.prefetchCancel = nil
+
 	if msg.Err != nil {
+		if errors.Is(msg.Err, context.Canceled) {
+			return m, nil
+		}
 		slog.Error(msg.Err.Error())
 		alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
 		return m, alertCmd
@@ -989,6 +1001,10 @@ func (m Model) handleActionKey(key string) (Model, tea.Cmd) {
 		if m.playbackCancel != nil {
 			m.playbackCancel()
 			m.playbackCancel = nil
+		}
+		if m.prefetchCancel != nil {
+			m.prefetchCancel()
+			m.prefetchCancel = nil
 		}
 		if m.PlayerProcess != nil {
 			err := m.PlayerProcess.Close()
@@ -2343,6 +2359,10 @@ func (m Model) PlaySelectedMusic(selectedMusic types.PlaylistTrackObject) (Model
 	if m.playbackCancel != nil {
 		m.playbackCancel()
 		m.playbackCancel = nil
+	}
+	if m.prefetchCancel != nil {
+		m.prefetchCancel()
+		m.prefetchCancel = nil
 	}
 	if m.PlayerProcess != nil {
 		err := m.PlayerProcess.Close()

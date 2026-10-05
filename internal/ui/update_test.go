@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -949,5 +950,41 @@ func TestUpdate_NextTrackMsg(t *testing.T) {
 
 	if len(updated.PlaybackContext) != 1 || updated.PlaybackContext[0].StreamAndDuration == nil || updated.PlaybackContext[0].StreamAndDuration.URL != "http://stream.url/ctx" {
 		t.Fatalf("expected context track to have stream URL updated")
+	}
+}
+
+func TestUpdate_NextTrackMsg_CanceledErrorSuppressed(t *testing.T) {
+	model := newTestModel()
+
+	canceledMsg := types.NextTrackMsg{
+		Err: context.Canceled,
+	}
+
+	res, cmd := model.Update(canceledMsg)
+	_ = res.(Model)
+
+	if cmd != nil {
+		t.Errorf("expected nil cmd for context.Canceled NextTrackMsg, got %v", cmd)
+	}
+}
+
+func TestUpdate_PrefetchCancelOnPlaybackChange(t *testing.T) {
+	model := newTestModel()
+
+	canceled := false
+	model.prefetchCancel = func() {
+		canceled = true
+	}
+
+	track := types.PlaylistTrackObject{
+		Track: &musicpb.Song{VideoId: "new-track"},
+	}
+
+	updated, _ := model.PlaySelectedMusic(track)
+	if !canceled {
+		t.Fatal("expected prefetchCancel to be called when PlaySelectedMusic is invoked")
+	}
+	if updated.prefetchCancel != nil {
+		t.Fatal("expected prefetchCancel to be cleared after PlaySelectedMusic")
 	}
 }
