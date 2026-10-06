@@ -369,6 +369,9 @@ func (m Model) handleNextTrackMessage(msg types.NextTrackMsg) (tea.Model, tea.Cm
 func (m Model) handleGetLibraryMessage(msg types.GetLibraryMsg) (tea.Model, tea.Cmd) {
 	m.IsSearchLoading = false
 	if msg.Err != nil {
+		if errors.Is(msg.Err, context.Canceled) {
+			return m, nil
+		}
 		slog.Error(msg.Err.Error())
 		alertCmd := m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
 		return m, alertCmd
@@ -482,6 +485,9 @@ func (m Model) handleHomePageResponseMessage(msg types.HomePageResponseMsg) (tea
 	var alertCmd tea.Cmd
 	m.IsSearchLoading = false
 	if msg.Err != nil {
+		if errors.Is(msg.Err, context.Canceled) {
+			return m, nil
+		}
 		slog.Error(msg.Err.Error())
 		alertCmd = m.Alert.NewAlertCmd(bubbleup.ErrorKey, msg.Err.Error())
 		return m, alertCmd
@@ -1001,6 +1007,10 @@ func (m Model) handleActionKey(key string) (Model, tea.Cmd) {
 		if m.playbackCancel != nil {
 			m.playbackCancel()
 			m.playbackCancel = nil
+		}
+		if m.navigationCancel != nil {
+			m.navigationCancel()
+			m.navigationCancel = nil
 		}
 		if m.prefetchCancel != nil {
 			m.prefetchCancel()
@@ -1728,10 +1738,16 @@ func (m Model) handleSidebarEnter() (Model, tea.Cmd) {
 	itemName := strings.ToLower(strings.TrimSpace(item.Name))
 
 	if itemName == "home" {
+		if m.navigationCancel != nil {
+			m.navigationCancel()
+		}
+		ctx, cancel := context.WithCancel(context.Background())
+		m.navigationCancel = cancel
 		homePageFeed := func() tea.Msg {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
 			homePage, err := m.YtMusicClient.GetHomePage(ctx, &musicpb.GetHomePageRequest{})
+			if ctx.Err() != nil {
+				return nil
+			}
 			var resp *musicpb.GetHomePageResponse
 			if homePage != nil {
 				resp = homePage
@@ -1745,11 +1761,17 @@ func (m Model) handleSidebarEnter() (Model, tea.Cmd) {
 	}
 
 	if itemName == "library" {
+		if m.navigationCancel != nil {
+			m.navigationCancel()
+		}
+		ctx, cancel := context.WithCancel(context.Background())
+		m.navigationCancel = cancel
 		m.PendingContextName = "Library"
 		libraryCmd := func() tea.Msg {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
 			library, err := m.YtMusicClient.GetLibrary(ctx, &musicpb.GetLibraryRequest{Limit: 100})
+			if ctx.Err() != nil {
+				return nil
+			}
 			var libResp *musicpb.GetLibraryResponse
 			if library != nil {
 				libResp = library
