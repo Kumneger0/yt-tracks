@@ -12,7 +12,7 @@ require (
 	github.com/ebitengine/oto/v3 v3.5.1
 	github.com/gen2brain/beeep v0.11.2
 	github.com/go-critic/go-critic v0.15.0
-	github.com/godbus/dbus/v5 v5.2.2
+	github.com/godbus/dbus/v5 v5.2.3
 	github.com/gofrs/flock v0.13.1
 	github.com/golangci/golangci-lint v1.64.8
 	github.com/gotesttools/gotestfmt/v2 v2.5.0
