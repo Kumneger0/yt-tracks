@@ -137,8 +137,8 @@ github.com/charmbracelet/colorprofile v0.4.3 h1:QPa1IWkYI+AOB+fE+mg/5/4HRMZcaXex
 github.com/charmbracelet/colorprofile v0.4.3/go.mod h1:/zT4BhpD5aGFpqQQqw7a+VtHCzu+zrQtt1zhMt9mR4Q=
 github.com/charmbracelet/lipgloss v1.1.0 h1:vYXsiLHVkK7fp74RkV7b2kq9+zDLoEU4MZoFqR/noCY=
 github.com/charmbracelet/lipgloss v1.1.0/go.mod h1:/6Q8FR2o+kj8rz4Dq0zQc3vYf7X+B0binUUBwA0aL30=
-github.com/charmbracelet/x/ansi v0.11.8 h1:JMFwp0CgDC2+jcOB162HH5k7I3FVbgFSMMYg7dSPBQQ=
-github.com/charmbracelet/x/ansi v0.11.8/go.mod h1:ZNN+3mXny/516oTQPLMPIBeSINvNJJQ8uQXDgbeJxY0=
+github.com/charmbracelet/x/ansi v0.11.9 h1:kIrqLBxtTVbLyyHO2Evoi93EjQo1mylWmpNEsfPxXAM=
+github.com/charmbracelet/x/ansi v0.11.9/go.mod h1:DG/hpOnaI2QJ/KMMqLL2h0KVhluuJLazf8973P+Vy5w=
 github.com/charmbracelet/x/cellbuf v0.0.16-0.20260602025815-df92a5806f7e h1:jmKdbZvhoY5ia2gIQHKpt+/iv45YYBnn1XS5hsjkUNA=
 github.com/charmbracelet/x/cellbuf v0.0.16-0.20260602025815-df92a5806f7e/go.mod h1:Px5TfcpvKtcs8SAIarHwSZjHkJ7aXxl6+tpMy5xmGHc=
 github.com/charmbracelet/x/exp/golden v0.0.0-20241011142426-46044092ad91 h1:payRxjMjKgx2PaCWLZ4p3ro9y97+TVLZNaRZgJwSVDQ=
@@ -423,8 +423,8 @@ github.com/ldez/usetesting v0.4.2 h1:J2WwbrFGk3wx4cZwSMiCQQ00kjGR0+tuuyW0Lqm4lwA
 github.com/ldez/usetesting v0.4.2/go.mod h1:eEs46T3PpQ+9RgN9VjpY6qWdiw2/QmfiDeWmdZdrjIQ=
 github.com/leonklingele/grouper v1.1.2 h1:o1ARBDLOmmasUaNDesWqWCIFH3u7hoFlM84YrjT3mIY=
 github.com/leonklingele/grouper v1.1.2/go.mod h1:6D0M/HVkhs2yRKRFZUoGjeDy7EZTfFBE9gl4kjmIGkA=
-github.com/lucasb-eyer/go-colorful v1.4.0 h1:UtrWVfLdarDgc44HcS7pYloGHJUjHV/4FwW4TvVgFr4=
-github.com/lucasb-eyer/go-colorful v1.4.0/go.mod h1:R4dSotOR9KMtayYi1e77YzuveK+i7ruzyGqttikkLy0=
+github.com/lucasb-eyer/go-colorful v1.4.1 h1:1EO+WB73+EH8EVbzlrG3KLAfEypQWVHIBqlTf+2hNss=
+github.com/lucasb-eyer/go-colorful v1.4.1/go.mod h1:R4dSotOR9KMtayYi1e77YzuveK+i7ruzyGqttikkLy0=
 github.com/macabu/inamedparam v0.1.3 h1:2tk/phHkMlEL/1GNe/Yf6kkR/hkcUdAEY3L0hjYV1Mk=
 github.com/macabu/inamedparam v0.1.3/go.mod h1:93FLICAIk/quk7eaPPQvbzihUdn/QkGDwIZEoLtpH6I=
 github.com/maratori/testableexamples v1.0.0 h1:dU5alXRrD8WKSjOUnmJZuzdxWOEQ57+7s93SLMxb2vI=
@@ -443,8 +443,8 @@ github.com/mattn/go-localereader v0.0.1 h1:ygSAOl7ZXTx4RdPYinUpg6W99U8jWvWi9Ye2J
 github.com/mattn/go-localereader v0.0.1/go.mod h1:8fBrzywKY7BI3czFoHkuzRoWE9C+EiG4R1k4Cjx5p88=
 github.com/mattn/go-runewidth v0.0.9/go.mod h1:H031xJmbD/WCDINGzjvQ9THkh0rPKHF+m2gUSrubnMI=
 github.com/mattn/go-runewidth v0.0.12/go.mod h1:RAqKPSqVFrSLVXbA8x7dzmKdmGzieGRCM46jaSJTDAk=
-github.com/mattn/go-runewidth v0.0.24 h1:cpokDiIn0MGnhdHwuWnJBITySJ20QyNGnY2kR/ay2DU=
-github.com/mattn/go-runewidth v0.0.24/go.mod h1:XBkDxAl56ILZc9knddidhrOlY5R/pDhgLpndooCuJAs=
+github.com/mattn/go-runewidth v0.0.27 h1:Feg/Oou5zI/wnpgDF6omIU0OokC9GxLC/WRknhVlIR0=
+github.com/mattn/go-runewidth v0.0.27/go.mod h1:3qAiGCV4Koz/yuveO58qUefmUTRm8r0IGEXZ9jeHp/8=
 github.com/matttproud/golang_protobuf_extensions v1.0.1 h1:4hp9jkHxhMHkqkrB3Ix0jegS5sx/RkqARlsWZ6pIwiU=
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
 github.com/mgechev/revive v1.7.0 h1:JyeQ4yO5K8aZhIKf5rec56u0376h8AlKNQEmjfkjKlY=
@@ -550,8 +550,8 @@ github.com/rivo/uniseg v0.1.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJ
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rivo/uniseg v0.4.7 h1:WUdvkW8uEhrYfLC4ZzdpI2ztxP1I582+49Oc5Mq64VQ=
 github.com/rivo/uniseg v0.4.7/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUcx88=
-github.com/rmhubbert/bubbletea-overlay v0.6.9 h1:SzSxkXVEu7Tf/xeqex0uP4h1fKwKU8uNT7FRfgzzQbk=
-github.com/rmhubbert/bubbletea-overlay v0.6.9/go.mod h1:w1hoI1LF8BsX2T1wRMTC3Wi2vT9X2OHvb0aGeKyXAqY=
+github.com/rmhubbert/bubbletea-overlay v0.6.10 h1:7uKLKi8nMcFjGhe9xOlzGeQkfngR+9hJdbir9JhdsO8=
+github.com/rmhubbert/bubbletea-overlay v0.6.10/go.mod h1:Ds2VZUWPpHjVp4bmJwWRC2V4uNp7HSscZ/YwiNf4cvc=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/rogpeppe/go-internal v1.16.0 h1:O9DK+vNMDVGLr2BeZqmpLeMjiMNkuXfcqntWbZV6S5g=
 github.com/rogpeppe/go-internal v1.16.0/go.mod h1:DrUVZyrJU+txYW5/1kwtXQSMFio52ZOxX7yM1VHvnxs=
