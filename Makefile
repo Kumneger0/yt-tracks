@@ -92,3 +92,4 @@ clean: ## clean up both go and python generated files
 	@echo "--> Cleaning up..."
 	@rm -rf coverage.out dist/ $(project_name)
 	@rm -rf gen/*.go gen/genconnect
+	@rm -rf grpc_server/gen/
