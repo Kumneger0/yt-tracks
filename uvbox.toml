@@ -1,0 +1,7 @@
+[package]
+name = "yt-tracks"
+script = "yt-tracks-backend"
+
+[uv]
+version = "0.11.6"
+environment = ["UV_PYTHON=3.13"]

@@ -8,16 +8,12 @@ import (
 )
 
 var (
-	version   = ""
-	Debug     = "false"
-	serverURL = ""
+	version = ""
+	Debug   = "false"
 )
 
 func main() {
-	if serverURL == "" {
-		panic("server url is missing")
-	}
-	err := cmd.Execute(version, Debug == "true", serverURL)
+	err := cmd.Execute(version, Debug == "true")
 	if err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)
