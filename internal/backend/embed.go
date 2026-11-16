@@ -56,3 +56,22 @@ func StartEmbedded(ctx context.Context) (*Backend, error) {
 
 	return Start(ctx, path)
 }
+
+func SetupEmbedded(ctx context.Context) error {
+	path, err := getOrExtractBackend()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("==> Setting up yt-tracks backend runtime...")
+	fmt.Println("    Downloading CPython and dependencies via uvbox (if not cached)...")
+
+	backend, err := StartWithOutput(ctx, path, os.Stdout, os.Stderr)
+	if err != nil {
+		return fmt.Errorf("setup failed: %w", err)
+	}
+	defer backend.Stop()
+
+	fmt.Println("\n✓ Setup completed successfully! You can now run 'yt-tracks'.")
+	return nil
+}
