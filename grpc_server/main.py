@@ -700,7 +700,7 @@ def serve() -> None:
     port = int(os.environ.get("PORT", "8080"))
     app = MusicServiceASGIApplication(Service())
     print(f"Server started, listening on {port}")
-    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
+    uvicorn.run(app, host=os.environ.get("HOST", "127.0.0.1"), port=port, log_level="info")
 
 
 if __name__ == "__main__":
