@@ -92,6 +92,7 @@ func newRootCmd(version string, debug bool) *cobra.Command {
 	cmd.AddCommand(ytTracksLog())
 	cmd.AddCommand(ManCmd(cmd))
 	cmd.AddCommand(newExtractCookieCmd())
+	cmd.AddCommand(newSetupCmd())
 	return cmd
 }
 
@@ -204,6 +205,12 @@ func getCLIFlags(cmd *cobra.Command) *CLIFlags {
 }
 
 func root(cmd *cobra.Command) error {
+	if isSetup, _ := cmd.Flags().GetBool("setup"); isSetup {
+		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Minute)
+		defer cancel()
+		return backend.SetupEmbedded(ctx)
+	}
+
 	flags := getCLIFlags(cmd)
 
 	appBackend, err := backend.StartEmbedded(context.Background())
@@ -476,6 +483,7 @@ func Execute(version string, debug bool) error {
 
 	cmd.Flags().String("cookies-from-browser", "", "The name of the browser to load cookies from this option is used by yt-dlp see yt-dlp docs to see supported browsers")
 	cmd.Flags().String("cookies", "", "cookies file the option you pass for this flag will be passed to yt-dlp checkout yt-dlp docs to learn more about this flag")
+	cmd.Flags().Bool("setup", false, "download and set up the local backend runtime")
 
 	if err := cmd.Execute(); err != nil {
 		return fmt.Errorf("Error executing root command: %w", err)

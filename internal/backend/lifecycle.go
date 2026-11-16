@@ -13,21 +13,28 @@ import (
 )
 
 func Start(ctx context.Context, path string) (*Backend, error) {
+	svcBackend := &Backend{}
+	return startWithOutput(ctx, path, svcBackend, &svcBackend.stdoutBuf, &svcBackend.stderrBuf)
+}
+
+func StartWithOutput(ctx context.Context, path string, stdout, stderr io.Writer) (*Backend, error) {
+	svcBackend := &Backend{}
+	return startWithOutput(ctx, path, svcBackend, stdout, stderr)
+}
+
+func startWithOutput(ctx context.Context, path string, svcBackend *Backend, stdout, stderr io.Writer) (*Backend, error) {
 	port, err := pickFreePort()
 	if err != nil {
 		return nil, fmt.Errorf("failed to pick a free port: %w", err)
 	}
 
-	svcBackend := &Backend{}
 	cmd := exec.Command(path)
 	cmd.Env = append(os.Environ(),
 		"HOST=127.0.0.1",
 		fmt.Sprintf("PORT=%d", port),
 	)
-	// Capture the child's output instead of attaching to the terminal so the
-	// uvbox spinner / uvicorn access logs don't corrupt the Bubbletea TUI.
-	cmd.Stdout = &svcBackend.stdoutBuf
-	cmd.Stderr = &svcBackend.stderrBuf
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 
 	setProcessGroup(cmd)
 
@@ -88,6 +95,8 @@ func waitForReady(ctx context.Context, url string, exitChan <-chan error) error 
 	}
 
 	endpoint := url + "/yt_tracks.music.v1.MusicService/HealthCheck"
+	start := time.Now()
+	notified := false
 
 	for time.Now().Before(deadline) {
 		select {
@@ -96,6 +105,12 @@ func waitForReady(ctx context.Context, url string, exitChan <-chan error) error 
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
+		}
+
+		if !notified && time.Since(start) > 2*time.Second {
+			fmt.Fprintln(os.Stderr, "==> Initializing backend runtime (first run may take a minute to download CPython)...")
+			fmt.Fprintln(os.Stderr, "    Tip: Run 'yt-tracks setup' to see real-time download progress.")
+			notified = true
 		}
 
 		// Re-create reader on every iteration so request body is never drained
