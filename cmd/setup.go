@@ -15,7 +15,7 @@ func newSetupCmd() *cobra.Command {
 		Short: "Download and set up the local backend runtime",
 		Long:  "Download and initialize the local Python runtime and dependencies in advance so yt-tracks launches instantly.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Minute)
+			ctx, cancel := context.WithTimeout(cmd.Context(), 10*time.Minute)
 			defer cancel()
 
 			if err := backend.SetupEmbedded(ctx); err != nil {

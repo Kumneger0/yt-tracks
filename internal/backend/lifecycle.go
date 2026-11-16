@@ -91,7 +91,7 @@ func pickFreePort() (int, error) {
 func waitForReady(ctx context.Context, url string, exitChan <-chan error) error {
 	deadline, ok := ctx.Deadline()
 	if !ok {
-		deadline = time.Now().Add(3 * time.Minute)
+		deadline = time.Now().Add(10 * time.Minute)
 	}
 
 	endpoint := url + "/yt_tracks.music.v1.MusicService/HealthCheck"
