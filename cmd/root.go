@@ -206,7 +206,7 @@ func getCLIFlags(cmd *cobra.Command) *CLIFlags {
 
 func root(cmd *cobra.Command) error {
 	if isSetup, _ := cmd.Flags().GetBool("setup"); isSetup {
-		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Minute)
+		ctx, cancel := context.WithTimeout(cmd.Context(), 10*time.Minute)
 		defer cancel()
 		return backend.SetupEmbedded(ctx)
 	}
