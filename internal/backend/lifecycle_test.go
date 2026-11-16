@@ -5,7 +5,9 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -50,6 +52,12 @@ func TestStartAndStop(t *testing.T) {
 	if os.Getenv("YT_TRACKS_BACKEND_TEST_SKIP") == "1" {
 		t.Skip("YT_TRACKS_BACKEND_TEST_SKIP set")
 	}
+	if runtime.GOOS == "windows" {
+		t.Skip("skipping on windows: fake backend script requires sh and python3")
+	}
+	if _, err := exec.LookPath("python3"); err != nil {
+		t.Skip("python3 not found in PATH")
+	}
 
 	dir := t.TempDir()
 	backendPath := writeFakeBackend(t, dir)
@@ -61,6 +69,10 @@ func TestStartAndStop(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Start() failed: %v", err)
 	}
+	t.Cleanup(func() {
+		backend.Stop()
+	})
+
 	if backend.URL() == "" {
 		t.Fatal("expected non-empty URL")
 	}
@@ -81,7 +93,10 @@ func TestStartAndStop(t *testing.T) {
 	}
 
 	backend.Stop()
-	time.Sleep(200 * time.Millisecond)
+	deadline := time.Now().Add(2 * time.Second)
+	for backend.IsRunning() && time.Now().Before(deadline) {
+		time.Sleep(20 * time.Millisecond)
+	}
 	if backend.IsRunning() {
 		t.Error("backend process still running after Stop()")
 	}

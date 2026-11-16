@@ -20,11 +20,13 @@ echo "--> Generating Python protobuf / Connect modules"
 buf generate --template buf.gen.python.yaml
 
 echo "--> Building Python wheel"
-uv build
+WHEEL_DIR="$(mktemp -d)"
+uv build --wheel --out-dir "$WHEEL_DIR"
 
-WHEEL=$(ls dist/yt_tracks-*.whl | head -1)
+WHEEL=$(ls "$WHEEL_DIR"/yt_tracks-*.whl 2>/dev/null | head -1)
 if [ -z "$WHEEL" ]; then
-    echo "ERROR: no wheel found in dist/" >&2
+    echo "ERROR: no wheel found in $WHEEL_DIR" >&2
+    rm -rf "$WHEEL_DIR"
     exit 1
 fi
 
@@ -33,6 +35,7 @@ rm -rf uvbox-tmp
 uvbox wheel --config uvbox.toml --output uvbox-tmp --linux --amd "$WHEEL"
 uvbox wheel --config uvbox.toml --output uvbox-tmp --darwin --arm "$WHEEL"
 uvbox wheel --config uvbox.toml --output uvbox-tmp --windows --amd "$WHEEL"
+rm -rf "$WHEEL_DIR"
 
 BIN_DIR="internal/backend/binaries"
 EMBED_DIR="internal/backend"

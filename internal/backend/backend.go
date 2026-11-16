@@ -11,6 +11,7 @@ type Backend struct {
 	url       string
 	stdoutBuf bytes.Buffer
 	stderrBuf bytes.Buffer
+	doneChan  chan struct{}
 	stopOnce  sync.Once
 }
 
@@ -26,8 +27,13 @@ func (b *Backend) IsRunning() bool {
 	if b.cmd == nil || b.cmd.Process == nil {
 		return false
 	}
-	if b.cmd.ProcessState != nil && b.cmd.ProcessState.Exited() {
-		return false
+	if b.doneChan != nil {
+		select {
+		case <-b.doneChan:
+			return false
+		default:
+			return true
+		}
 	}
 	return isProcessAlive(b.cmd.Process)
 }

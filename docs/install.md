@@ -32,9 +32,10 @@ cd yt-tracks
 
 ### 2. Build the Python Backend
 
-Build the uvbox launcher and embed it into the Go binary:
+Install `uvbox` and build the backend launcher to embed it into the Go binary:
 
 ```bash
+uv tool install uvbox
 make backend
 ```
 

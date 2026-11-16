@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"runtime"
 	"runtime/pprof"
@@ -213,7 +214,9 @@ func root(cmd *cobra.Command) error {
 
 	flags := getCLIFlags(cmd)
 
-	appBackend, err := backend.StartEmbedded(context.Background())
+	startCtx, stopSignals := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
+	appBackend, err := backend.StartEmbedded(startCtx)
+	stopSignals()
 	if err != nil {
 		return fmt.Errorf("failed to start local backend: %w", err)
 	}

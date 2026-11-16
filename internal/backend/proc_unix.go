@@ -19,6 +19,13 @@ func terminateProcess(cmd *exec.Cmd) error {
 	return syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
 }
 
+func killProcess(cmd *exec.Cmd) error {
+	if cmd == nil || cmd.Process == nil {
+		return nil
+	}
+	return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+}
+
 func isProcessAlive(process *os.Process) bool {
 	if process == nil {
 		return false
