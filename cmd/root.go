@@ -1,20 +1,21 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
-	"os/exec"
-	"path/filepath"
-	"runtime"
-	"strconv"
-	"syscall"
-
 	"log"
 	"log/slog"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 	"runtime/pprof"
+	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/gofrs/flock"
+	"github.com/kumneger0/yt-tracks/internal/backend"
 	"github.com/kumneger0/yt-tracks/internal/config"
 	logSetup "github.com/kumneger0/yt-tracks/internal/logger"
 	"github.com/kumneger0/yt-tracks/internal/queue"
@@ -37,7 +38,7 @@ var (
 	Program *tea.Program
 )
 
-func newRootCmd(version string, debug bool, serverURL string) *cobra.Command {
+func newRootCmd(version string, debug bool) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "yt-tracks",
 		Short: "youtube music player",
@@ -68,7 +69,7 @@ func newRootCmd(version string, debug bool, serverURL string) *cobra.Command {
 					fmt.Fprintf(os.Stderr, "Warning: could not write PID to lock file: %v\n", err)
 				}
 			}
-			return root(cmd, serverURL)
+			return root(cmd)
 		},
 		PersistentPostRun: func(cmd *cobra.Command, args []string) {
 			if memFile != "" && debug {
@@ -90,7 +91,7 @@ func newRootCmd(version string, debug bool, serverURL string) *cobra.Command {
 	cmd.AddCommand(newVersionCmd(version))
 	cmd.AddCommand(ytTracksLog())
 	cmd.AddCommand(ManCmd(cmd))
-	cmd.AddCommand(newExtractCookieCmd(serverURL))
+	cmd.AddCommand(newExtractCookieCmd())
 	return cmd
 }
 
@@ -202,23 +203,26 @@ func getCLIFlags(cmd *cobra.Command) *CLIFlags {
 	}
 }
 
-func root(cmd *cobra.Command, serverURL string) error {
+func root(cmd *cobra.Command) error {
 	flags := getCLIFlags(cmd)
 
+	appBackend, err := backend.StartEmbedded(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to start local backend: %w", err)
+	}
+	defer appBackend.Stop()
+
 	if err := os.MkdirAll(flags.DebugDir, 0755); err != nil {
-		fmt.Printf("failed to create debug directory '%s': %v\n", flags.DebugDir, err)
-		os.Exit(1)
+		return fmt.Errorf("failed to create debug directory '%s': %w", flags.DebugDir, err)
 	}
 
 	fileInfo, err := os.Stat(flags.DebugDir)
 	if err != nil {
-		fmt.Printf("failed to stat debug directory '%s': %v\n", flags.DebugDir, err)
-		os.Exit(1)
+		return fmt.Errorf("failed to stat debug directory '%s': %w", flags.DebugDir, err)
 	}
 
 	if !fileInfo.IsDir() {
-		fmt.Printf("the debug path '%v' is not a directory\n", flags.DebugDir)
-		os.Exit(1)
+		return fmt.Errorf("the debug path '%v' is not a directory", flags.DebugDir)
 	}
 
 	ytDlpArgs := config.YtDlpArgs{
@@ -277,7 +281,7 @@ func root(cmd *cobra.Command, serverURL string) error {
 		slog.Error(err.Error())
 	}
 
-	client := ytMusicClient.GetYtMusicClient(serverURL)
+	client := ytMusicClient.GetYtMusicClient(appBackend.URL())
 	termWidth, termHeight, err := term.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
 		slog.Error(err.Error())
@@ -444,8 +448,8 @@ var (
 	memFile string
 )
 
-func Execute(version string, debug bool, serverURL string) error {
-	cmd := newRootCmd(version, debug, serverURL)
+func Execute(version string, debug bool) error {
+	cmd := newRootCmd(version, debug)
 	if debug {
 		cmd.PersistentFlags().StringVar(&cpuFile, "cpuprofile", "", "write cpu profile to `file`")
 		cmd.PersistentFlags().StringVar(&memFile, "memprofile", "", "write memory profile to `file`")
