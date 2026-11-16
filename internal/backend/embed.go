@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -14,7 +13,7 @@ var embeddedBackend []byte
 
 func getOrExtractBackend() (string, error) {
 	if len(embeddedBackend) == 0 {
-		return "", fmt.Errorf("embedded backend binary is empty")
+		return "", fmt.Errorf("embedded backend binary is missing: run 'make backend' before building")
 	}
 
 	cacheDir, err := os.UserCacheDir()
@@ -49,36 +48,7 @@ func getOrExtractBackend() (string, error) {
 	return targetPath, nil
 }
 
-func findLocalPython() string {
-	candidates := []string{
-		filepath.Join(".venv", "bin", "python"),
-		filepath.Join("venv", "bin", "python"),
-		filepath.Join(".venv", "Scripts", "python.exe"),
-		filepath.Join("venv", "Scripts", "python.exe"),
-	}
-	for _, c := range candidates {
-		if fi, err := os.Stat(c); err == nil && !fi.IsDir() {
-			return c
-		}
-	}
-	return ""
-}
-
 func StartEmbedded(ctx context.Context) (*Backend, error) {
-	if serverURL := os.Getenv("YT_TRACKS_SERVER_URL"); serverURL != "" {
-		slog.Info("using external backend server", "url", serverURL)
-		return &Backend{url: serverURL}, nil
-	}
-
-	if len(embeddedBackend) == 0 {
-		if localPython := findLocalPython(); localPython != "" {
-			slog.Info("embedded backend not present; starting local python environment", "path", localPython)
-			return Start(ctx, localPython, "-m", "grpc_server.main")
-		}
-
-		return nil, fmt.Errorf("embedded backend is missing from this build: run 'make backend' before building, or run 'make server-run' for local development")
-	}
-
 	path, err := getOrExtractBackend()
 	if err != nil {
 		return nil, err

@@ -12,14 +12,14 @@ import (
 	"time"
 )
 
-func Start(ctx context.Context, path string, args ...string) (*Backend, error) {
+func Start(ctx context.Context, path string) (*Backend, error) {
 	port, err := pickFreePort()
 	if err != nil {
 		return nil, fmt.Errorf("failed to pick a free port: %w", err)
 	}
 
 	svcBackend := &Backend{}
-	cmd := exec.Command(path, args...)
+	cmd := exec.Command(path)
 	cmd.Env = append(os.Environ(),
 		"HOST=127.0.0.1",
 		fmt.Sprintf("PORT=%d", port),
