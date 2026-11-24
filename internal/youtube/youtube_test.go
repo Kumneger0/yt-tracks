@@ -2,6 +2,7 @@ package youtube
 
 import (
 	"context"
+	"slices"
 	"testing"
 	"time"
 
@@ -100,5 +101,41 @@ func TestSearchAndDownloadMusic_ClearsStreamAndDuration(t *testing.T) {
 
 	if track.StreamAndDuration != nil {
 		t.Errorf("expected track.StreamAndDuration to be cleared to nil after playback call, got %+v", track.StreamAndDuration)
+	}
+}
+
+func TestBuildYtDlpArgs(t *testing.T) {
+	// Case 1: no cookie
+	args := buildYtDlpArgs("vid123", "")
+	expectedTarget := "https://www.youtube.com/watch?v=vid123"
+	if !slices.Contains(args, expectedTarget) {
+		t.Errorf("expected args to contain target URL %s, got %v", expectedTarget, args)
+	}
+	if slices.Contains(args, "--cookies") {
+		t.Errorf("expected args to not contain --cookies, got %v", args)
+	}
+	if slices.Contains(args, "--config-locations") {
+		t.Errorf("expected args to not contain --config-locations, got %v", args)
+	}
+
+	// Case 2: with cookie
+	args = buildYtDlpArgs("vid123", "/path/to/cookie.txt")
+	cookieIdx := slices.Index(args, "--cookies")
+	if cookieIdx == -1 || cookieIdx+1 >= len(args) || args[cookieIdx+1] != "/path/to/cookie.txt" {
+		t.Errorf("expected --cookies flag with cookie path, got %v", args)
+	}
+}
+
+func TestBuildYtDlpFallbackArgs(t *testing.T) {
+	args := buildYtDlpFallbackArgs("vid123", "/path/to/cookie.txt")
+	if !slices.Contains(args, "--ignore-config") {
+		t.Errorf("expected fallback args to contain --ignore-config, got %v", args)
+	}
+	if !slices.Contains(args, "https://www.youtube.com/watch?v=vid123") {
+		t.Errorf("expected fallback args to contain target URL, got %v", args)
+	}
+	cookieIdx := slices.Index(args, "--cookies")
+	if cookieIdx == -1 || cookieIdx+1 >= len(args) || args[cookieIdx+1] != "/path/to/cookie.txt" {
+		t.Errorf("expected fallback args to contain --cookies flag, got %v", args)
 	}
 }

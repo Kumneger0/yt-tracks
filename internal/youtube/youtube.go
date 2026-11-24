@@ -259,6 +259,28 @@ func SearchAndDownloadMusic(
 	}
 }
 
+func buildYtDlpArgs(videoID string, cookiePath string) []string {
+	targetURL := "https://www.youtube.com/watch?v=" + videoID
+	args := []string{"-j", "--no-warnings", "-v"}
+
+	if cookiePath != "" {
+		args = append(args, "--cookies", cookiePath)
+	}
+
+	args = append(args, "-f", "ba[acodec=opus][tbr<=300]/ba[tbr<=300]/ba/b", targetURL)
+	return args
+}
+
+func buildYtDlpFallbackArgs(videoID string, cookiePath string) []string {
+	targetURL := "https://www.youtube.com/watch?v=" + videoID
+	fallbackArgs := []string{"--ignore-config", "-j", "--no-warnings", "-f", "ba[acodec=opus][tbr<=300]/ba[tbr<=300]/ba/b"}
+	if cookiePath != "" {
+		fallbackArgs = append(fallbackArgs, "--cookies", cookiePath)
+	}
+	fallbackArgs = append(fallbackArgs, targetURL)
+	return fallbackArgs
+}
+
 func GetStreamURLAndDuration(ctx context.Context, videoID string, ytdlpPath string) (*types.StreamAndDuration, error) {
 	timeoutCtx, cancel := context.WithTimeout(ctx, 45*time.Second)
 	defer cancel()
@@ -275,13 +297,7 @@ func GetStreamURLAndDuration(ctx context.Context, videoID string, ytdlpPath stri
 	}
 
 	cookiePath := cookie.EnsureCookieFile()
-	targetURL := "https://www.youtube.com/watch?v=" + videoID
-
-	args := []string{"-j", "--no-warnings"}
-	if cookiePath != "" {
-		args = append(args, "--cookies", cookiePath)
-	}
-	args = append(args, "-f", "ba[acodec=opus][tbr<=300]/ba[tbr<=300]/ba/b", targetURL)
+	args := buildYtDlpArgs(videoID, cookiePath)
 
 	cmd, err := command.ExecCommand(timeoutCtx, ytdlpPath, args...)
 	if err != nil {
@@ -292,11 +308,7 @@ func GetStreamURLAndDuration(ctx context.Context, videoID string, ytdlpPath stri
 	outBytes, err := cmd.Output()
 	if err != nil {
 		slog.Error(err.Error())
-		fallbackArgs := []string{"-j", "--no-warnings", "-f", "ba[acodec=opus][tbr<=300]/ba[tbr<=300]/ba/b"}
-		if cookiePath != "" {
-			fallbackArgs = append(fallbackArgs, "--cookies", cookiePath)
-		}
-		fallbackArgs = append(fallbackArgs, targetURL)
+		fallbackArgs := buildYtDlpFallbackArgs(videoID, cookiePath)
 		fallbackCtx, fallbackCancel := context.WithTimeout(ctx, 45*time.Second)
 		defer fallbackCancel()
 		cmd, err = command.ExecCommand(fallbackCtx, ytdlpPath, fallbackArgs...)
