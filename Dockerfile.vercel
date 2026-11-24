@@ -1,4 +1,4 @@
-FROM python:3.13-slim AS builder
+FROM python:3.15-slim AS builder
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -20,7 +20,7 @@ COPY buf.yaml buf.gen.python.yaml ./
 COPY proto ./proto
 RUN buf generate --template buf.gen.python.yaml
 
-FROM python:3.13-slim AS runner
+FROM python:3.15-slim AS runner
 
 WORKDIR /app
 
