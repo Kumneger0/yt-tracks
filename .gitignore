@@ -34,6 +34,7 @@ gen/genconnect/*
 !gen/genconnect/stub.go
 backend/binaries/python-*
 .vercel
+docs/.vercel
 .env*
 
 # uvbox build outputs
