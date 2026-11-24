@@ -12,7 +12,7 @@ require (
 	github.com/ebitengine/oto/v3 v3.5.1
 	github.com/gen2brain/beeep v0.11.2
 	github.com/go-critic/go-critic v0.15.0
-	github.com/godbus/dbus/v5 v5.2.2
+	github.com/godbus/dbus/v5 v5.2.3
 	github.com/gofrs/flock v0.13.1
 	github.com/golangci/golangci-lint v1.64.8
 	github.com/gotesttools/gotestfmt/v2 v2.5.0
@@ -25,7 +25,7 @@ require (
 	go.dalton.dog/bubbleup v1.4.0
 	golang.org/x/lint v0.0.0-20241112194109-818c5a804067
 	golang.org/x/sys v0.49.0
-	golang.org/x/term v0.46.0
+	golang.org/x/term v0.47.0
 	golang.org/x/tools v0.51.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	mvdan.cc/gofumpt v0.12.0
