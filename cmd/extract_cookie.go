@@ -13,6 +13,7 @@ import (
 	"time"
 
 	musicpb "github.com/kumneger0/yt-tracks/gen"
+	"github.com/kumneger0/yt-tracks/internal/backend"
 	"github.com/kumneger0/yt-tracks/internal/config"
 	"github.com/kumneger0/yt-tracks/internal/cookie"
 	ytMusicClient "github.com/kumneger0/yt-tracks/internal/yt-music-client"
@@ -94,13 +95,20 @@ func saveAuthJSON(authJSON string) (string, error) {
 	return path, nil
 }
 
-func newExtractCookieCmd(serverURL string) *cobra.Command {
+func newExtractCookieCmd() *cobra.Command {
 	cmd := &cobra.Command{Use: "extract-cookies",
 		Short:        "Extract YouTube Music cookies and verify",
 		Long:         `Extract YouTube Music authentication cookies from supported browsers, verify via API, and store locally.`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
+
+			appBackend, err := backend.StartEmbedded(context.Background())
+			if err != nil {
+				return fmt.Errorf("failed to start local backend: %w", err)
+			}
+			defer appBackend.Stop()
+
 			var isAuthenticated bool
 			for _, browser := range supportedBrowsers {
 				cookies := extractFromBrowserStore(ctx, browser)
@@ -113,7 +121,7 @@ func newExtractCookieCmd(serverURL string) *cobra.Command {
 					continue
 				}
 
-				client := ytMusicClient.GetYtMusicClient(serverURL)
+				client := ytMusicClient.GetYtMusicClient(appBackend.URL())
 				rpcCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 				defer cancel()
 				resp, err := client.Login(rpcCtx, &musicpb.LoginRequest{AuthJson: jsonStr})

@@ -1,8 +1,7 @@
 #!/bin/sh
 set -e
-SERVER_URL="${1:-$SERVER_URL}"
 rm -rf completions
 mkdir completions
 for sh in bash zsh fish; do
-	go run -ldflags "-X main.serverURL=${SERVER_URL}" main.go completion "$sh" >"completions/yt-tracks.$sh"
+	go run -ldflags "-X main.version=dev" main.go completion "$sh" >"completions/yt-tracks.$sh"
 done

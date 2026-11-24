@@ -1,4 +1,3 @@
-SERVER_URL ?= http://localhost:8080
 project_name?=yt-tracks
 
 default: help
@@ -11,7 +10,7 @@ help: ## show this help message
 .PHONY: build
 build: ## build the Go application
 	@echo "--> Building Go application..."
-	@go build -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags) -X main.Debug=true -X main.serverURL=$(SERVER_URL)" -o $(project_name)
+	@go build -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags) -X main.Debug=true" -o $(project_name)
 
 
 .PHONY: install
@@ -83,10 +82,14 @@ server-sync: ## sync python virtual environment dependencies
 	@echo "Syncing virtual environment dependencies using uv..."
 	uv sync
 
+.PHONY: backend
+backend: ## build the Python backend launcher with uvbox for all targets
+	@echo "--> Building Python backend launchers"
+	@./scripts/build-backends.sh
 
 .PHONY: clean
 clean: ## clean up both go and python generated files
 	@echo "--> Cleaning up..."
 	@rm -rf coverage.out dist/ $(project_name)
 	@rm -rf gen/*.go gen/genconnect
-	@rm -f grpc_server/gen/music_pb2.py grpc_server/gen/music_pb2.pyi grpc_server/gen/music_connect.py grpc_server/gen/music_pb2_grpc.py
+	@rm -rf grpc_server/gen/
