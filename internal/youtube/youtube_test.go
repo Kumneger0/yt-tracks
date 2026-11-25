@@ -105,11 +105,14 @@ func TestSearchAndDownloadMusic_ClearsStreamAndDuration(t *testing.T) {
 }
 
 func TestBuildYtDlpArgs(t *testing.T) {
-	// Case 1: no cookie
-	args := buildYtDlpArgs("vid123", "")
+	// Case 1: no cookie, non-verbose default
+	args := buildYtDlpArgs("vid123", "", false)
 	expectedTarget := "https://www.youtube.com/watch?v=vid123"
 	if !slices.Contains(args, expectedTarget) {
 		t.Errorf("expected args to contain target URL %s, got %v", expectedTarget, args)
+	}
+	if slices.Contains(args, "-v") {
+		t.Errorf("expected default args to not contain -v, got %v", args)
 	}
 	if slices.Contains(args, "--cookies") {
 		t.Errorf("expected args to not contain --cookies, got %v", args)
@@ -118,8 +121,11 @@ func TestBuildYtDlpArgs(t *testing.T) {
 		t.Errorf("expected args to not contain --config-locations, got %v", args)
 	}
 
-	// Case 2: with cookie
-	args = buildYtDlpArgs("vid123", "/path/to/cookie.txt")
+	// Case 2: with cookie and explicit verbose mode
+	args = buildYtDlpArgs("vid123", "/path/to/cookie.txt", true)
+	if !slices.Contains(args, "-v") {
+		t.Errorf("expected verbose args to contain -v, got %v", args)
+	}
 	cookieIdx := slices.Index(args, "--cookies")
 	if cookieIdx == -1 || cookieIdx+1 >= len(args) || args[cookieIdx+1] != "/path/to/cookie.txt" {
 		t.Errorf("expected --cookies flag with cookie path, got %v", args)

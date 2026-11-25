@@ -1,7 +1,6 @@
 package backend
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha256"
 	"embed"
@@ -49,7 +48,7 @@ func readSingleAsset(fsys embed.FS, dir, suffix string) (string, []byte, error) 
 func cacheRootDir() (string, error) {
 	cacheDir, err := os.UserCacheDir()
 	if err != nil {
-		cacheDir = os.TempDir()
+		return "", fmt.Errorf("failed to resolve user cache directory: %w", err)
 	}
 	root := filepath.Join(cacheDir, "yt-tracks")
 	if err := os.MkdirAll(root, 0755); err != nil {
@@ -195,11 +194,11 @@ func StartEmbedded(ctx context.Context) (*Backend, error) {
 	ctx, cancel := withDefaultStartupTimeout(ctx)
 	defer cancel()
 
-	var errBuf bytes.Buffer
+	var errBuf tailBuffer
 	entrypoint, err := ensureBackendReady(ctx, io.Discard, &errBuf, true)
 	if err != nil {
-		if errBuf.Len() > 0 {
-			return nil, fmt.Errorf("%w\nuv output:\n%s", err, errBuf.String())
+		if stderrOut := errBuf.String(); stderrOut != "" {
+			return nil, fmt.Errorf("%w\nuv output:\n%s", err, stderrOut)
 		}
 		return nil, err
 	}

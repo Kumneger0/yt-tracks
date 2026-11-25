@@ -259,9 +259,16 @@ func SearchAndDownloadMusic(
 	}
 }
 
-func buildYtDlpArgs(videoID string, cookiePath string) []string {
+func isYtDlpVerboseEnabled() bool {
+	return os.Getenv("YT_TRACKS_YTDLP_VERBOSE") == "1"
+}
+
+func buildYtDlpArgs(videoID, cookiePath string, verbose bool) []string {
 	targetURL := "https://www.youtube.com/watch?v=" + videoID
-	args := []string{"-j", "--no-warnings", "-v"}
+	args := []string{"-j", "--no-warnings"}
+	if verbose {
+		args = append(args, "-v")
+	}
 
 	if cookiePath != "" {
 		args = append(args, "--cookies", cookiePath)
@@ -271,7 +278,7 @@ func buildYtDlpArgs(videoID string, cookiePath string) []string {
 	return args
 }
 
-func buildYtDlpFallbackArgs(videoID string, cookiePath string) []string {
+func buildYtDlpFallbackArgs(videoID, cookiePath string) []string {
 	targetURL := "https://www.youtube.com/watch?v=" + videoID
 	fallbackArgs := []string{"--ignore-config", "-j", "--no-warnings", "-f", "ba[acodec=opus][tbr<=300]/ba[tbr<=300]/ba/b"}
 	if cookiePath != "" {
@@ -297,7 +304,7 @@ func GetStreamURLAndDuration(ctx context.Context, videoID string, ytdlpPath stri
 	}
 
 	cookiePath := cookie.EnsureCookieFile()
-	args := buildYtDlpArgs(videoID, cookiePath)
+	args := buildYtDlpArgs(videoID, cookiePath, isYtDlpVerboseEnabled())
 
 	cmd, err := command.ExecCommand(timeoutCtx, ytdlpPath, args...)
 	if err != nil {

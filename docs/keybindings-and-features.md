@@ -6,7 +6,7 @@
 
 Before running `yt-tracks`, ensure the following system tools are installed:
 
-- **`yt-dlp`**: Required for extracting and fetching YouTube Music audio stream URLs.
+- **`yt-dlp`**: Required for extracting and fetching YouTube Music audio stream URLs. Standard `yt-dlp` configuration files and plugins are loaded natively; if the initial call fails, `yt-tracks` retries with `--ignore-config` (which drops config-file flags such as `--proxy` — use `HTTP_PROXY`/`HTTPS_PROXY` environment variables if proxy routing must also apply to fallback).
 - **`ffmpeg`**: Required for decoding and playing audio streams.
 
 Install both using your OS package manager:

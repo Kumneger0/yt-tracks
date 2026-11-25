@@ -7,6 +7,7 @@ Before building `yt-tracks` from source, ensure you have the following installed
 - **[Go](https://go.dev/dl/)** (v1.26 or higher)
 - **[uv](https://docs.astral.sh/uv/)** (Python package manager, for building the backend)
 - **[buf](https://buf.build/)** (protobuf code generation, for building the backend)
+- **`curl`**, **`tar`**, and **`unzip`** (required by `make backend` to download and extract embedded `uv` binaries across platforms)
 
 - **System Dependencies**:
   - **[yt-dlp](https://github.com/yt-dlp/yt-dlp)**: Required for extracting and fetching YouTube Music audio stream URLs

@@ -96,3 +96,13 @@ func TestWithDefaultStartupTimeout(t *testing.T) {
 		t.Fatalf("expected earlier deadline %v to be preserved, got %v", earlier, gotDeadline)
 	}
 }
+
+func TestCacheRootDirReturnsUserCacheDirError(t *testing.T) {
+	t.Setenv("XDG_CACHE_HOME", "")
+	t.Setenv("HOME", "")
+	t.Setenv("LocalAppData", "")
+
+	if _, err := cacheRootDir(); err == nil {
+		t.Fatal("expected cacheRootDir() to return an error when user cache directory cannot be resolved")
+	}
+}

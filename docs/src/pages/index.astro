@@ -95,17 +95,17 @@ const description = "A fast, keyboard-driven terminal user interface client for 
       </div>
 
       <p class="text-sm sm:text-base text-terminal-muted mb-6 leading-relaxed">
-        Download pre-built binaries from the <a href="https://github.com/Kumneger0/yt-tracks/releases" target="_blank" rel="noopener noreferrer" class="text-terminal-accent hover:underline font-medium">GitHub Releases</a> page, or run an installer script:
+        Download pre-built binaries for <strong class="text-terminal-text font-medium">Linux x86-64</strong>, <strong class="text-terminal-text font-medium">macOS Apple Silicon</strong>, and <strong class="text-terminal-text font-medium">Windows x86-64</strong> from the <a href="https://github.com/Kumneger0/yt-tracks/releases" target="_blank" rel="noopener noreferrer" class="text-terminal-accent hover:underline font-medium">GitHub Releases</a> page, or run an installer script:
       </p>
 
       <div class="space-y-4">
         <div>
-          <span class="block text-xs font-mono uppercase tracking-wider text-terminal-muted mb-2">// Linux / macOS</span>
+          <span class="block text-xs font-mono uppercase tracking-wider text-terminal-muted mb-2">// Linux x86-64 / macOS Apple Silicon</span>
           <pre class="bg-terminal-surface border border-terminal-border rounded-xl p-4 sm:p-5 text-sm font-mono text-terminal-text overflow-x-auto"><code>curl -fsSL https://raw.githubusercontent.com/Kumneger0/yt-tracks/main/install.sh | bash</code></pre>
         </div>
 
         <div>
-          <span class="block text-xs font-mono uppercase tracking-wider text-terminal-muted mb-2">// Windows (PowerShell)</span>
+          <span class="block text-xs font-mono uppercase tracking-wider text-terminal-muted mb-2">// Windows x86-64 (PowerShell)</span>
           <pre class="bg-terminal-surface border border-terminal-border rounded-xl p-4 sm:p-5 text-sm font-mono text-terminal-text overflow-x-auto"><code>iwr -useb https://raw.githubusercontent.com/Kumneger0/yt-tracks/main/install.ps1 | iex</code></pre>
         </div>
       </div>
@@ -151,7 +151,7 @@ const description = "A fast, keyboard-driven terminal user interface client for 
 
         <p class="text-xs font-mono uppercase tracking-wider text-terminal-muted mt-6 mb-2">// Install yt-dlp:</p>
         <p class="text-sm text-terminal-muted">
-          Follow the <a href="https://github.com/yt-dlp/yt-dlp#installation" target="_blank" rel="noopener noreferrer" class="text-terminal-accent hover:underline font-medium">yt-dlp GitHub Installation Guide</a>.
+          Follow the <a href="https://github.com/yt-dlp/yt-dlp#installation" target="_blank" rel="noopener noreferrer" class="text-terminal-accent hover:underline font-medium">yt-dlp GitHub Installation Guide</a>. Standard <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">yt-dlp</code> configuration files are loaded natively; on failure, <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">yt-tracks</code> retries with <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">--ignore-config</code> (set <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">HTTP_PROXY</code> / <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">HTTPS_PROXY</code> if a proxy must also apply to fallback).
         </p>
       </div>
     </section>
@@ -310,11 +310,11 @@ yt-tracks</code></pre>
               </tr>
               <tr class="hover:bg-terminal-surface/50 transition-colors">
                 <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">n</code></td>
-                <td class="px-5 py-3.5">Next track in queue or playback context</td>
+                <td class="px-5 py-3.5">Skip to next track (Queue &rarr; Context &rarr; History) (when player focused)</td>
               </tr>
               <tr class="hover:bg-terminal-surface/50 transition-colors">
                 <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">b</code></td>
-                <td class="px-5 py-3.5">Previous track from history</td>
+                <td class="px-5 py-3.5">Skip to previous track from history (when player focused)</td>
               </tr>
               <tr class="hover:bg-terminal-surface/50 transition-colors">
                 <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">a</code></td>
@@ -334,7 +334,7 @@ yt-tracks</code></pre>
               </tr>
               <tr class="hover:bg-terminal-surface/50 transition-colors">
                 <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Ctrl + q</code></td>
-                <td class="px-5 py-3.5">Toggle Queue List vs Related Tracks view mode</td>
+                <td class="px-5 py-3.5">Toggle right column view mode (Queue List vs Related Tracks) (when queue column focused)</td>
               </tr>
               <tr class="hover:bg-terminal-surface/50 transition-colors">
                 <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">q</code> / <code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Ctrl + c</code></td>
