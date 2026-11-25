@@ -8,6 +8,7 @@ UV_VERSION="${UV_VERSION:-0.11.6}"
 UV_CACHE_DIR="$ROOT/build/uv-cache/$UV_VERSION"
 BIN_DIR="internal/backend/binaries"
 mkdir -p "$UV_CACHE_DIR" "$BIN_DIR/wheel"
+rm -f internal/backend/embedded_*.go
 
 echo "--> Generating Python protobuf / Connect modules"
 buf generate --template buf.gen.python.yaml
