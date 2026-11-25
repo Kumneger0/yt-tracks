@@ -19,8 +19,7 @@ Before starting, ensure you have the following installed:
 - **Go**: `1.26` or higher
 - **Python**: `3.13` or higher
 - **uv**: Fast Python package manager ([install guide](https://docs.astral.sh/uv/getting-started/installation/))
-- **Protobuf Compiler (`protoc`)**: Required if modifying `.proto` files
-  - Go plugins: `go install google.golang.org/protobuf/cmd/protoc-gen-go@latest` and `go install connectrpc.com/connect/cmd/protoc-gen-connect-go@latest`
+- **[buf](https://buf.build/)**: Protobuf code generation (required if modifying `.proto` files or building the backend)
 - **System Dependencies**:
   - **[yt-dlp](https://github.com/yt-dlp/yt-dlp)**: Required for extracting and fetching YouTube Music audio stream URLs
   - **[ffmpeg](https://ffmpeg.org/)**: Required for audio stream decoding and playback
@@ -51,10 +50,9 @@ Before starting, ensure you have the following installed:
 
 | Command | Description |
 | --- | --- |
+| `make backend` | Build the Python backend wheel and fetch `uv` binaries for embedding |
 | `make run` | Build and run the TUI locally |
-| `make proto` | Generate Protobuf & gRPC code for both Go and Python |
-| `make proto-go` | Generate Go protobuf code (`gen/`) |
-| `make proto-python` | Generate Python protobuf code (`grpc_server/gen/`) |
+| `make proto` | Generate Protobuf & Connect RPC code for both Go and Python |
 | `make hooks` | Set up local git commit hooks |
 
 ---

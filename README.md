@@ -35,10 +35,12 @@ check the [docs](https://yt-tracks.kumneger.dev) for the full lowdown on how to 
 
 ## 🖥️ Local Backend
 
-yt-tracks embeds its YouTube Music Connect RPC backend (`yt-tracks-backend`)
-inside the Go binary via `//go:embed`. The backend runs on `127.0.0.1` only and
-requires no user-installed Python — on first launch it downloads a CPython
-runtime and the Python dependencies (network required once).
+yt-tracks embeds its YouTube Music Connect RPC backend wheel (`yt-tracks-backend`)
+and `uv` inside the Go binary via `//go:embed`. The backend runs on `127.0.0.1`
+only and requires no user-installed Python — on first launch it downloads a
+CPython runtime and the Python dependencies into your user cache directory
+(network required once). You can also run `yt-tracks setup` to initialize it
+in advance with live progress.
 
 ## 🤝 Contributing
 
