@@ -95,8 +95,6 @@ func waitForReady(ctx context.Context, url string, exitChan <-chan error) error 
 	}
 
 	endpoint := url + "/yt_tracks.music.v1.MusicService/HealthCheck"
-	start := time.Now()
-	notified := false
 
 	for time.Now().Before(deadline) {
 		select {
@@ -105,12 +103,6 @@ func waitForReady(ctx context.Context, url string, exitChan <-chan error) error 
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
-		}
-
-		if !notified && time.Since(start) > 2*time.Second {
-			fmt.Fprintln(os.Stderr, "==> Initializing backend runtime (first run may take a minute to download CPython)...")
-			fmt.Fprintln(os.Stderr, "    Tip: Run 'yt-tracks setup' to see real-time download progress.")
-			notified = true
 		}
 
 		// Re-create reader on every iteration so request body is never drained
