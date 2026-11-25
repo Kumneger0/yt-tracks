@@ -32,9 +32,6 @@ jobs:
           python-version: '3.13'
           enable-cache: true
 
-      - name: Install uvbox
-        run: uv tool install uvbox
-
       - name: Install buf Proto Compiler
         run: npm install -g @bufbuild/buf
 

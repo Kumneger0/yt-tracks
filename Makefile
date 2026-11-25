@@ -83,8 +83,8 @@ server-sync: ## sync python virtual environment dependencies
 	uv sync
 
 .PHONY: backend
-backend: ## build the Python backend launcher with uvbox for all targets
-	@echo "--> Building Python backend launchers"
+backend: ## build the Python backend wheel and fetch uv binaries for embedding
+	@echo "--> Building Python backend assets"
 	@./scripts/build-backends.sh
 
 .PHONY: clean

@@ -30,6 +30,7 @@ exclude = [".venv/", "build/", "dist/", "wheels/", "main.build/", "main.dist/"]
 [tool.hatch.build.targets.wheel]
 packages = ["grpc_server"]
 include = ["grpc_server/**/*.py", "grpc_server/**/*.pyi"]
+artifacts = ["grpc_server/gen/*.py", "grpc_server/gen/*.pyi"]
 
 
 

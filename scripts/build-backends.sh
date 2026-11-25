@@ -1,95 +1,52 @@
 #!/bin/bash
-# Build the yt-tracks-backend Python launcher with uvbox and generate Go
-# //go:embed source files so the backend is compiled into the Go binary.
-#
-# Outputs:
-#   internal/backend/binaries/<goos>_<goarch>/yt-tracks-backend(.exe)  raw launcher binaries
-#   internal/backend/embedded_<goos>_<goarch>.go                      //go:embed source (build-tagged)
-#
-# Run this before `go build` so the embedded backend bytes are available.
-# In CI this runs as a goreleaser before.hook.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-echo "--> Syncing Python dependencies"
-uv sync --frozen
+UV_VERSION="${UV_VERSION:-0.11.6}"
+UV_CACHE_DIR="$ROOT/build/uv-cache/$UV_VERSION"
+BIN_DIR="internal/backend/binaries"
+mkdir -p "$UV_CACHE_DIR" "$BIN_DIR/wheel"
+rm -f internal/backend/embedded_*.go
 
 echo "--> Generating Python protobuf / Connect modules"
 buf generate --template buf.gen.python.yaml
 
 echo "--> Building Python wheel"
-uv build
+rm -f "$BIN_DIR"/wheel/*.whl "$BIN_DIR/wheel/.gitignore"
+tmp_wheel="$(mktemp -d)"
+uv build --wheel --out-dir "$tmp_wheel"
+cp "$tmp_wheel"/yt_tracks-*.whl "$BIN_DIR/wheel/"
+rm -rf "$tmp_wheel"
 
-WHEEL=$(ls dist/yt_tracks-*.whl | head -1)
-if [ -z "$WHEEL" ]; then
-    echo "ERROR: no wheel found in dist/" >&2
-    exit 1
-fi
-
-echo "--> Building uvbox launchers"
-rm -rf uvbox-tmp
-uvbox wheel --config uvbox.toml --output uvbox-tmp --linux --amd "$WHEEL"
-uvbox wheel --config uvbox.toml --output uvbox-tmp --darwin --arm "$WHEEL"
-uvbox wheel --config uvbox.toml --output uvbox-tmp --windows --amd "$WHEEL"
-
-BIN_DIR="internal/backend/binaries"
-EMBED_DIR="internal/backend"
-rm -rf "$BIN_DIR"
-rm -f "$EMBED_DIR"/embedded_*.go
-mkdir -p "$BIN_DIR"
-
-# Format: <goos> <goarch> <uvbox_arch> <exe_name> <archive_ext>
+echo "--> Preparing uv $UV_VERSION binaries"
+# Format: <goos>_<goarch> <uv_target> <exe_name> <archive_ext>
 TARGETS=(
-    "linux amd64 x86_64-unknown-linux-gnu yt-tracks-backend tar.gz"
-    "darwin arm64 aarch64-apple-darwin yt-tracks-backend tar.gz"
-    "windows amd64 x86_64-pc-windows-msvc yt-tracks-backend.exe zip"
+    "linux_amd64 x86_64-unknown-linux-musl uv tar.gz"
+    "darwin_arm64 aarch64-apple-darwin uv tar.gz"
+    "windows_amd64 x86_64-pc-windows-msvc uv.exe zip"
 )
 
 for target in "${TARGETS[@]}"; do
-    set -- $target
-    goos="$1"
-    goarch="$2"
-    uvbox_arch="$3"
-    exe="$4"
-    format="$5"
+    read -r platform uv_target exe format <<< "$target"
+    archive_name="uv-${uv_target}.${format}"
+    archive_path="$UV_CACHE_DIR/$archive_name"
+    url="https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/${archive_name}"
 
-    archive="uvbox-tmp/yt-tracks-backend-${uvbox_arch}.${format}"
-    target_dir="$BIN_DIR/${goos}_${goarch}"
-    mkdir -p "$target_dir"
-
-    tmpdir="$(mktemp -d)"
-    if [ "$format" = "zip" ]; then
-        unzip -q -o "$archive" -d "$tmpdir"
-    else
-        tar xzf "$archive" -C "$tmpdir"
+    if [ ! -f "$archive_path" ]; then
+        echo "   Downloading $url"
+        curl -fsSL -o "${archive_path}.tmp" "$url"
+        mv "${archive_path}.tmp" "$archive_path"
     fi
-    cp "$tmpdir/$exe" "$target_dir/$exe"
+
+    target_dir="$BIN_DIR/$platform"
+    mkdir -p "$target_dir"
+    if [ "$format" = "zip" ]; then
+        unzip -jqo "$archive_path" "$exe" -d "$target_dir"
+    else
+        tar -xzf "$archive_path" -C "$target_dir" --strip-components=1 "uv-${uv_target}/$exe"
+    fi
     chmod +x "$target_dir/$exe"
-    rm -rf "$tmpdir"
-
-    # Generate //go:embed source file (build-tagged per platform)
-    embed_path="binaries/${goos}_${goarch}/${exe}"
-    var_name="${goos}${goarch}Backend"
-    embed_file="$EMBED_DIR/embedded_${goos}_${goarch}.go"
-    cat > "$embed_file" <<EOF
-//go:build $goos && $goarch
-
-package backend
-
-import _ "embed"
-
-//go:embed $embed_path
-var $var_name []byte
-
-func init() {
-	embeddedBackend = $var_name
-}
-EOF
-
-    echo "   $goos/$goarch -> $target_dir/$exe + $embed_file"
+    echo "   $platform -> $target_dir/$exe"
 done
-
-rm -rf uvbox-tmp
-echo "--> Embedded backend sources ready"
