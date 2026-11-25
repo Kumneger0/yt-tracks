@@ -1,5 +1,10 @@
-SERVER_URL ?= http://localhost:8080
 project_name?=yt-tracks
+BACKEND_STAMP := build/.backend.stamp
+BACKEND_SOURCES := $(shell find grpc_server -path 'grpc_server/gen' -prune -o -name '__pycache__' -prune -o -type f -print 2>/dev/null) proto/music.proto pyproject.toml $(wildcard uv.lock) buf.gen.python.yaml scripts/build-backends.sh
+GO_SOURCES := $(shell find . -path './.venv' -prune -o -path './build' -prune -o -path './docs' -prune -o -path './main.build' -prune -o -path './main.dist' -prune -o -name '*.go' -print 2>/dev/null) go.mod go.sum
+ifeq ($(and $(wildcard internal/backend/binaries/wheel/*.whl),$(wildcard internal/backend/binaries/linux_amd64/uv),$(wildcard internal/backend/binaries/darwin_arm64/uv),$(wildcard internal/backend/binaries/windows_amd64/uv.exe)),)
+.PHONY: $(BACKEND_STAMP)
+endif
 
 default: help
 
@@ -9,9 +14,11 @@ help: ## show this help message
 
 
 .PHONY: build
-build: ## build the Go application
+build: $(project_name) ## build the Go application
+
+$(project_name): $(BACKEND_STAMP) $(GO_SOURCES)
 	@echo "--> Building Go application..."
-	@go build -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags) -X main.Debug=true -X main.serverURL=$(SERVER_URL)" -o $(project_name)
+	@go build -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags) -X main.Debug=true" -o $(project_name)
 
 
 .PHONY: install
@@ -83,10 +90,22 @@ server-sync: ## sync python virtual environment dependencies
 	@echo "Syncing virtual environment dependencies using uv..."
 	uv sync
 
+$(BACKEND_STAMP): $(BACKEND_SOURCES)
+	@echo "--> Building Python backend assets"
+	@./scripts/build-backends.sh
+	@mkdir -p $(dir $@)
+	@touch $@
+
+.PHONY: backend
+backend: ## build the Python backend wheel and fetch uv binaries for embedding
+	@echo "--> Building Python backend assets"
+	@./scripts/build-backends.sh
+	@mkdir -p $(dir $(BACKEND_STAMP))
+	@touch $(BACKEND_STAMP)
 
 .PHONY: clean
 clean: ## clean up both go and python generated files
 	@echo "--> Cleaning up..."
-	@rm -rf coverage.out dist/ $(project_name)
+	@rm -rf coverage.out dist/ $(project_name) $(BACKEND_STAMP)
 	@rm -rf gen/*.go gen/genconnect
-	@rm -f grpc_server/gen/music_pb2.py grpc_server/gen/music_pb2.pyi grpc_server/gen/music_connect.py grpc_server/gen/music_pb2_grpc.py
+	@rm -rf grpc_server/gen/

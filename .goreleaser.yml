@@ -3,18 +3,18 @@ project_name: yt-tracks
 
 env:
   - GO111MODULE=on
-  - SERVER_URL={{.Env.SERVER_URL }}
 
 before:
   hooks:
-    - ./scripts/manpages.sh {{ .Env.SERVER_URL }}
-    - ./scripts/completions.sh {{ .Env.SERVER_URL }}
+    - ./scripts/build-backends.sh
+    - ./scripts/manpages.sh
+    - ./scripts/completions.sh
 
 builds:
   - id: yt-tracks
     main: .
     ldflags:
-      - -s -w -X main.version={{ .Version }} -X main.serverURL={{ .Env.SERVER_URL }}
+      - -s -w -X main.version={{ .Version }}
     binary: yt-tracks
     env:
       - CGO_ENABLED=0

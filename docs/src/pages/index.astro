@@ -1,0 +1,363 @@
+---
+import '../styles/global.css';
+
+const title = "yt-tracks – Terminal YouTube Music Client";
+const description = "A fast, keyboard-driven terminal user interface client for YouTube Music.";
+---
+
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth" style="background-color: #080a08; color-scheme: dark;">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <meta name="theme-color" content="#080a08" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Onest:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style is:inline>
+    html, body {
+      background-color: #080a08 !important;
+      color: #f0f2ed !important;
+      color-scheme: dark !important;
+      font-family: 'Onest', 'Inter', system-ui, sans-serif;
+    }
+    code, pre, .font-mono {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+  </style>
+</head>
+<body class="bg-terminal-bg text-terminal-text antialiased min-h-screen selection:bg-terminal-accent/20 selection:text-terminal-text">
+
+  <!-- Sticky Navbar -->
+  <nav class="border-b border-terminal-border/80 bg-terminal-bg/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6">
+      <div class="flex items-center justify-between h-16">
+        <a href="/" class="flex items-center gap-2.5 font-bold text-terminal-text tracking-tight group">
+          <span class="font-mono text-terminal-accent text-sm">$</span>
+          <span class="text-base group-hover:text-terminal-accent transition-colors">yt-tracks</span>
+        </a>
+
+        <a 
+          href="https://github.com/Kumneger0/yt-tracks" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          aria-label="GitHub Repository"
+          title="GitHub Repository"
+          class="p-2 text-terminal-accent bg-terminal-accent/10 border border-terminal-accent/20 rounded-lg hover:bg-terminal-accent/20 transition-all flex items-center justify-center"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Content Container -->
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-12 space-y-16">
+
+    <!-- Hero Section -->
+    <section>
+      <p class="font-mono text-xs text-terminal-muted mb-4 tracking-wider uppercase">// terminal youtube music client</p>
+      <h1 class="text-3xl sm:text-5xl font-bold text-terminal-text tracking-tight mb-4">
+        yt-tracks documentation
+      </h1>
+      <p class="text-base sm:text-lg text-terminal-muted leading-relaxed max-w-2xl">
+        A fast, keyboard-driven terminal user interface client for YouTube Music.
+      </p>
+
+      <!-- Demo Screenshot Window Frame -->
+      <div class="rounded-xl border border-terminal-border bg-terminal-surface overflow-hidden shadow-2xl my-8">
+        <div class="flex items-center px-4 py-3 bg-terminal-surface border-b border-terminal-border">
+          <div class="flex items-center gap-2">
+            <div class="flex gap-1.5">
+              <div class="w-3 h-3 rounded-full bg-terminal-border"></div>
+              <div class="w-3 h-3 rounded-full bg-terminal-border"></div>
+              <div class="w-3 h-3 rounded-full bg-terminal-border"></div>
+            </div>
+            <span class="text-xs text-terminal-muted ml-2 font-mono">yt-tracks — player</span>
+          </div>
+        </div>
+        <div class="p-1 bg-terminal-bg">
+          <img src="/ytmuic-tui.png" alt="yt-tracks demo screenshot" class="w-full h-auto block rounded-b border border-terminal-border/30 object-contain" />
+        </div>
+      </div>
+    </section>
+
+    <!-- 01. Installation -->
+    <section>
+      <div class="flex items-center gap-3 mb-6">
+        <span class="font-mono text-xs text-terminal-accent tracking-wider">01</span>
+        <h2 class="text-xl sm:text-2xl font-bold text-terminal-text">Installation</h2>
+        <div class="flex-1 h-px bg-terminal-border"></div>
+      </div>
+
+      <p class="text-sm sm:text-base text-terminal-muted mb-6 leading-relaxed">
+        Download pre-built binaries for <strong class="text-terminal-text font-medium">Linux x86-64</strong>, <strong class="text-terminal-text font-medium">macOS Apple Silicon</strong>, and <strong class="text-terminal-text font-medium">Windows x86-64</strong> from the <a href="https://github.com/Kumneger0/yt-tracks/releases" target="_blank" rel="noopener noreferrer" class="text-terminal-accent hover:underline font-medium">GitHub Releases</a> page, or run an installer script:
+      </p>
+
+      <div class="space-y-4">
+        <div>
+          <span class="block text-xs font-mono uppercase tracking-wider text-terminal-muted mb-2">// Linux x86-64 / macOS Apple Silicon</span>
+          <pre class="bg-terminal-surface border border-terminal-border rounded-xl p-4 sm:p-5 text-sm font-mono text-terminal-text overflow-x-auto"><code>curl -fsSL https://raw.githubusercontent.com/Kumneger0/yt-tracks/main/install.sh | bash</code></pre>
+        </div>
+
+        <div>
+          <span class="block text-xs font-mono uppercase tracking-wider text-terminal-muted mb-2">// Windows x86-64 (PowerShell)</span>
+          <pre class="bg-terminal-surface border border-terminal-border rounded-xl p-4 sm:p-5 text-sm font-mono text-terminal-text overflow-x-auto"><code>iwr -useb https://raw.githubusercontent.com/Kumneger0/yt-tracks/main/install.ps1 | iex</code></pre>
+        </div>
+      </div>
+
+      <div class="mt-8 pt-6 border-t border-terminal-border/60">
+        <p class="text-sm sm:text-base text-terminal-text font-semibold mb-3">
+          Required System Prerequisites:
+        </p>
+        <ul class="space-y-2 text-sm text-terminal-muted mb-6 ml-1">
+          <li class="flex items-start gap-2">
+            <span class="text-terminal-accent mt-0.5">•</span>
+            <span><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">yt-dlp</code> — Extracting and fetching YouTube Music audio stream URLs.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-terminal-accent mt-0.5">•</span>
+            <span><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">ffmpeg</code> — Audio stream decoding and playback.</span>
+          </li>
+        </ul>
+
+        <p class="text-xs font-mono uppercase tracking-wider text-terminal-muted mb-3">// Install ffmpeg using your package manager:</p>
+        <div class="rounded-xl border border-terminal-border bg-terminal-surface/30 p-4 space-y-2 text-sm font-mono">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <span class="text-terminal-muted">Ubuntu / Debian:</span>
+            <code class="text-terminal-accent">sudo apt install ffmpeg</code>
+          </div>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <span class="text-terminal-muted">Arch Linux:</span>
+            <code class="text-terminal-accent">sudo pacman -S ffmpeg</code>
+          </div>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <span class="text-terminal-muted">Fedora:</span>
+            <code class="text-terminal-accent">sudo dnf install ffmpeg</code>
+          </div>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <span class="text-terminal-muted">macOS:</span>
+            <code class="text-terminal-accent">brew install ffmpeg</code>
+          </div>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <span class="text-terminal-muted">Windows:</span>
+            <code class="text-terminal-accent">winget install ffmpeg</code>
+          </div>
+        </div>
+
+        <p class="text-xs font-mono uppercase tracking-wider text-terminal-muted mt-6 mb-2">// Install yt-dlp:</p>
+        <p class="text-sm text-terminal-muted">
+          Follow the <a href="https://github.com/yt-dlp/yt-dlp#installation" target="_blank" rel="noopener noreferrer" class="text-terminal-accent hover:underline font-medium">yt-dlp GitHub Installation Guide</a>. Standard <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">yt-dlp</code> configuration files are loaded natively; on failure, <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">yt-tracks</code> retries with <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">--ignore-config</code> (set <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">HTTP_PROXY</code> / <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">HTTPS_PROXY</code> if a proxy must also apply to fallback).
+        </p>
+      </div>
+    </section>
+
+    <!-- 02. Quick Start -->
+    <section>
+      <div class="flex items-center gap-3 mb-6">
+        <span class="font-mono text-xs text-terminal-accent tracking-wider">02</span>
+        <h2 class="text-xl sm:text-2xl font-bold text-terminal-text">Quick Start</h2>
+        <div class="flex-1 h-px bg-terminal-border"></div>
+      </div>
+
+      <p class="text-sm sm:text-base text-terminal-muted mb-4 leading-relaxed">
+        Authenticate with your local browser session and launch the client:
+      </p>
+      <pre class="bg-terminal-surface border border-terminal-border rounded-xl p-4 sm:p-5 text-sm font-mono text-terminal-text overflow-x-auto"><code># 1. Extract session cookies automatically from installed browser (chrome, firefox, safari)
+yt-tracks extract-cookies
+
+# 2. Launch the client
+yt-tracks</code></pre>
+    </section>
+
+    <!-- 03. CLI Commands & Subcommands -->
+    <section>
+      <div class="flex items-center gap-3 mb-6">
+        <span class="font-mono text-xs text-terminal-accent tracking-wider">03</span>
+        <h2 class="text-xl sm:text-2xl font-bold text-terminal-text">CLI Commands & Subcommands</h2>
+        <div class="flex-1 h-px bg-terminal-border"></div>
+      </div>
+
+      <div class="w-full overflow-x-auto border border-terminal-border rounded-xl bg-terminal-surface/30">
+        <table class="w-full text-left text-sm border-collapse">
+          <thead>
+            <tr class="bg-terminal-surface border-b border-terminal-border text-terminal-text font-mono uppercase text-xs tracking-wider">
+              <th class="px-5 py-3.5 font-semibold">Command</th>
+              <th class="px-5 py-3.5 font-semibold">Description</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-terminal-border text-terminal-muted">
+            <tr class="hover:bg-terminal-surface/50 transition-colors">
+              <td class="px-5 py-3.5 font-mono text-terminal-accent whitespace-nowrap">yt-tracks</td>
+              <td class="px-5 py-3.5">Launch the interactive terminal user interface.</td>
+            </tr>
+            <tr class="hover:bg-terminal-surface/50 transition-colors">
+              <td class="px-5 py-3.5 font-mono text-terminal-accent whitespace-nowrap">yt-tracks setup</td>
+              <td class="px-5 py-3.5">Download CPython and initialize the local backend runtime in advance with live progress (also available via <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">--setup</code>).</td>
+            </tr>
+            <tr class="hover:bg-terminal-surface/50 transition-colors">
+              <td class="px-5 py-3.5 font-mono text-terminal-accent whitespace-nowrap">yt-tracks extract-cookies</td>
+              <td class="px-5 py-3.5">Extract YouTube Music cookies from supported browsers (<code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">chrome</code>, <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">firefox</code>, <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">safari</code>), verify via API, and store locally.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 04. Authentication Details -->
+    <section class="space-y-6">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="font-mono text-xs text-terminal-accent tracking-wider">04</span>
+        <h2 class="text-xl sm:text-2xl font-bold text-terminal-text">Authentication Details</h2>
+        <div class="flex-1 h-px bg-terminal-border"></div>
+      </div>
+
+      <div>
+        <h3 class="text-base sm:text-lg font-semibold text-terminal-text mb-2">Automatic Cookie Extraction</h3>
+        <pre class="bg-terminal-surface border border-terminal-border rounded-xl p-4 sm:p-5 text-sm font-mono text-terminal-text overflow-x-auto mb-3"><code>yt-tracks extract-cookies</code></pre>
+        <p class="text-sm text-terminal-muted">
+          Supported browsers: <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">chrome</code>, <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">firefox</code>, <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">safari</code>.
+        </p>
+      </div>
+
+      <div class="pt-6 border-t border-terminal-border/60">
+        <p class="text-sm text-terminal-muted mb-3">
+          Credentials are saved locally as <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">browser.json</code> in your config path:
+        </p>
+        <ul class="space-y-1.5 text-sm text-terminal-text font-mono">
+          <li class="flex items-center gap-2">
+            <span class="text-terminal-accent">Linux:</span>
+            <span class="text-terminal-muted">~/.config/yt-tracks/browser.json</span>
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="text-terminal-accent">macOS:</span>
+            <span class="text-terminal-muted">~/Library/Application Support/yt-tracks/browser.json</span>
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="text-terminal-accent">Windows:</span>
+            <span class="text-terminal-muted">%APPDATA%\yt-tracks\browser.json</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 05. TUI Keybindings -->
+    <section class="space-y-8">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="font-mono text-xs text-terminal-accent tracking-wider">05</span>
+        <h2 class="text-xl sm:text-2xl font-bold text-terminal-text">TUI Keybindings</h2>
+        <div class="flex-1 h-px bg-terminal-border"></div>
+      </div>
+
+      <div>
+        <h3 class="text-base font-semibold text-terminal-text mb-3">// Navigation & Focus</h3>
+        <div class="w-full overflow-x-auto border border-terminal-border rounded-xl bg-terminal-surface/30">
+          <table class="w-full text-left text-sm border-collapse">
+            <thead>
+              <tr class="bg-terminal-surface border-b border-terminal-border text-terminal-text font-mono uppercase text-xs tracking-wider">
+                <th class="px-5 py-3.5 font-semibold w-1/3">Key</th>
+                <th class="px-5 py-3.5 font-semibold">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-terminal-border text-terminal-muted">
+              <tr class="hover:bg-terminal-surface/50 transition-colors">
+                <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Tab</code> / <code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Shift + Tab</code></td>
+                <td class="px-5 py-3.5">Cycle focus forward / backward (Sidebar &rarr; Main &rarr; Queue)</td>
+              </tr>
+              <tr class="hover:bg-terminal-surface/50 transition-colors">
+                <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Ctrl + k</code></td>
+                <td class="px-5 py-3.5">Focus search bar input</td>
+              </tr>
+              <tr class="hover:bg-terminal-surface/50 transition-colors">
+                <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">j</code> / <code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Down</code></td>
+                <td class="px-5 py-3.5">Navigate list item down / scroll lyrics down</td>
+              </tr>
+              <tr class="hover:bg-terminal-surface/50 transition-colors">
+                <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">k</code> / <code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Up</code></td>
+                <td class="px-5 py-3.5">Navigate list item up / scroll lyrics up</td>
+              </tr>
+              <tr class="hover:bg-terminal-surface/50 transition-colors">
+                <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Enter</code></td>
+                <td class="px-5 py-3.5">Play selected track / open playlist, album, or section</td>
+              </tr>
+              <tr class="hover:bg-terminal-surface/50 transition-colors">
+                <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Esc</code></td>
+                <td class="px-5 py-3.5">Unfocus search bar or return to main Home sections</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="text-base font-semibold text-terminal-text mb-3">// Playback & Queue Controls</h3>
+        <div class="w-full overflow-x-auto border border-terminal-border rounded-xl bg-terminal-surface/30">
+          <table class="w-full text-left text-sm border-collapse">
+            <thead>
+              <tr class="bg-terminal-surface border-b border-terminal-border text-terminal-text font-mono uppercase text-xs tracking-wider">
+                <th class="px-5 py-3.5 font-semibold w-1/3">Key</th>
+                <th class="px-5 py-3.5 font-semibold">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-terminal-border text-terminal-muted">
+              <tr class="hover:bg-terminal-surface/50 transition-colors">
+                <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Space</code></td>
+                <td class="px-5 py-3.5">Play / Pause current track (when player focused)</td>
+              </tr>
+              <tr class="hover:bg-terminal-surface/50 transition-colors">
+                <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">n</code></td>
+                <td class="px-5 py-3.5">Skip to next track (Queue &rarr; Context &rarr; History) (when player focused)</td>
+              </tr>
+              <tr class="hover:bg-terminal-surface/50 transition-colors">
+                <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">b</code></td>
+                <td class="px-5 py-3.5">Skip to previous track from history (when player focused)</td>
+              </tr>
+              <tr class="hover:bg-terminal-surface/50 transition-colors">
+                <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">a</code></td>
+                <td class="px-5 py-3.5">Add selected track to queue (works in Playlists, Albums, Search, Home sections, and Related list)</td>
+              </tr>
+              <tr class="hover:bg-terminal-surface/50 transition-colors">
+                <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">r</code></td>
+                <td class="px-5 py-3.5">Remove highlighted track from queue or related list</td>
+              </tr>
+              <tr class="hover:bg-terminal-surface/50 transition-colors">
+                <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">l</code></td>
+                <td class="px-5 py-3.5">Toggle Like (♥) / Unlike (♡) for current track</td>
+              </tr>
+              <tr class="hover:bg-terminal-surface/50 transition-colors">
+                <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Ctrl + l</code></td>
+                <td class="px-5 py-3.5">Open synced lyrics overlay</td>
+              </tr>
+              <tr class="hover:bg-terminal-surface/50 transition-colors">
+                <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Ctrl + q</code></td>
+                <td class="px-5 py-3.5">Toggle right column view mode (Queue List vs Related Tracks) (when queue column focused)</td>
+              </tr>
+              <tr class="hover:bg-terminal-surface/50 transition-colors">
+                <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">q</code> / <code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Ctrl + c</code></td>
+                <td class="px-5 py-3.5">Quit application</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="pt-8 border-t border-terminal-border text-center sm:flex sm:items-center sm:justify-between text-xs font-mono text-terminal-muted">
+      <p>© {new Date().getFullYear()} yt-tracks // terminal youtube music client</p>
+      <div class="mt-4 sm:mt-0 flex items-center justify-center gap-6">
+        <a href="https://github.com/Kumneger0/yt-tracks" target="_blank" rel="noopener noreferrer" aria-label="GitHub Repository" title="GitHub Repository" class="hover:text-terminal-accent transition-colors inline-flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+        </a>
+      </div>
+    </footer>
+
+  </main>
+</body>
+</html>

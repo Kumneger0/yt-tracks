@@ -34,4 +34,9 @@ gen/genconnect/*
 !gen/genconnect/stub.go
 backend/binaries/python-*
 .vercel
+docs/.vercel
 .env*
+
+# Embedded Python backend assets (populated by scripts/build-backends.sh)
+internal/backend/binaries/*/*
+!internal/backend/binaries/*/.gitkeep
