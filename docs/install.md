@@ -14,11 +14,11 @@ Before building `yt-tracks` from source, ensure you have the following installed
 
 ## Backend
 
-yt-tracks embeds its YouTube Music Connect RPC backend (`yt-tracks-backend`)
-inside the Go binary via `//go:embed`, built with
-[uvbox](https://github.com/AmadeusITGroup/uvbox). The backend runs on `127.0.0.1`
-only and requires no user-installed Python — on first launch it downloads a
-CPython runtime and installs the backend dependencies (one-time network
+yt-tracks embeds its YouTube Music Connect RPC backend wheel (`yt-tracks-backend`)
+and the official [uv](https://docs.astral.sh/uv/) binary inside the Go binary via
+`//go:embed`. The backend runs on `127.0.0.1` only and requires no
+user-installed Python — on first launch it downloads a CPython runtime and
+installs the backend dependencies into your cache directory (one-time network
 required).
 
 ## Installation Steps
@@ -32,14 +32,16 @@ cd yt-tracks
 
 ### 2. Build the Python Backend
 
-Build the uvbox launcher and embed it into the Go binary:
+Build the Python wheel and fetch the `uv` binaries to embed into the Go binary:
 
 ```bash
 make backend
 ```
 
-This generates `internal/backend/embedded_*.go` sources with `//go:embed`
-directives pointing at the platform-specific launcher binaries.
+This generates the Python protobuf stubs, builds `yt_tracks-*.whl` into
+`internal/backend/binaries/wheel/`, and downloads platform-specific `uv`
+binaries into `internal/backend/binaries/<goos>_<goarch>/` for Go's static
+`//go:embed` files.
 
 ### 3. Build the Go Application
 
@@ -72,6 +74,12 @@ Or run the built binary directly:
 ./yt-tracks
 ```
 
+Optionally, pre-download and initialize the local Python backend runtime with live progress before launching the TUI:
+
+```bash
+./yt-tracks setup
+```
+
 ### 5. Authenticate with YouTube Music
 
 To access your playlists, liked songs, and library, extract session cookies from your browser:
@@ -88,5 +96,5 @@ If you encounter issues during installation or build:
 - Ensure `yt-dlp` and `ffmpeg` are in your system `PATH`.
 - Check application logs via `yt-tracks log`.
 - For local backend first-run failures, ensure network access is available
-  (uvbox downloads CPython on first launch).
+  (`uv` downloads CPython and Python dependencies on first launch; run `yt-tracks setup` to see live progress).
 - Open an issue on [GitHub Issues](https://github.com/Kumneger0/yt-tracks/issues).

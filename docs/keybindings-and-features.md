@@ -24,6 +24,7 @@ Install both using your OS package manager:
 | Command | Purpose |
 | --- | --- |
 | `yt-tracks` | Launch the interactive terminal user interface. |
+| `yt-tracks setup` | Download CPython and initialize the local backend runtime in advance (also available via `--setup`). |
 | `yt-tracks extract-cookies` | Automatically extract YouTube Music cookies from supported browsers (`chrome`, `firefox`, `safari`), verify via API, and store locally. |
 | `yt-tracks version` | Print application version. |
 | `yt-tracks log` | View debug logs. |
