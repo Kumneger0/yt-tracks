@@ -15,9 +15,15 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
+
+	"github.com/gofrs/flock"
 )
 
-const pythonVersion = "3.13"
+const (
+	pythonVersion         = "3.13"
+	defaultStartupTimeout = 10 * time.Minute
+)
 
 var errMissingAssets = errors.New("embedded backend assets are missing: run 'make backend' before building")
 
@@ -80,11 +86,31 @@ func venvPaths(venvDir string) (string, string) {
 		filepath.Join(venvDir, "bin", "yt-tracks-backend")
 }
 
+func isBackendReady(readyMarker, entrypoint string) bool {
+	if _, err := os.Stat(readyMarker); err != nil {
+		return false
+	}
+	_, err := os.Stat(entrypoint)
+	return err == nil
+}
+
 func runUV(ctx context.Context, uvPath string, args []string, stdout, stderr io.Writer) error {
 	cmd := exec.CommandContext(ctx, uvPath, args...)
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	return cmd.Run()
+}
+
+func acquireBackendLock(ctx context.Context, cacheRoot string) (*flock.Flock, error) {
+	fileLock := flock.New(filepath.Join(cacheRoot, "backend.lock"))
+	locked, err := fileLock.TryLockContext(ctx, 100*time.Millisecond)
+	if err != nil {
+		return nil, fmt.Errorf("failed to acquire backend setup lock: %w", err)
+	}
+	if !locked {
+		return nil, errors.New("failed to acquire backend setup lock")
+	}
+	return fileLock, nil
 }
 
 func ensureBackendReady(ctx context.Context, stdout, stderr io.Writer, notify bool) (string, error) {
@@ -107,10 +133,20 @@ func ensureBackendReady(ctx context.Context, stdout, stderr io.Writer, notify bo
 	readyMarker := filepath.Join(venvDir, ".ready")
 	venvPython, entrypoint := venvPaths(venvDir)
 
-	if _, statErr := os.Stat(readyMarker); statErr == nil {
-		if _, entryErr := os.Stat(entrypoint); entryErr == nil {
-			return entrypoint, nil
-		}
+	if isBackendReady(readyMarker, entrypoint) {
+		return entrypoint, nil
+	}
+
+	fileLock, err := acquireBackendLock(ctx, root)
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		_ = fileLock.Unlock()
+	}()
+
+	if isBackendReady(readyMarker, entrypoint) {
+		return entrypoint, nil
 	}
 
 	uvHash := sha256.Sum256(uvBytes)
@@ -148,7 +184,17 @@ func ensureBackendReady(ctx context.Context, stdout, stderr io.Writer, notify bo
 	return entrypoint, nil
 }
 
+func withDefaultStartupTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
+	if _, hasDeadline := ctx.Deadline(); hasDeadline {
+		return ctx, func() {}
+	}
+	return context.WithTimeout(ctx, defaultStartupTimeout)
+}
+
 func StartEmbedded(ctx context.Context) (*Backend, error) {
+	ctx, cancel := withDefaultStartupTimeout(ctx)
+	defer cancel()
+
 	var errBuf bytes.Buffer
 	entrypoint, err := ensureBackendReady(ctx, io.Discard, &errBuf, true)
 	if err != nil {
