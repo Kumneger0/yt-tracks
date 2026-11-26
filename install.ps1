@@ -41,15 +41,9 @@ if (Test-Admin) {
 if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') {
     $target = "Windows_x86_64"
 }
-elseif ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') {
-    $target = "Windows_arm64"
-}
-elseif ($env:PROCESSOR_ARCHITECTURE -eq 'x86') {
-    $target = "Windows_386"
-}
 else {
-    Write-Error "Unsupported architecture: $env:PROCESSOR_ARCHITECTURE"
-    exit
+    Write-Error "Unsupported architecture: $env:PROCESSOR_ARCHITECTURE. Currently only AMD64 (x86_64) pre-built binaries are supported."
+    exit 1
 }
 
 # Fetch Version
@@ -64,7 +58,7 @@ else {
     catch {
         Write-Error "Failed to fetch latest version from GitHub API: $($_.Exception.Message)"
         Write-Host "Try passing the version manually, for example:" -ForegroundColor 'Yellow'
-        Write-Host '$v = "0.4.0"; Get-Content .\install.ps1 -Raw | iex' -ForegroundColor 'Yellow'
+        Write-Host '$v = "0.9.0"; Get-Content .\install.ps1 -Raw | iex' -ForegroundColor 'Yellow'
         exit
     }
 }
