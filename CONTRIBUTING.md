@@ -76,11 +76,11 @@ go test -v ./...
 ## Pull Request Guidelines
 
 1. **Conventional Commits**: Commit messages must follow Conventional Commit rules (e.g., `feat: ...`, `fix: ...`, `docs: ...`, `test: ...`).
-2. **Code Formatting**: Ensure Go code is formatted (`go fmt ./...`) and tests pass (`go test ./...`).
+2. **Code Formatting & Checks**: Ensure formatting (`make fmt`), linting (`make lint`), and tests (`make test` or `go test ./...`) pass.
 3. **Keep PRs Focused**: Limit PRs to a single feature or bugfix for fast review.
 
 ---
 
 ## Reporting Issues
 
-Use [GitHub Issues](https://github.com/kumneger0/yt-tracks/issues) for bug reports and feature requests. Include your OS, Go version, and log output (`yt-tracks log` or `~/.config/yt-tracks/yt-tracks.log`) when reporting bugs.
+Use [GitHub Issues](https://github.com/kumneger0/yt-tracks/issues) for bug reports and feature requests. Include your OS, Go version, and log output (`yt-tracks log`, stored under `~/.local/state/yt-tracks/logs/yt-tracks.log` on Linux, `~/Library/State/yt-tracks/logs/yt-tracks.log` on macOS, or `%APPDATA%\yt-tracks\logs\yt-tracks.log` on Windows) when reporting bugs.

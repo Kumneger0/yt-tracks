@@ -165,29 +165,32 @@ const description = "A fast, keyboard-driven terminal user interface client for 
       </div>
 
       <p class="text-sm sm:text-base text-terminal-muted mb-4 leading-relaxed">
-        Authenticate with your local browser session and launch the client:
+        Initialize the embedded local backend (or let it initialize automatically on first run — one-time network access required to cache CPython and dependencies), authenticate with your browser cookies, and launch the client:
       </p>
-      <pre class="bg-terminal-surface border border-terminal-border rounded-xl p-4 sm:p-5 text-sm font-mono text-terminal-text overflow-x-auto"><code># 1. Extract session cookies automatically from installed browser (chrome, firefox, safari)
+      <pre class="bg-terminal-surface border border-terminal-border rounded-xl p-4 sm:p-5 text-sm font-mono text-terminal-text overflow-x-auto"><code># 1. (Optional) Pre-download CPython &amp; backend dependencies with live progress
+yt-tracks setup
+
+# 2. Extract session cookies automatically from installed browser (chrome, firefox, safari)
 yt-tracks extract-cookies
 
-# 2. Launch the client
+# 3. Launch the client
 yt-tracks</code></pre>
     </section>
 
     <!-- 03. CLI Commands & Subcommands -->
-    <section>
+    <section class="space-y-6">
       <div class="flex items-center gap-3 mb-6">
         <span class="font-mono text-xs text-terminal-accent tracking-wider">03</span>
-        <h2 class="text-xl sm:text-2xl font-bold text-terminal-text">CLI Commands & Subcommands</h2>
+        <h2 id="cli-commands-heading" class="text-xl sm:text-2xl font-bold text-terminal-text">CLI Commands &amp; Subcommands</h2>
         <div class="flex-1 h-px bg-terminal-border"></div>
       </div>
 
-      <div class="w-full overflow-x-auto border border-terminal-border rounded-xl bg-terminal-surface/30">
+      <div tabindex="0" role="region" aria-labelledby="cli-commands-heading" class="w-full overflow-x-auto border border-terminal-border rounded-xl bg-terminal-surface/30">
         <table class="w-full text-left text-sm border-collapse">
           <thead>
             <tr class="bg-terminal-surface border-b border-terminal-border text-terminal-text font-mono uppercase text-xs tracking-wider">
-              <th class="px-5 py-3.5 font-semibold">Command</th>
-              <th class="px-5 py-3.5 font-semibold">Description</th>
+              <th scope="col" class="px-5 py-3.5 font-semibold">Command</th>
+              <th scope="col" class="px-5 py-3.5 font-semibold">Description</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-terminal-border text-terminal-muted">
@@ -203,16 +206,52 @@ yt-tracks</code></pre>
               <td class="px-5 py-3.5 font-mono text-terminal-accent whitespace-nowrap">yt-tracks extract-cookies</td>
               <td class="px-5 py-3.5">Extract YouTube Music cookies from supported browsers (<code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">chrome</code>, <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">firefox</code>, <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">safari</code>), verify via API, and store locally.</td>
             </tr>
+            <tr class="hover:bg-terminal-surface/50 transition-colors">
+              <td class="px-5 py-3.5 font-mono text-terminal-accent whitespace-nowrap">yt-tracks version</td>
+              <td class="px-5 py-3.5">Print the installed application version.</td>
+            </tr>
+            <tr class="hover:bg-terminal-surface/50 transition-colors">
+              <td class="px-5 py-3.5 font-mono text-terminal-accent whitespace-nowrap">yt-tracks log</td>
+              <td class="px-5 py-3.5">Print debug logs for error reporting.</td>
+            </tr>
           </tbody>
         </table>
       </div>
+
+      <div>
+        <h3 id="cli-flags-heading" class="text-base font-semibold text-terminal-text mb-3">// Flags &amp; Environment Variables</h3>
+        <div tabindex="0" role="region" aria-labelledby="cli-flags-heading" class="w-full overflow-x-auto border border-terminal-border rounded-xl bg-terminal-surface/30">
+          <table class="w-full text-left text-sm border-collapse">
+            <thead>
+              <tr class="bg-terminal-surface border-b border-terminal-border text-terminal-text font-mono uppercase text-xs tracking-wider">
+                <th scope="col" class="px-5 py-3.5 font-semibold w-1/3">Option</th>
+                <th scope="col" class="px-5 py-3.5 font-semibold">Description</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-terminal-border text-terminal-muted">
+              <tr class="hover:bg-terminal-surface/50 transition-colors">
+                <td class="px-5 py-3.5 font-mono text-terminal-accent whitespace-nowrap">--setup</td>
+                <td class="px-5 py-3.5">Download and initialize the local backend runtime without starting the TUI.</td>
+              </tr>
+              <tr class="hover:bg-terminal-surface/50 transition-colors">
+                <td class="px-5 py-3.5 font-mono text-terminal-accent whitespace-nowrap">-d, --debug-dir &lt;path&gt;</td>
+                <td class="px-5 py-3.5">Override the directory used for <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">yt-tracks.log</code>, <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">yt-dlp-error.log</code>, and <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">ffstderr.log</code>.</td>
+              </tr>
+              <tr class="hover:bg-terminal-surface/50 transition-colors">
+                <td class="px-5 py-3.5 font-mono text-terminal-accent whitespace-nowrap">YT_TRACKS_YTDLP_VERBOSE=1</td>
+                <td class="px-5 py-3.5">Pass <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">-v</code> to <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">yt-dlp</code> when logging stream extraction failures.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
-    <!-- 04. Authentication Details -->
+    <!-- 04. Authentication &amp; Local Files -->
     <section class="space-y-6">
       <div class="flex items-center gap-3 mb-6">
         <span class="font-mono text-xs text-terminal-accent tracking-wider">04</span>
-        <h2 class="text-xl sm:text-2xl font-bold text-terminal-text">Authentication Details</h2>
+        <h2 class="text-xl sm:text-2xl font-bold text-terminal-text">Authentication &amp; Local Files</h2>
         <div class="flex-1 h-px bg-terminal-border"></div>
       </div>
 
@@ -224,22 +263,36 @@ yt-tracks</code></pre>
         </p>
       </div>
 
-      <div class="pt-6 border-t border-terminal-border/60">
-        <p class="text-sm text-terminal-muted mb-3">
-          Credentials are saved locally as <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">browser.json</code> in your config path:
+      <div class="pt-6 border-t border-terminal-border/60 space-y-4">
+        <p class="text-sm text-terminal-muted">
+          Credentials (<code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">browser.json</code>, plus Netscape <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">cookie.txt</code>) and optional <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">config.json</code> (<code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">&#123; "debug-dir": "..." &#125;</code>) are saved in your config path:
         </p>
         <ul class="space-y-1.5 text-sm text-terminal-text font-mono">
           <li class="flex items-center gap-2">
             <span class="text-terminal-accent">Linux:</span>
-            <span class="text-terminal-muted">~/.config/yt-tracks/browser.json</span>
+            <span class="text-terminal-muted">~/.config/yt-tracks/</span>
           </li>
           <li class="flex items-center gap-2">
             <span class="text-terminal-accent">macOS:</span>
-            <span class="text-terminal-muted">~/Library/Application Support/yt-tracks/browser.json</span>
+            <span class="text-terminal-muted">~/Library/Application Support/yt-tracks/</span>
           </li>
           <li class="flex items-center gap-2">
             <span class="text-terminal-accent">Windows:</span>
-            <span class="text-terminal-muted">%APPDATA%\yt-tracks\browser.json</span>
+            <span class="text-terminal-muted">%APPDATA%\yt-tracks\</span>
+          </li>
+        </ul>
+
+        <p class="text-sm text-terminal-muted pt-2">
+          Logs default to your state directory (viewable with <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">yt-tracks log</code>), and the embedded <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">uv</code> + CPython runtime is cached in your user cache directory:
+        </p>
+        <ul class="space-y-1.5 text-sm text-terminal-text font-mono">
+          <li class="flex items-center gap-2">
+            <span class="text-terminal-accent">Logs (Linux / macOS / Windows):</span>
+            <span class="text-terminal-muted">~/.local/state/yt-tracks/logs/ &middot; ~/Library/State/yt-tracks/logs/ &middot; %APPDATA%\yt-tracks\logs\</span>
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="text-terminal-accent">Cache (Linux / macOS / Windows):</span>
+            <span class="text-terminal-muted">~/.cache/yt-tracks/ &middot; ~/Library/Caches/yt-tracks/ &middot; %LOCALAPPDATA%\yt-tracks\</span>
           </li>
         </ul>
       </div>
@@ -254,19 +307,19 @@ yt-tracks</code></pre>
       </div>
 
       <div>
-        <h3 class="text-base font-semibold text-terminal-text mb-3">// Navigation & Focus</h3>
-        <div class="w-full overflow-x-auto border border-terminal-border rounded-xl bg-terminal-surface/30">
+        <h3 id="nav-keys-heading" class="text-base font-semibold text-terminal-text mb-3">// Navigation &amp; Focus</h3>
+        <div tabindex="0" role="region" aria-labelledby="nav-keys-heading" class="w-full overflow-x-auto border border-terminal-border rounded-xl bg-terminal-surface/30">
           <table class="w-full text-left text-sm border-collapse">
             <thead>
               <tr class="bg-terminal-surface border-b border-terminal-border text-terminal-text font-mono uppercase text-xs tracking-wider">
-                <th class="px-5 py-3.5 font-semibold w-1/3">Key</th>
-                <th class="px-5 py-3.5 font-semibold">Action</th>
+                <th scope="col" class="px-5 py-3.5 font-semibold w-1/3">Key</th>
+                <th scope="col" class="px-5 py-3.5 font-semibold">Action</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-terminal-border text-terminal-muted">
               <tr class="hover:bg-terminal-surface/50 transition-colors">
                 <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Tab</code> / <code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Shift + Tab</code></td>
-                <td class="px-5 py-3.5">Cycle focus forward / backward (Sidebar &rarr; Main &rarr; Queue)</td>
+                <td class="px-5 py-3.5">Cycle focus forward / backward (Sidebar &rarr; Main &rarr; Queue &rarr; Player)</td>
               </tr>
               <tr class="hover:bg-terminal-surface/50 transition-colors">
                 <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Ctrl + k</code></td>
@@ -286,7 +339,7 @@ yt-tracks</code></pre>
               </tr>
               <tr class="hover:bg-terminal-surface/50 transition-colors">
                 <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Esc</code></td>
-                <td class="px-5 py-3.5">Unfocus search bar or return to main Home sections</td>
+                <td class="px-5 py-3.5">Unfocus search bar, return to main Home sections, or close active modal</td>
               </tr>
             </tbody>
           </table>
@@ -294,13 +347,13 @@ yt-tracks</code></pre>
       </div>
 
       <div>
-        <h3 class="text-base font-semibold text-terminal-text mb-3">// Playback & Queue Controls</h3>
-        <div class="w-full overflow-x-auto border border-terminal-border rounded-xl bg-terminal-surface/30">
+        <h3 id="playback-keys-heading" class="text-base font-semibold text-terminal-text mb-3">// Playback, Queue &amp; Playlist Controls</h3>
+        <div tabindex="0" role="region" aria-labelledby="playback-keys-heading" class="w-full overflow-x-auto border border-terminal-border rounded-xl bg-terminal-surface/30">
           <table class="w-full text-left text-sm border-collapse">
             <thead>
               <tr class="bg-terminal-surface border-b border-terminal-border text-terminal-text font-mono uppercase text-xs tracking-wider">
-                <th class="px-5 py-3.5 font-semibold w-1/3">Key</th>
-                <th class="px-5 py-3.5 font-semibold">Action</th>
+                <th scope="col" class="px-5 py-3.5 font-semibold w-1/3">Key</th>
+                <th scope="col" class="px-5 py-3.5 font-semibold">Action</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-terminal-border text-terminal-muted">
@@ -322,7 +375,15 @@ yt-tracks</code></pre>
               </tr>
               <tr class="hover:bg-terminal-surface/50 transition-colors">
                 <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">r</code></td>
-                <td class="px-5 py-3.5">Remove highlighted track from queue or related list</td>
+                <td class="px-5 py-3.5">Remove highlighted track from the queue (when queue list focused)</td>
+              </tr>
+              <tr class="hover:bg-terminal-surface/50 transition-colors">
+                <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Ctrl + t</code></td>
+                <td class="px-5 py-3.5">Open Create New Playlist modal (<code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">Tab</code>/<code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">&uarr;&darr;</code> focus, <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">Space</code> privacy, <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">Enter</code> submit)</td>
+              </tr>
+              <tr class="hover:bg-terminal-surface/50 transition-colors">
+                <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Ctrl + p</code></td>
+                <td class="px-5 py-3.5">Open Manage Playlist modal for selected/current track (<code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">Enter</code>/<code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">a</code> add, <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">r</code> remove)</td>
               </tr>
               <tr class="hover:bg-terminal-surface/50 transition-colors">
                 <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">l</code></td>
@@ -330,7 +391,7 @@ yt-tracks</code></pre>
               </tr>
               <tr class="hover:bg-terminal-surface/50 transition-colors">
                 <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Ctrl + l</code></td>
-                <td class="px-5 py-3.5">Open synced lyrics overlay</td>
+                <td class="px-5 py-3.5">Toggle synced lyrics overlay (supports mouse wheel &amp; <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">j</code>/<code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">k</code> scroll)</td>
               </tr>
               <tr class="hover:bg-terminal-surface/50 transition-colors">
                 <td class="px-5 py-3.5 whitespace-nowrap"><code class="bg-terminal-accent/10 border border-terminal-accent/20 text-terminal-accent px-2 py-0.5 rounded font-mono text-xs">Ctrl + q</code></td>
