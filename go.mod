@@ -19,7 +19,7 @@ require (
 	github.com/muesli/mango-cobra v1.3.0
 	github.com/muesli/roff v0.1.0
 	github.com/rmhubbert/bubbletea-overlay v0.6.10
-	github.com/smallnest/ringbuffer v0.1.1
+	github.com/smallnest/ringbuffer v0.2.1
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.1
 	go.dalton.dog/bubbleup v1.4.0
