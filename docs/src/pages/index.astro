@@ -212,7 +212,7 @@ yt-tracks</code></pre>
             </tr>
             <tr class="hover:bg-terminal-surface/50 transition-colors">
               <td class="px-5 py-3.5 font-mono text-terminal-accent whitespace-nowrap">yt-tracks log</td>
-              <td class="px-5 py-3.5">Print debug logs for error reporting.</td>
+              <td class="px-5 py-3.5">Print <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">yt-tracks.log</code> for error reporting (inspect <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">yt-dlp-error.log</code> and <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">ffstderr.log</code> directly for subprocess diagnostics).</td>
             </tr>
           </tbody>
         </table>
@@ -283,7 +283,7 @@ yt-tracks</code></pre>
         </ul>
 
         <p class="text-sm text-terminal-muted pt-2">
-          Logs default to your state directory (viewable with <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">yt-tracks log</code>), and the embedded <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">uv</code> + CPython runtime is cached in your user cache directory:
+          Logs default to your state directory (overrideable via <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">--debug-dir</code> or <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">config.json</code> <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">debug-dir</code>; <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">yt-tracks log</code> prints <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">yt-tracks.log</code> only, while <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">yt-dlp-error.log</code> and <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">ffstderr.log</code> can be inspected directly), and the embedded <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">uv</code> + CPython runtime is cached in your user cache directory:
         </p>
         <ul class="space-y-1.5 text-sm text-terminal-text font-mono">
           <li class="flex items-center gap-2">

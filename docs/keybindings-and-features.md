@@ -27,7 +27,7 @@ Install both using your OS package manager:
 | `yt-tracks setup` | Download CPython and initialize the local backend runtime in advance (also available via `--setup`). |
 | `yt-tracks extract-cookies` | Automatically extract YouTube Music cookies from supported browsers (`chrome`, `firefox`, `safari`), verify via API, and store locally. |
 | `yt-tracks version` | Print application version. |
-| `yt-tracks log` | View debug logs. |
+| `yt-tracks log` | Print `yt-tracks.log` only (inspect `yt-dlp-error.log` and `ffstderr.log` directly for subprocess diagnostics). |
 
 ### Active Flags & Environment Variables
 
@@ -83,7 +83,7 @@ Credentials extracted via `yt-tracks extract-cookies` (`browser.json`, plus Nets
 - **macOS**: `~/Library/Application Support/yt-tracks/`
 - **Windows**: `%APPDATA%\yt-tracks\`
 
-Logs (`yt-tracks.log`, `yt-dlp-error.log`, `ffstderr.log`) are stored in your state directory (or inspect via `yt-tracks log`):
+Logs are written to your state directory by default (or to the directory set via `--debug-dir` / `config.json` `debug-dir` on any platform). `yt-tracks log` prints only `yt-tracks.log`; inspect `yt-dlp-error.log` and `ffstderr.log` directly in that directory for subprocess diagnostics:
 - **Linux**: `~/.local/state/yt-tracks/logs/` (`$XDG_STATE_HOME/yt-tracks/logs/`)
 - **macOS**: `~/Library/State/yt-tracks/logs/`
 - **Windows**: `%APPDATA%\yt-tracks\logs\`
