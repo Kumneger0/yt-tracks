@@ -42,14 +42,13 @@ log() {
 OS=$(uname -s)
 ARCH=$(uname -m)
 
+bin_name="yt-tracks"
 case "$OS" in
     Darwin)
-        if [ "$ARCH" = "x86_64" ]; then
-            target="Darwin_x86_64"
-        elif [ "$ARCH" = "arm64" ]; then
+        if [ "$ARCH" = "arm64" ]; then
             target="Darwin_arm64"
         else
-            log "Unsupported architecture: $ARCH on Darwin"
+            log "Unsupported architecture: $ARCH on Darwin. Currently only Apple Silicon (arm64) pre-built binaries are supported."
             exit 1
         fi
         ext="tar.gz"
@@ -64,8 +63,14 @@ case "$OS" in
         ext="tar.gz"
         ;;
     MINGW*|MSYS*|CYGWIN*)
-        target="Windows_x86_64"
-        ext="zip"
+        if [ "$ARCH" = "x86_64" ]; then
+            target="Windows_x86_64"
+            bin_name="yt-tracks.exe"
+        else
+            log "Unsupported architecture: $ARCH on Windows. Currently only x86_64 is supported."
+            exit 1
+        fi
+        ext="tar.gz"
         ;;
     *)
         log "Unsupported platform: $OS $ARCH"
@@ -96,7 +101,7 @@ download_uri="$releases_uri/download/v$version/yt-tracks_${target}.${ext}"
 
 yt_tracks_dir="$HOME/.yt-tracks"
 bin_dir="$yt_tracks_dir/bin"
-exe="$bin_dir/yt-tracks"
+exe="$bin_dir/$bin_name"
 archive="$yt_tracks_dir/yt-tracks.$ext"
 mkdir -p "$bin_dir"
 

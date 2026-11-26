@@ -23,6 +23,28 @@ listen to youtube music in your terminal
 
 check the [docs](https://yt-tracks.kumneger.dev) for the full lowdown on how to use this
 
+## 📦 Prerequisites & Installation
+
+Make sure `yt-dlp` and `ffmpeg` are installed and available on your `PATH`, then install a pre-built release for **Linux x86-64**, **macOS Apple Silicon**, or **Windows x86-64**:
+
+- **Linux / macOS**:
+  ```bash
+  curl -fsSL https://raw.githubusercontent.com/Kumneger0/yt-tracks/main/install.sh | bash
+  ```
+- **Windows (PowerShell)**:
+  ```powershell
+  iwr -useb https://raw.githubusercontent.com/Kumneger0/yt-tracks/main/install.ps1 | iex
+  ```
+- **Manual / Building from source**: grab binaries from [GitHub Releases](https://github.com/Kumneger0/yt-tracks/releases) or follow [docs/install.md](docs/install.md).
+
+Quick start:
+
+```bash
+yt-tracks setup            # optional: pre-download CPython & backend deps with progress
+yt-tracks extract-cookies  # extract YouTube Music cookies from chrome, firefox, or safari
+yt-tracks                  # launch TUI
+```
+
 ## 🚀 Features
 
 - [x] Home page & personalized recommendations

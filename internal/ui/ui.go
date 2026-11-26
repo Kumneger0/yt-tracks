@@ -57,10 +57,6 @@ const (
 	RightColumnRelated RightColumnMode = "RIGHT_COLUMN_RELATED"
 )
 
-type SpotifySearchResult struct {
-	Tracks, Artists, Albums, Playlists list.Model
-}
-
 type SelectedTrack struct {
 	types.PlaylistTrackObject
 	isLiked bool

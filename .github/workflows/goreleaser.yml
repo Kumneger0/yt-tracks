@@ -27,7 +27,7 @@ jobs:
           go-version: '1.26.x'
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7
+        uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d
         with:
           python-version: '3.13'
           enable-cache: true
@@ -38,9 +38,10 @@ jobs:
       - name: Generate Go Protobuf files
         run: buf generate --template buf.gen.go.yaml
 
-      - name: Install ALSA & cross-compile dependencies
+      - name: Install ALSA dependencies
         run: |
-          sudo apt-get install -y pkg-config libasound2-dev gcc-aarch64-linux-gnu libc6-dev-arm64-cross
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libasound2-dev unzip
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v7

@@ -44,6 +44,13 @@ Before starting, ensure you have the following installed:
    make hooks
    ```
 
+4. **Install Go Formatting & Linting Tools** *(Required by `make fmt` and `make lint`)*:
+   ```bash
+   go install mvdan.cc/gofumpt@v0.12.0
+   go install github.com/daixiang0/gci@v0.14.0
+   go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+   ```
+
 ---
 
 ## Common Makefile Commands
@@ -76,11 +83,14 @@ go test -v ./...
 ## Pull Request Guidelines
 
 1. **Conventional Commits**: Commit messages must follow Conventional Commit rules (e.g., `feat: ...`, `fix: ...`, `docs: ...`, `test: ...`).
-2. **Code Formatting**: Ensure Go code is formatted (`go fmt ./...`) and tests pass (`go test ./...`).
+2. **Code Formatting & Checks**: Ensure formatting (`make fmt`), linting (`make lint`), and tests (`make test` or `go test ./...`) pass.
 3. **Keep PRs Focused**: Limit PRs to a single feature or bugfix for fast review.
 
 ---
 
 ## Reporting Issues
 
-Use [GitHub Issues](https://github.com/kumneger0/yt-tracks/issues) for bug reports and feature requests. Include your OS, Go version, and log output (`yt-tracks log` or `~/.config/yt-tracks/yt-tracks.log`) when reporting bugs.
+Use [GitHub Issues](https://github.com/kumneger0/yt-tracks/issues) for bug reports and feature requests. Include your OS, Go version, and `yt-tracks.log` from the directory the app actually used (inspectable with `yt-tracks log` when using the default or configured `config.json` path):
+
+- **Default locations**: `$XDG_STATE_HOME/yt-tracks/logs/yt-tracks.log` (or `~/.local/state/yt-tracks/logs/yt-tracks.log` when unset) on Linux, `~/Library/State/yt-tracks/logs/yt-tracks.log` on macOS, and `%APPDATA%\yt-tracks\logs\yt-tracks.log` on Windows.
+- **Overrides**: Passing `--debug-dir` / `-d` or setting `debug-dir` in `config.json` overrides the log directory on all platforms.

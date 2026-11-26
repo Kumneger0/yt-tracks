@@ -149,6 +149,8 @@ func checkBackendHealth(ctx context.Context, client *http.Client, endpoint strin
 	}
 	defer resp.Body.Close()
 
-	_, _ = io.Copy(io.Discard, resp.Body)
-	return resp.StatusCode == http.StatusOK
+	if _, err := io.Copy(io.Discard, resp.Body); err != nil {
+		return false
+	}
+	return ctx.Err() == nil && resp.StatusCode == http.StatusOK
 }

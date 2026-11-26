@@ -65,8 +65,8 @@ nfpms:
     vendor: kumneger0
     homepage: https://github.com/kumneger0/yt-tracks
     maintainer: "Kumneger wondimu <Kumnegerwondimu@gmail.com>"
-    description: "CLI-based Spotify client"
-    license: GPL-3.0
+    description: "Terminal YouTube Music client"
+    license: MIT
     formats:
       - apk
       - deb

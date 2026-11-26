@@ -1,3 +1,0 @@
-{
-  "ignoreCommand": "git diff --quiet HEAD~1 HEAD -- grpc_server/ pyproject.toml uv.lock proto/ Dockerfile.vercel"
-}
