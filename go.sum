@@ -249,8 +249,8 @@ github.com/gobwas/glob v0.2.3/go.mod h1:d3Ez4x06l9bZtSvzIay5+Yzi0fmZzPgnTbPcKjJA
 github.com/godbus/dbus/v5 v5.1.0/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
 github.com/godbus/dbus/v5 v5.2.4 h1:F2gUCy++NMIxGmo9J+z5le/+ZC8W1OgeR51P4i9ZB/U=
 github.com/godbus/dbus/v5 v5.2.4/go.mod h1:3AAv2+hPq5rdnr5txxxRwiGjPXamgoIHgz9FPBfOp3c=
-github.com/gofrs/flock v0.13.1 h1:jjREztyBeSKBZYAC+mgc1laB+xsgy4kYMf3FbKF2UBo=
-github.com/gofrs/flock v0.13.1/go.mod h1:sf4BFiHwnvgxa25DlQoDqXQnwRMEOwqxRq37P6MzzmE=
+github.com/gofrs/flock v0.13.2 h1:9o62TArG4T0f8L46kSf8sLtNUGvJEfiCK9md7/ilko0=
+github.com/gofrs/flock v0.13.2/go.mod h1:OEjpF6MC2Plt1fLXTTgXwnZohWbs/Alxf2i1qTne/Vg=
 github.com/gogo/protobuf v1.1.1/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
 github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
@@ -589,8 +589,8 @@ github.com/sivchari/containedctx v1.0.3 h1:x+etemjbsh2fB5ewm5FeLNi5bUjK0V8n0RB+W
 github.com/sivchari/containedctx v1.0.3/go.mod h1:c1RDvCbnJLtH4lLcYD/GqwiBSSf4F5Qk0xld2rBqzJ4=
 github.com/sivchari/tenv v1.12.1 h1:+E0QzjktdnExv/wwsnnyk4oqZBUfuh89YMQT1cyuvSY=
 github.com/sivchari/tenv v1.12.1/go.mod h1:1LjSOUCc25snIr5n3DtGGrENhX3LuWefcplwVGC24mw=
-github.com/smallnest/ringbuffer v0.1.1 h1:KL2iILLdDCr9nWxYrNcsQ7Px7EVnoNBDJ0r/M/hEksA=
-github.com/smallnest/ringbuffer v0.1.1/go.mod h1:tAG61zBM1DYRaGIPloumExGvScf08oHuo0kFoOqdbT0=
+github.com/smallnest/ringbuffer v0.2.1 h1:3iKDp5yyNAHwbob+midr96gGbrvocrw6rVNFg6RxczM=
+github.com/smallnest/ringbuffer v0.2.1/go.mod h1:bJQOhvCZe/d27P1bYJf24+ie4q7Fhv1F2fy+NuWT6Pk=
 github.com/sonatard/noctx v0.1.0 h1:JjqOc2WN16ISWAjAk8M5ej0RfExEXtkEyExl2hLW+OM=
 github.com/sonatard/noctx v0.1.0/go.mod h1:0RvBxqY8D4j9cTTTWE8ylt2vqj2EPI8fHmrxHdsaZ2c=
 github.com/sourcegraph/go-diff v0.7.0 h1:9uLlrd5T46OXs5qpp8L/MTltk0zikUGi0sNNyCpA8G0=

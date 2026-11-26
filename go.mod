@@ -13,13 +13,13 @@ require (
 	github.com/gen2brain/beeep v0.11.2
 	github.com/go-critic/go-critic v0.15.0
 	github.com/godbus/dbus/v5 v5.2.4
-	github.com/gofrs/flock v0.13.1
+	github.com/gofrs/flock v0.13.2
 	github.com/golangci/golangci-lint v1.64.8
 	github.com/gotesttools/gotestfmt/v2 v2.5.0
 	github.com/muesli/mango-cobra v1.3.0
 	github.com/muesli/roff v0.1.0
 	github.com/rmhubbert/bubbletea-overlay v0.6.10
-	github.com/smallnest/ringbuffer v0.1.1
+	github.com/smallnest/ringbuffer v0.2.1
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.1
 	go.dalton.dog/bubbleup v1.4.0
