@@ -481,8 +481,8 @@ func Execute(version string, debug bool) error {
 	cmd.Flags().StringP("cache-dir", "c", config.GetCacheDir(runtime.GOOS), "a path to store app cache")
 	cmd.Flags().Bool("disable-cache", false, "disable cache")
 
-	cmd.Flags().String("cookies-from-browser", "", "The name of the browser to load cookies from this option is used by yt-dlp see yt-dlp docs to see supported browsers")
-	cmd.Flags().String("cookies", "", "cookies file the option you pass for this flag will be passed to yt-dlp checkout yt-dlp docs to learn more about this flag")
+	cmd.Flags().String("cookies-from-browser", "", "The name of the browser to load cookies from; passed to yt-dlp (check out yt-dlp docs for supported browsers)")
+	cmd.Flags().String("cookies", "", "Path to a cookies file passed to yt-dlp (check out yt-dlp docs to learn more about this flag)")
 	cmd.Flags().Bool("setup", false, "download and set up the local backend runtime")
 
 	if err := cmd.Execute(); err != nil {
