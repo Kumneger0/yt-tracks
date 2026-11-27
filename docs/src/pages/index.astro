@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import CopyButton from '../components/CopyButton.astro';
 
 const title = "yt-tracks – Terminal YouTube Music Client";
 const description = "A fast, keyboard-driven terminal user interface client for YouTube Music.";
@@ -62,7 +63,7 @@ const description = "A fast, keyboard-driven terminal user interface client for 
     <section>
       <p class="font-mono text-xs text-terminal-muted mb-4 tracking-wider uppercase">// terminal youtube music client</p>
       <h1 class="text-3xl sm:text-5xl font-bold text-terminal-text tracking-tight mb-4">
-        yt-tracks documentation
+        yt-tracks
       </h1>
       <p class="text-base sm:text-lg text-terminal-muted leading-relaxed max-w-2xl">
         A fast, keyboard-driven terminal user interface client for YouTube Music.
@@ -101,12 +102,18 @@ const description = "A fast, keyboard-driven terminal user interface client for 
       <div class="space-y-4">
         <div>
           <span class="block text-xs font-mono uppercase tracking-wider text-terminal-muted mb-2">// Linux x86-64 / macOS Apple Silicon</span>
-          <pre class="bg-terminal-surface border border-terminal-border rounded-xl p-4 sm:p-5 text-sm font-mono text-terminal-text overflow-x-auto"><code>curl -fsSL https://raw.githubusercontent.com/Kumneger0/yt-tracks/main/install.sh | bash</code></pre>
+          <div class="relative">
+            <pre class="bg-terminal-surface border border-terminal-border rounded-xl p-4 sm:p-5 pr-14 sm:pr-16 text-sm font-mono text-terminal-text overflow-x-auto"><code id="cmd-install-unix">curl -fsSL https://raw.githubusercontent.com/Kumneger0/yt-tracks/main/install.sh | bash</code></pre>
+            <CopyButton targetId="cmd-install-unix" label="Copy Linux and macOS install command" tipSide="top" class="absolute top-1/2 -translate-y-1/2 right-3" />
+          </div>
         </div>
 
         <div>
           <span class="block text-xs font-mono uppercase tracking-wider text-terminal-muted mb-2">// Windows x86-64 (PowerShell)</span>
-          <pre class="bg-terminal-surface border border-terminal-border rounded-xl p-4 sm:p-5 text-sm font-mono text-terminal-text overflow-x-auto"><code>iwr -useb https://raw.githubusercontent.com/Kumneger0/yt-tracks/main/install.ps1 | iex</code></pre>
+          <div class="relative">
+            <pre class="bg-terminal-surface border border-terminal-border rounded-xl p-4 sm:p-5 pr-14 sm:pr-16 text-sm font-mono text-terminal-text overflow-x-auto"><code id="cmd-install-win">iwr -useb https://raw.githubusercontent.com/Kumneger0/yt-tracks/main/install.ps1 | iex</code></pre>
+            <CopyButton targetId="cmd-install-win" label="Copy Windows PowerShell install command" tipSide="top" class="absolute top-1/2 -translate-y-1/2 right-3" />
+          </div>
         </div>
       </div>
 
@@ -127,25 +134,40 @@ const description = "A fast, keyboard-driven terminal user interface client for 
 
         <p class="text-xs font-mono uppercase tracking-wider text-terminal-muted mb-3">// Install ffmpeg using your package manager:</p>
         <div class="rounded-xl border border-terminal-border bg-terminal-surface/30 p-4 space-y-2 text-sm font-mono">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <span class="text-terminal-muted">Ubuntu / Debian:</span>
-            <code class="text-terminal-accent">sudo apt install ffmpeg</code>
+            <div class="flex items-center justify-between sm:justify-end gap-2.5">
+              <code id="cmd-ffmpeg-ubuntu" class="text-terminal-accent">sudo apt install ffmpeg</code>
+              <CopyButton targetId="cmd-ffmpeg-ubuntu" label="Copy Ubuntu and Debian ffmpeg install command" />
+            </div>
           </div>
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <span class="text-terminal-muted">Arch Linux:</span>
-            <code class="text-terminal-accent">sudo pacman -S ffmpeg</code>
+            <div class="flex items-center justify-between sm:justify-end gap-2.5">
+              <code id="cmd-ffmpeg-arch" class="text-terminal-accent">sudo pacman -S ffmpeg</code>
+              <CopyButton targetId="cmd-ffmpeg-arch" label="Copy Arch Linux ffmpeg install command" />
+            </div>
           </div>
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <span class="text-terminal-muted">Fedora:</span>
-            <code class="text-terminal-accent">sudo dnf install ffmpeg</code>
+            <div class="flex items-center justify-between sm:justify-end gap-2.5">
+              <code id="cmd-ffmpeg-fedora" class="text-terminal-accent">sudo dnf install ffmpeg</code>
+              <CopyButton targetId="cmd-ffmpeg-fedora" label="Copy Fedora ffmpeg install command" />
+            </div>
           </div>
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <span class="text-terminal-muted">macOS:</span>
-            <code class="text-terminal-accent">brew install ffmpeg</code>
+            <div class="flex items-center justify-between sm:justify-end gap-2.5">
+              <code id="cmd-ffmpeg-macos" class="text-terminal-accent">brew install ffmpeg</code>
+              <CopyButton targetId="cmd-ffmpeg-macos" label="Copy macOS ffmpeg install command" />
+            </div>
           </div>
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <span class="text-terminal-muted">Windows:</span>
-            <code class="text-terminal-accent">winget install ffmpeg</code>
+            <div class="flex items-center justify-between sm:justify-end gap-2.5">
+              <code id="cmd-ffmpeg-windows" class="text-terminal-accent">winget install ffmpeg</code>
+              <CopyButton targetId="cmd-ffmpeg-windows" label="Copy Windows ffmpeg install command" />
+            </div>
           </div>
         </div>
 
@@ -167,7 +189,8 @@ const description = "A fast, keyboard-driven terminal user interface client for 
       <p class="text-sm sm:text-base text-terminal-muted mb-4 leading-relaxed">
         Initialize the embedded local backend (or let it initialize automatically on first run — one-time network access required to cache CPython and dependencies), authenticate with your browser cookies, and launch the client:
       </p>
-      <pre class="bg-terminal-surface border border-terminal-border rounded-xl p-4 sm:p-5 text-sm font-mono text-terminal-text overflow-x-auto"><code># 1. (Optional) Pre-download CPython &amp; backend dependencies with live progress
+      <div class="relative">
+        <pre class="bg-terminal-surface border border-terminal-border rounded-xl p-4 sm:p-5 pr-14 sm:pr-16 text-sm font-mono text-terminal-text overflow-x-auto"><code id="cmd-quickstart"># 1. (Optional) Pre-download CPython &amp; backend dependencies with live progress
 yt-tracks setup
 
 # 2. Extract session cookies automatically from installed browser (chrome, firefox, safari)
@@ -175,6 +198,8 @@ yt-tracks extract-cookies
 
 # 3. Launch the client
 yt-tracks</code></pre>
+        <CopyButton targetId="cmd-quickstart" label="Copy Quick Start commands" tipSide="top" class="absolute top-3 right-3" />
+      </div>
     </section>
 
     <!-- 03. CLI Commands & Subcommands -->
@@ -195,23 +220,48 @@ yt-tracks</code></pre>
           </thead>
           <tbody class="divide-y divide-terminal-border text-terminal-muted">
             <tr class="hover:bg-terminal-surface/50 transition-colors">
-              <td class="px-5 py-3.5 font-mono text-terminal-accent whitespace-nowrap">yt-tracks</td>
+              <td class="px-5 py-3.5 font-mono text-terminal-accent whitespace-nowrap">
+                <div class="inline-flex items-center gap-2.5">
+                  <code id="cmd-cli-run">yt-tracks</code>
+                  <CopyButton targetId="cmd-cli-run" label="Copy yt-tracks command" tipSide="right" />
+                </div>
+              </td>
               <td class="px-5 py-3.5">Launch the interactive terminal user interface.</td>
             </tr>
             <tr class="hover:bg-terminal-surface/50 transition-colors">
-              <td class="px-5 py-3.5 font-mono text-terminal-accent whitespace-nowrap">yt-tracks setup</td>
+              <td class="px-5 py-3.5 font-mono text-terminal-accent whitespace-nowrap">
+                <div class="inline-flex items-center gap-2.5">
+                  <code id="cmd-cli-setup">yt-tracks setup</code>
+                  <CopyButton targetId="cmd-cli-setup" label="Copy yt-tracks setup command" tipSide="right" />
+                </div>
+              </td>
               <td class="px-5 py-3.5">Download CPython and initialize the local backend runtime in advance with live progress (also available via <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">--setup</code>).</td>
             </tr>
             <tr class="hover:bg-terminal-surface/50 transition-colors">
-              <td class="px-5 py-3.5 font-mono text-terminal-accent whitespace-nowrap">yt-tracks extract-cookies</td>
+              <td class="px-5 py-3.5 font-mono text-terminal-accent whitespace-nowrap">
+                <div class="inline-flex items-center gap-2.5">
+                  <code id="cmd-cli-extract-cookies">yt-tracks extract-cookies</code>
+                  <CopyButton targetId="cmd-cli-extract-cookies" label="Copy yt-tracks extract-cookies command" tipSide="right" />
+                </div>
+              </td>
               <td class="px-5 py-3.5">Extract YouTube Music cookies from supported browsers (<code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">chrome</code>, <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">firefox</code>, <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">safari</code>), verify via API, and store locally.</td>
             </tr>
             <tr class="hover:bg-terminal-surface/50 transition-colors">
-              <td class="px-5 py-3.5 font-mono text-terminal-accent whitespace-nowrap">yt-tracks version</td>
+              <td class="px-5 py-3.5 font-mono text-terminal-accent whitespace-nowrap">
+                <div class="inline-flex items-center gap-2.5">
+                  <code id="cmd-cli-version">yt-tracks version</code>
+                  <CopyButton targetId="cmd-cli-version" label="Copy yt-tracks version command" tipSide="right" />
+                </div>
+              </td>
               <td class="px-5 py-3.5">Print the installed application version.</td>
             </tr>
             <tr class="hover:bg-terminal-surface/50 transition-colors">
-              <td class="px-5 py-3.5 font-mono text-terminal-accent whitespace-nowrap">yt-tracks log</td>
+              <td class="px-5 py-3.5 font-mono text-terminal-accent whitespace-nowrap">
+                <div class="inline-flex items-center gap-2.5">
+                  <code id="cmd-cli-log">yt-tracks log</code>
+                  <CopyButton targetId="cmd-cli-log" label="Copy yt-tracks log command" tipSide="right" />
+                </div>
+              </td>
               <td class="px-5 py-3.5">Print <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">yt-tracks.log</code> for error reporting (inspect <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">yt-dlp-error.log</code> and <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1 py-0.5 rounded font-mono text-xs">ffstderr.log</code> directly for subprocess diagnostics).</td>
             </tr>
           </tbody>
@@ -257,7 +307,10 @@ yt-tracks</code></pre>
 
       <div>
         <h3 class="text-base sm:text-lg font-semibold text-terminal-text mb-2">Automatic Cookie Extraction</h3>
-        <pre class="bg-terminal-surface border border-terminal-border rounded-xl p-4 sm:p-5 text-sm font-mono text-terminal-text overflow-x-auto mb-3"><code>yt-tracks extract-cookies</code></pre>
+        <div class="relative mb-3">
+          <pre class="bg-terminal-surface border border-terminal-border rounded-xl p-4 sm:p-5 pr-14 sm:pr-16 text-sm font-mono text-terminal-text overflow-x-auto"><code id="cmd-extract-cookies">yt-tracks extract-cookies</code></pre>
+          <CopyButton targetId="cmd-extract-cookies" label="Copy yt-tracks extract-cookies command" tipSide="top" class="absolute top-1/2 -translate-y-1/2 right-3" />
+        </div>
         <p class="text-sm text-terminal-muted">
           Supported browsers: <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">chrome</code>, <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">firefox</code>, <code class="bg-terminal-surface border border-terminal-border text-terminal-accent px-1.5 py-0.5 rounded font-mono text-xs">safari</code>.
         </p>

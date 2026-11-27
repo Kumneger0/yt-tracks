@@ -1,0 +1,140 @@
+---
+interface Props {
+  targetId: string;
+  label: string;
+  tipSide?: 'left' | 'right' | 'top';
+  class?: string;
+}
+
+const { targetId, label, tipSide = 'left', class: className = '' } = Astro.props;
+const commandAttrs = {
+  command: '--copy',
+  commandfor: targetId,
+} as Record<string, string>;
+---
+
+<span class:list={['copy', className]} data-tip-side={tipSide}>
+  <button
+    type="button"
+    class="copy-button"
+    aria-label={label}
+    title={label}
+    {...commandAttrs}
+  >
+    <span class="copy-icon" aria-hidden="true"></span>
+  </button>
+  <span class="copy-tip" role="status"></span>
+</span>
+
+<script>
+  const COPY_SCRIPT_KEY = '__ytTracksCopyInitialized';
+
+  if (!(window as unknown as Record<string, unknown>)[COPY_SCRIPT_KEY]) {
+    (window as unknown as Record<string, unknown>)[COPY_SCRIPT_KEY] = true;
+
+    const timers = new WeakMap<HTMLButtonElement, number>();
+    let lastMessage = '';
+
+    function legacyCopy(text: string): boolean {
+      const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      const field = Object.assign(document.createElement('textarea'), { value: text });
+      field.setAttribute('readonly', '');
+      field.style.cssText = 'position:fixed;inset-block-start:0;opacity:0';
+      document.body.append(field);
+      field.select();
+      try {
+        return document.execCommand('copy');
+      } finally {
+        field.remove();
+        previousFocus?.focus({ preventScroll: true });
+      }
+    }
+
+    function report(button: HTMLButtonElement, ok: boolean): void {
+      const tip = button.nextElementSibling;
+      const prevTimer = timers.get(button);
+      if (prevTimer !== undefined) {
+        window.clearTimeout(prevTimer);
+      }
+
+      button.removeAttribute('data-copied');
+      button.removeAttribute('data-failed');
+
+      let message = ok ? 'Copied' : 'Copy failed';
+      if (message === lastMessage) {
+        message += '\u00A0';
+      }
+      lastMessage = message;
+
+      if (tip) {
+        tip.textContent = '';
+      }
+
+      void button.offsetWidth;
+      button.setAttribute(ok ? 'data-copied' : 'data-failed', '');
+
+      if (tip) {
+        requestAnimationFrame(() => {
+          tip.textContent = message;
+        });
+      }
+
+      const timer = window.setTimeout(() => {
+        button.removeAttribute('data-copied');
+        button.removeAttribute('data-failed');
+        if (tip) {
+          tip.textContent = '';
+        }
+      }, 2000);
+      timers.set(button, timer);
+    }
+
+    async function copy(button: HTMLButtonElement, target: HTMLElement): Promise<void> {
+      const text =
+        target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
+          ? target.value
+          : target.innerText.trim();
+      if (!text) return;
+
+      try {
+        await navigator.clipboard.writeText(text);
+        report(button, true);
+      } catch {
+        report(button, legacyCopy(text));
+      }
+    }
+
+    if ('CommandEvent' in window) {
+      document.addEventListener(
+        'command',
+        (event: Event) => {
+          const cmdEvent = event as Event & {
+            command?: string;
+            source?: Element | null;
+          };
+          if (
+            cmdEvent.command?.startsWith('--copy') &&
+            cmdEvent.source instanceof HTMLButtonElement &&
+            cmdEvent.target instanceof HTMLElement
+          ) {
+            void copy(cmdEvent.source, cmdEvent.target);
+          }
+        },
+        true
+      );
+    } else {
+      document.addEventListener('click', (event: MouseEvent) => {
+        if (event.defaultPrevented) return;
+        const targetEl = event.target instanceof Element ? event.target : null;
+        const button = targetEl?.closest('button[command^="--copy"]');
+        if (!(button instanceof HTMLButtonElement)) return;
+        const targetId = button.getAttribute('commandfor');
+        if (!targetId) return;
+        const target = document.getElementById(targetId);
+        if (target) {
+          void copy(button, target);
+        }
+      });
+    }
+  }
+</script>
